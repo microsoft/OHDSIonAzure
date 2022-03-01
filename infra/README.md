@@ -24,6 +24,8 @@ We leverage Terraform to automate the creation of resources to support the deplo
 - Key Vault
 - App Service
 
+![Infrastructure Deployment](./infrastructure_deployment.png)
+
 Before running terraform, you will need to provide the required variables:
 
 - environment name (i.e `dev`)
