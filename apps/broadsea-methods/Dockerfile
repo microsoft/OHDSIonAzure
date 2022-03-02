@@ -20,13 +20,9 @@ RUN install2.r \
 COPY jdbc_drivers /home/jdbc_drivers
 
 ## Install OHDSI R packages
-# TODO: Switch to original master once fixes are merged. Or move code base into AzDo.
-#       https://github.com/OHDSI/ETL-Synthea/pull/100
-# Error seen with original master: Unsupported CDM specified. Supported CDM versions are "5.3" and "5.4"
-# Using OHDSI/ETL-Synthea@a58bfd32715a05f8031790c98d35888e02af17b5 until original master is stabilized
 RUN installGithub.r \
 	OHDSI/Achilles \
-	OHDSI/ETL-Synthea@a58bfd32715a05f8031790c98d35888e02af17b5 \
+	OHDSI/ETL-Synthea \
 && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
 
 CMD ["Rscript"]
