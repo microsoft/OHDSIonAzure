@@ -1,0 +1,52 @@
+steps:
+  - checkout: self
+
+  - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+    displayName: 'Install Terraform'
+    inputs:
+      terraformVersion: $(terraform_version)
+
+  - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+    displayName: 'terraform init'
+    inputs:
+      command: init
+      workingDirectory: $(System.DefaultWorkingDirectory)/$(tf_directory)
+      commandOptions: $(tf_init_command_options)
+      backendType: azurerm
+      backendServiceArm: $(azure_service_connection)
+      ensureBackend: true
+      backendAzureRmResourceGroupName: $(tf_storage_resource_group)
+      backendAzureRmResourceGroupLocation: $(tf_storage_region)
+      backendAzureRmStorageAccountName: $(tf_storage_account_name)
+      backendAzureRmContainerName: $(tf_storage_container_name)
+      backendAzureRmKey: $(tf_state_filename)
+
+  - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+    displayName: 'terraform refresh'
+    inputs:
+      command: refresh
+      workingDirectory: $(System.DefaultWorkingDirectory)/$(tf_directory)
+      environmentServiceName: $(azure_service_connection)
+      commandOptions: $(tf_refresh_command_options)
+
+  - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+    displayName: 'terraform apply'
+    inputs:
+      command: apply
+      workingDirectory: $(System.DefaultWorkingDirectory)/$(tf_directory)
+      environmentServiceName: $(azure_service_connection)
+      commandOptions: $(tf_apply_command_options)
+
+  - task: DeleteFiles@1
+    displayName: 'Clean up working dir'
+    # Run directory cleanup always
+    condition: |
+      and
+        (
+          always(),
+          ne(variables['Agent.OS'], 'Windows_NT'),
+          ne(variables.disable_tf_cleanup, 'true')
+        )
+    inputs:
+      SourceFolder: '$(Agent.BuildDirectory)'
+      Contents: '*'

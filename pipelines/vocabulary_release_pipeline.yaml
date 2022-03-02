@@ -1,0 +1,183 @@
+# Pipeline to populate vocabulary to an OMOP CDM database.
+parameters:
+- name: publishPostTFDeploy
+  type: boolean
+  default: true
+  displayName: Run the Post TF Deploy script (One time setup for Vocabulary Load)
+- name: publishVocabularyDDL
+  type: boolean
+  default: true
+  displayName: Run the Vocabulary DDL Dacpac (including Vocabulary Load)
+- name: publishVocabularyIndexesConstraints
+  type: boolean
+  default: true
+  displayName: Run the Vocabulary Indexes and Constraints Dacpac
+
+  # For artifact retrieval
+- name: sourcePipelineArtifactProjectName
+  displayName: Source Pipeline Artifact Project Name (e.g. use myproject for https://dev.azure.com/myorg/<myproject>/)
+  type: string
+  default: OHDSIonAzure
+- name: sourcePipelineArtifactPipelineName
+  displayName: Source Pipeline Artifact Pipeline Name (E.g Vocabulary Build)
+  type: string
+  default: Vocabulary Build
+
+  # Post TF Deploy Parameters
+- name: buildArtifactNamePostTFDeploy
+  type: string
+  default: PostTFDeployScript
+  displayName: Build Artifact Name for post TF Script
+  values:
+  - PostTFDeployScript
+- name: scriptFileNamePostTFDeploy
+  type: string
+  default: Post_TF_Deploy.sql
+  displayName: Post TF Deploy Script file name (e.g. Post_TF_Deploy.sql)
+
+  # Vocabulary DDL Parameters
+- name: buildArtifactNameVocabularyDDL
+  type: string
+  default: VocabularyDDLDacpac
+  displayName: Build Artifact Name for Vocabulary DDL Dacpac
+  values:
+  - VocabularyDDLDacpac
+- name: scriptFileNameVocabularyDDL
+  type: string
+  default: OMOP_Vocabulary_DDL.dacpac
+  displayName: OMOP CDM Vocabulary DDL Script file name (e.g. my_omop_vocabulary_ddl.dacpac)
+
+# Vocabulary Indexes and Constraints Parameters
+- name: buildArtifactNameVocabularyIndexesConstraints
+  type: string
+  default: VocabularyIndexesConstraintsDacpac
+  displayName: Build Artifact Name for Vocabulary Indexes Constriants Dacpac
+  values:
+  - VocabularyIndexesConstraintsDacpac
+- name: scriptFileNameVocabularyIndexesConstraints
+  type: string
+  default: OMOP_Vocabulary_Indexes_Constraints.dacpac
+  displayName: OMOP CDM Vocabulary Indexes and Constraints Script file name (e.g. my_omop_vocabulary_indexes_constraints.dacpac)
+
+variables:
+  - template: variables.yaml
+  - name: "PublishPostTFDeploy"
+    value: ${{ parameters.publishPostTFDeploy }}
+  - name: "PublishVocabularyDDL"
+    value: ${{ parameters.publishVocabularyDDL }}
+  - name: "PublishVocabularyIndexesConstraints"
+    value: ${{ parameters.publishVocabularyIndexesConstraints }}
+
+# build completion trigger
+resources:
+  pipelines:
+  - pipeline: "Vocabulary Build"   # Internal name of the source pipeline, used elsewhere within app-ci YAML
+                            # e.g. to reference published artifacts
+    source: "Vocabulary Build" # Azure Pipelines name of the source pipeline referenced
+    # project: FabrikamProject # Required only if the source pipeline is in another project
+    trigger: true # Run app-ci pipeline when any run of Vocabulary Build completes
+
+# Disable CI Triggers - can re-enable later.
+trigger: none
+
+pool: 'Azure Pipelines'
+
+# Release instructions
+stages:
+# - stage: Check_OMOP_Tests
+#   jobs:
+#   - job:
+#     displayName: Run OMOP Tests
+#     continueOnError: 'false'
+#     steps:
+#       - template: templates/omop_test_suite_pipeline.yaml
+
+# This stage should be run on the initial configuration of the OMOP CDM Database
+- stage: Add_Vocab_CDR
+  jobs:
+  - job: Retrieve_Vocab_Files
+    displayName: Retrieve_Vocab_Files
+    workspace:
+      clean: all
+    continueOnError: 'false'
+    steps:
+
+    # Install sqlcmd
+    - template: templates/install_sqlcmd.yml
+
+    # Install sqlpackage
+    - template: templates/install_sqlpackage.yml
+
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        source: 'specific'
+        project: '${{ parameters.sourcePipelineArtifactProjectName }}'
+        pipeline: '${{ parameters.sourcePipelineArtifactPipelineName }}'
+        runVersion: 'latest'
+        runBranch: 'refs/heads/$(Build.SourceBranchName)'
+        path: $(Build.SourcesDirectory)/artifacts
+
+    - ${{ if eq(variables.PublishPostTFDeploy, 'true') }}:
+      - template: templates/run_sqlcmd_script.yml
+        parameters:
+          serviceConnection: ${{ variables.serviceConnection }}
+          sqlServerName: ${{ variables.sqlServerName }}
+          sqlServerDbName: ${{ variables.sqlServerDbName }}
+          sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNamePostTFDeploy }}'
+          scriptFileName: ${{ parameters.scriptFileNamePostTFDeploy }}
+          sqlcmdCommandLineParameters: '-v StorageAccountName="${{ variables.storageAccount }}" -v BroadseaAppServiceName="${{ variables.appSvcName }}" -v ADOVMSSBuildAgentPoolName="${{ variables.adoVMSSBuildAgentPoolName }}"'
+      
+    - ${{ if eq(variables.PublishVocabularyDDL, 'true') }}:
+      - task: AzureCLI@2
+        displayName: Smoke Test - Validate that Vocabulary Files Exists in Storage Account
+        inputs:
+          azureSubscription: ${{ variables.serviceConnection }}
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            echo "------------------------ SMOKE TEST: VALIDATE VOCAB FILES ------------------------"
+
+            vocabContainerPath=$(echo "${{ variables.vocabulariesContainerPath }}")
+            # This assumes that the vocabularies have a form of vocabularies/some/path e.g. vocabularies/02-SEP-21
+            vocabContainerPathArr=($(echo $vocabContainerPath | tr "/" "\n"))
+            vocabContainerName=$(echo ${vocabContainerPathArr[0]})
+            vocabPrefix=""
+            if [ ${#vocabContainerPathArr[*]} -gt 1 ]; then
+              printf -v vocabPrefix "%s/" "${vocabContainerPathArr[@]:1}"
+              vocabPrefix=${vocabPrefix%?} # remove last character
+            else
+              echo "Unable to detect rest of vocabulary container path, so will proceed with searching for an empty string"
+            fi
+            echo "Searching for Prefix $vocabPrefix in Container $vocabContainerName"
+
+            # sanity check
+            az storage blob list -c "$vocabContainerName" --account-name "${{ variables.storageAccount }}" --prefix "$vocabPrefix" -o tsv
+            blobArr=($(az storage blob list -c "$vocabContainerName" --account-name "${{ variables.storageAccount }}" --prefix "$vocabPrefix" | jq '.[].name'))
+            echo $blobArr
+
+            if [ ${#blobArr[*]} -gt 0 ]; then
+              echo 'Vocabulary files exists.'
+            else
+              echo "Vocabulary files not found!"
+              echo "Could not find vocabulary files in vocabContainerPath $vocabContainerPath in the storage account"
+              exit 1
+            fi
+
+      - template: templates/run_sqlpackage_script.yml
+        parameters:
+          serviceConnection: ${{ variables.serviceConnection }}
+          sqlServerName: ${{ variables.sqlServerName }}
+          sqlServerDbName: ${{ variables.sqlServerDbName }}
+          sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNameVocabularyDDL }}'
+          scriptFileName: ${{ parameters.scriptFileNameVocabularyDDL }}
+          sqlPackageCommandLineParameters: '/v:VocabulariesContainerPath="${{ variables.vocabulariesContainerPath }}" /v:DSVocabularyBlobStorageName="${{ variables.dSVocabularyBlobStorageName }}"'
+
+    - ${{ if eq(variables.PublishVocabularyIndexesConstraints, 'true') }}:
+      - template: templates/run_sqlpackage_script.yml
+        parameters:
+          serviceConnection: ${{ variables.serviceConnection }}
+          sqlServerName: ${{ variables.sqlServerName }}
+          sqlServerDbName: ${{ variables.sqlServerDbName }}
+          sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNameVocabularyIndexesConstraints }}'
+          scriptFileName: ${{ parameters.scriptFileNameVocabularyIndexesConstraints }}
+          sqlPackageCommandLineParameters: ''

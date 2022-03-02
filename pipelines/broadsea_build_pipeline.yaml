@@ -1,0 +1,138 @@
+# Build and publish broadsea-webtools (Atlas / WebApi) and broadsea-methods (Achilles / Synthea-ETL) to ACR pipeline
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - apps/broadsea-methods
+    - apps/broadsea-webtools
+
+parameters:
+- name: publishBroadseaWebApiScript
+  type: boolean
+  default: true
+  displayName: Publish broadsea webapi script as a pipeline artifact
+- name: publishBroadseaWebtools
+  type: boolean
+  default: true
+  displayName: Build and publish broadsea-webtools (Atlas / WebApi)
+- name: publishBroadseaMethods
+  type: boolean
+  default: true
+  displayName: Build and publish broadsea-methods (Achilles / Synthea-ETL)
+
+- name: buildConfiguration
+  type: string
+  default: Dev
+  displayName: Build Configuration for scripts
+  values:
+  - Dev
+  - Stage
+  - Qa
+  - Prod
+- name: sourceFolder
+  type: string
+  default: sql/
+  displayName: Source folder for scripts (e.g. for sql/scripts use sql/)
+
+# WebAPI Parameters
+- name: buildArtifactFolderPathWebApi
+  type: string
+  default: webApi
+  displayName: Build Artifact Folder Path for WebAPI Script
+  values:
+  - webApi
+- name: buildArtifactNameWebApi
+  type: string
+  default: webApiScript
+  displayName: Build Artifact for WebApi Script
+  values:
+  - webApiScript
+- name: scriptFileNameWebApi
+  type: string
+  default: Web_Api_Refresh.sql
+  displayName: Web API Script file name (e.g. Web_Api_Refresh.sql)
+
+# Broadsea Webtools (Atlas / WebApi) Docker to ACR Settings
+- name: dockerBuildSourceFolderBroadseaWebTools
+  type: string
+  default: apps/broadsea-webtools
+  displayName: Source Folder used for docker build for broadsea-webtools, e.g. if the folder 'my-folder' has the Dockerfile, specify 'my-folder'.  Defaults to empty.
+- name: dockerBuildImageNameBroadseaWebTools
+  type: string
+  default: broadsea-webtools
+  displayName: Image Name for broadsea-webtools (e.g. broadsea-webtools) to push into ACR.  Defaults to empty.
+- name: dockerBuildImageTagBroadseaWebTools
+  type: string
+  default: latest
+  displayName: Image Tag for broadsea-webtools (e.g. latest) to push into ACR.  Defaults to empty.
+
+# Broadsea Methods (Achilles / Synthea-ETL) Docker to ACR Settings
+- name: dockerBuildSourceFolderBroadseaMethods
+  type: string
+  default: apps/broadsea-methods
+  displayName: Source Folder used for docker build for broadsea-methods, e.g. if the folder 'my-folder' has the Dockerfile, specify 'my-folder'.  Defaults to empty.
+# TODO: move to variables.yaml
+- name: dockerBuildImageNameBroadseaMethods
+  type: string
+  default: broadsea-methods
+  displayName: Image Name for broadsea-methods (e.g. broadsea-methods) to push into ACR.  Defaults to empty.
+- name: dockerBuildImageTagBroadseaMethods
+  type: string
+  default: latest
+  displayName: Image Tag for broadsea-methods (e.g. latest) to push into ACR.  Defaults to empty.
+
+variables:
+- template: variables.yaml
+- name: "PublishBroadseaWebApiScript"
+  value: ${{ parameters.publishBroadseaWebApiScript }}
+- name: "PublishBroadseaWebtools"
+  value: ${{ parameters.publishBroadseaWebtools }}
+- name: "PublishBroadseaMethods"
+  value: ${{ parameters.publishBroadseaMethods }}
+
+pool: 'Azure Pipelines'
+
+stages:
+- stage: Build_and_push_broadsea_webtools
+  displayName: Build and Push Broadsea Webtools Artifacts
+  jobs:
+  - ${{ if eq(variables.PublishBroadseaWebApiScript, 'true') }}:
+    - job:
+      displayName: Publish Web Api Scripts to Pipeline Artifacts 
+      steps:
+      # publish the webapi script
+      - template: templates/copy_and_publish_file.yml
+        parameters:
+          sourceFolder: '${{ parameters.sourceFolder }}/scripts/'
+          targetFolder: '${{ parameters.buildConfiguration }}'
+          fileName: ${{ parameters.scriptFileNameWebApi }}
+          buildArtifactFolderPath: ${{ parameters.buildArtifactFolderPathWebApi }}
+          buildArtifactName: ${{ parameters.buildArtifactNameWebApi }}
+  
+  - ${{ if eq(variables.PublishBroadseaWebtools, 'true') }}:
+    - job:
+      displayName: Build and Publish broadsea-webtools (Atlas / Web Api) Docker Image to Azure Container Registry
+      steps:
+      - template: templates/build_and_push_docker_to_acr.yml
+        parameters:
+          serviceConnection: '${{ variables.serviceConnection }}'
+          containerRegistry: '${{ variables.containerRegistry }}'
+          sourceFolder: ${{ parameters.dockerBuildSourceFolderBroadseaWebTools }}
+          imageName: ${{ parameters.dockerBuildImageNameBroadseaWebTools }}
+          imageTag: ${{ parameters.dockerBuildImageTagBroadseaWebTools }}
+
+- ${{ if eq(variables.PublishBroadseaMethods, 'true') }}:
+  - stage: Build_and_push_broadsea_methods
+    displayName: Build and Publish broadsea-methods (Achilles / Synthea-ETL) Docker image
+    jobs:
+    - job:
+      steps:
+      - template: templates/build_and_push_docker_to_acr.yml
+        parameters:
+          serviceConnection: '${{ variables.serviceConnection }}'
+          containerRegistry: '${{ variables.containerRegistry }}'
+          sourceFolder: ${{ parameters.dockerBuildSourceFolderBroadseaMethods }}
+          imageName: ${{ parameters.dockerBuildImageNameBroadseaMethods }}
+          imageTag: ${{ parameters.dockerBuildImageTagBroadseaMethods }}

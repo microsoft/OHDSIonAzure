@@ -1,0 +1,231 @@
+variables:
+- name: environment
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'PROD'
+  ${{ if eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'STG'
+  ${{ if eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'QA'
+  ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'INT'
+
+- name: serviceConnection
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'my-prod-sp-omop-service-connection'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'my-stage-sp-omop-service-connection'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'my-qa-sp-omop-service-connection'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'my-dev-sp-omop-service-connection'
+  ${{ else }}:
+    value: 'sp-omop-service-connection'
+
+# ADO VMSS Build Agent Pool Name.  Currently from ./scripts/ado_bootstrap.sh
+- name: adoVMSSBuildAgentPoolName
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: ''
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: ''
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: ''
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: ''
+  ${{ else }}:
+    value: 'vmssagentspool'
+
+- name: containerRegistry
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'myprodsharingacr'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'mystagesharingacr'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'myqasharingacr'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'mydevsharingacr'
+  ${{ else }}:
+    value: 'sharingdevacr'
+
+- name: appSvcRg
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'my-prod-sharing-omop-rg'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'my-stage-sharing-omop-rg'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'my-qa-sharing-omop-rg'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'my-dev-sharing-omop-rg'
+  ${{ else }}:
+    value: 'sharing-dev-omop-rg'
+
+- name: appSvcName
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'my-prod-sharing-omop-broadsea'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'my-stage-sharing-omop-broadsea'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'my-qa-sharing-omop-broadsea'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'my-dev-sharing-omop-broadsea'
+  ${{ else }}:
+    value: 'sharing-dev-omop-broadsea'
+
+- name: sqlServerName
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'my-prod-sharing-omop-sql-server'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'my-stage-sharing-omop-sql-server'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'my-qa-sharing-omop-sql-server'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'my-dev-sharing-omop-sql-server'
+  ${{ else }}:
+    value: 'sharing-dev-omop-sql-server'
+
+- name: sqlServerDbName
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'my_prod_sharing_omop_db'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'my_stage_sharing_omop_db'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'my_qa_sharing_omop_db'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'my_dev_sharing_omop_db'
+  ${{ else }}:
+    value: 'sharing_dev_omop_db'
+
+- name: vocabulariesContainerPath
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'vocabularies/$(vocabularyVersion)'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'vocabularies/$(vocabularyVersion)'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'vocabularies/$(vocabularyVersion)'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'vocabularies/$(vocabularyVersion)'
+  ${{ else }}:
+    value: "vocabularies/$(vocabularyVersion)"
+
+- name: vocabularyVersion
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'my/prod/path'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'my/stage/path'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'my/qa/path'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'my/dev/path'
+  ${{ else }}:
+    value: '19-AUG-2021'
+
+- name: dSVocabularyBlobStorageName
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'DSVocabularyBlobStorage'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'DSVocabularyBlobStorage'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'DSVocabularyBlobStorage'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'DSVocabularyBlobStorage'
+  ${{ else }}:
+    value: 'DSVocabularyBlobStorage'
+
+- name: storageAccount
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'myprodsharingomopsa'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'mystagesharingomopsa'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'myqasharingomopsa'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'mydevsharingomopsa'
+  ${{ else }}:
+    value: 'sharingdevomopsa'
+
+# Maps to WEBAPI_SOURCES
+- name: webapiSources
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    # TODO: Switch name according to app service here
+    value: 'https://myprodstudysource-cdromopbroadseaappservice.azurewebsites.net/WebAPI/source'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    # TODO: Switch name according to app service here
+    value: 'https://mystagestudysource-cdromopbroadseaappservice.azurewebsites.net/WebAPI/source'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    # TODO: Switch name according to app service here
+    value: 'https://myqastudysource-cdromopbroadseaappservice.azurewebsites.net/WebAPI/source'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'https://mydevstudysource-cdromopbroadseaappservice.azurewebsites.net/WebAPI/source'
+  ${{ else }}:
+    value: 'https://sharing-dev-omop-broadsea.azurewebsites.net/WebAPI/source'
+
+- name: cdmVersion
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 5.3.1
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 5.3.1
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 5.3.1
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 5.3.1
+  ${{ else }}:
+    value: 5.3.1
+
+- name: cdmSchema
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'cdm'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'cdm'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'dbo'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'dbo'
+  ${{ else }}:
+    value: 'dbo'
+
+- name: syntheaSchema
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'synthea'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'synthea'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'synthea'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'synthea'
+  ${{ else }}:
+    value: 'synthea'
+
+- name: vocabSchema
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'cdm'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'cdm'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'dbo'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'dbo'
+  ${{ else }}:
+    value: 'dbo'
+
+- name: resultsSchema
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 'webapi'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 'webapi'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 'webapi'
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 'webapi'
+  ${{ else }}:
+    value: 'webapi'
+
+- name: syntheaVersion
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    value: 2.7.0
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    value: 2.7.0
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    value: 2.7.0
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    value: 2.7.0
+  ${{ else }}:
+    value: 2.7.0

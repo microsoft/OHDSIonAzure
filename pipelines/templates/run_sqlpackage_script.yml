@@ -1,0 +1,57 @@
+parameters:
+
+- name: serviceConnection # Service Connection used to connect to Azure SQL
+  default: ''
+  displayName: Service Connection Used to connect to Azure SQL
+- name: sqlServerName # SqlServerName, e.g. for <my-sql-server-name>.database.windows.net use my-sql-server-name
+  default: ''
+  displayName: SQL Server Name, e.g. for <my-sql-server-name>.database.windows.net use my-sql-server-name
+- name: sqlServerDbName # Sql Server DB Name
+  default: ''
+  displayName: SQL Database Name
+- name: sourceFolderPath # Source Folder Path e.g. if the script is located at /artifacts/SomeScript/script.sql use /artifacts/SomeScript.  Defaults to empty.
+  default: ''
+  displayName: Source Folder Path e.g. if the script is located at /artifacts/SomeScript/script.sql use /artifacts/SomeScript.  Defaults to empty.
+- name: scriptFileName # Script File Name e.g. the Dacpac name
+  default: ''
+  displayName: SQL Script File Name (e.g. OMOP_Vocabulary_DDL.dacpac)
+- name: sqlPackageCommandLineParameters # SQL Package additional parameters
+  default: ''
+  displayName: SQL Package Command Line Parameters, e.g. /v:somevariable="somevalue". Default to empty. Note the connection information is handled through the template.
+
+steps:
+# Run the script using sql package
+- task: AzureCLI@2
+  displayName: 'Run ${{ parameters.scriptFileName }} Script using Service Connection'
+  inputs:
+    azureSubscription: ${{ parameters.serviceConnection }}
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    addSpnToEnvironment: True
+    inlineScript: |
+      # https://docs.microsoft.com/en-us/azure/azure-sql/database/database-export#sqlpackage-utility
+      export PATH="$PATH:/sqlpackage"
+      sudo chmod a+x /sqlpackage/sqlpackage
+
+      echo '******************Copy Script******************'
+      sudo cp '${{ parameters.sourceFolderPath }}/${{ parameters.scriptFileName }}' '${{ parameters.scriptFileName }}'
+
+      ls -l
+
+      echo '******************Get Access Token******************'
+
+      az account show
+      token=$(az account get-access-token --resource=https://database.windows.net --query accessToken --output tsv)
+
+      sudo apt-get update
+      sudo apt-get install dnsutils -y
+
+      echo '****************Checking without private link resolution******************'
+      echo 'nslookup "${{ parameters.sqlServerName }}.database.windows.net"'
+      nslookup "${{ parameters.sqlServerName }}.database.windows.net"
+
+      echo '****************Run SQL Package******************'
+      echo '******Run ${{ parameters.scriptFileName }} Script******'
+
+      echo 'sqlpackage /a:Publish /sf:"${{ parameters.scriptFileName }}" /tsn:"${{ parameters.sqlServerName }}.database.windows.net" /tdn:"${{ parameters.sqlServerDbName }}" /at:"$token" /tec:true /ttsc:false ${{ parameters.sqlPackageCommandLineParameters}}'
+      sqlpackage /a:Publish /sf:"${{ parameters.scriptFileName }}" /tsn:"${{ parameters.sqlServerName }}.database.windows.net" /tdn:"${{ parameters.sqlServerDbName }}" /at:"$token" /tec:true /ttsc:false ${{ parameters.sqlPackageCommandLineParameters}}

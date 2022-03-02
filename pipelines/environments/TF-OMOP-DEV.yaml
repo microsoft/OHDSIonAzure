@@ -1,0 +1,82 @@
+# Terraform release pipeline for environment
+# TODO update resource group in .tfvars
+variables:
+  tf_directory: 'infra/terraform'
+  terraform_version: '1.1.4'
+  pool: 'Azure Pipelines'
+  
+  azure_service_connection: 'sp-omop-service-connection'
+
+  tf_storage_resource_group: 'ado-omop-bootstrap-rg'
+  tf_storage_region: 'westus3'
+  tf_storage_account_name: 'omopdevtfstatestoracc'
+  tf_storage_container_name: 'dev-omop-statefile-container'
+  tf_state_filename: 'terraform.tfstate'
+
+  tf_init_command_options: '-input=false'
+  tf_validate_command_options: ''
+  tf_refresh_command_options: '-input=false -lock=false'
+  tf_plan_command_options: '-input=false -lock=false -refresh=false -out plan.out'
+  tf_apply_command_options: '-input=false -refresh=false'
+
+  tf_plan_environment: 'omop-tf-plan-environment'
+  tf_approval_environment: 'omop-tf-approval-environment'
+
+  disable_tf_cleanup: 'true'
+
+# Disable CI Triggers
+trigger: none
+
+# Release instructions
+stages:
+- stage: Terraform_Plan
+  jobs:
+  - deployment: Terraform_Plan
+    displayName: Terraform Plan
+    pool: $(pool)
+    workspace:
+      clean: all
+    continueOnError: 'false'
+    environment: $(tf_plan_environment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - template: ../templates/terraform/tf_plan.yml
+
+- stage: Approved_Terraform
+  dependsOn:
+    - Terraform_Plan # Explicitly set dependency graph
+
+  # Conditions
+  # 1. If TF Plan succeeded
+  # 2. If build reason isn't a pull request
+
+  condition: |
+    and(
+      succeeded(),
+      ne(variables['Build.Reason'], 'PullRequest')
+    )
+
+  jobs:
+  - deployment: Approved_Terraform
+    displayName: Approved Terraform
+    pool: $(pool)
+    workspace:
+      clean: all
+    continueOnError: 'false'
+    environment: $(tf_approval_environment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # TODO point to higher environment path for higher environments
+            - template: ../templates/terraform/tf_apply.yml
+            
+            - task: DeleteFiles@1
+              displayName: 'Clean up working dir'
+              # Run directory cleanup always
+              condition: always()
+              inputs:
+                SourceFolder: '$(Agent.BuildDirectory)'
+                Contents: '*'
