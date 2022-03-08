@@ -1,0 +1,54 @@
+# Setup Achilles and ETL-Synthea
+
+Below are steps to setup [Achilles](https://github.com/OHDSI/Achilles) and [ETL-Synthea](https://github.com/OHDSI/ETL-Synthea).
+
+## Prerequisites
+  
+1. You've successfully setup [Atlas](/docs/setup/setup_atlas_webapi.md)
+
+2. Update your [variables.yaml](/pipelines/variables.yaml) to reflect your environment settings. See how you can [update your variables.yaml](/docs/update_your_variables.yaml.md) for more info.
+
+## Steps
+
+### Step 1. Run the Broadsea Build pipeline
+
+1. Run the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) on your feature branch to **Build and publish broadsea-methods (Achilles / ETL-Synthea)**
+
+![Broadsea Build Pipeline for Achilles / ETL-Synthea](/docs/media/broadsea_build_pipeline_achilles_etl_synthea.png)
+
+> Note that the `broadsea-methods` image is a combined image used both by Achilles & ETL-Synthea. The option to **Build Docker Container** will **build and push** the image to ACR. You will need to ensure that the `broadsea-methods` container image is in ACR in order to run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline).
+
+You should be able to review ACR to see broadsea methods in your environment.
+
+![Confirm Broadsea Methods in ACR](/docs/media/confirm_acr_broadsea_methods_1.png)
+
+### Step 2. Run the Broadsea Release Pipeline
+
+1. Run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) on your feature branch.
+- You can fill in the [pipeline parameter details](/pipelines/README.md/#broadsea-release-pipeline-parameters), whether to run the [ETL-Synthea](/apps/broadsea-methods/README.md/#synthea-etl) process, and whether to run the [achilles characterization](/apps/broadsea-methods/README.md/#achilles) on your Azure SQL DB.
+
+![Select Broadsea Release Pipeline Settings](/docs/media/broadsea_release_pipeline_achilles_etl_synthea_1.png)
+
+### Step 3. Validate Achilles & ETL-Synthea
+
+1. If Synthea and Achilles are set up correctly, you should see the following by checking https://my-app-service.azurewebsites.net/atlas/#/datasources/webapi-CDMV5/dashboard:
+
+![Confirm Achilles and Synthea](/docs/media/confirm_achilles_synthea_1.png)
+
+> You should see some information in the dashboard populated through Synthea (reflecting the patient population) and the Achilles script should populate the reports.
+
+2. You can also check for Synthea-based person information by checking for a person id:
+https://my-app-service.azurewebsites.net/atlas/#/profiles/webapi-CDMV5/
+
+![Confirm Achilles and Synthea](/docs/media/confirm_achilles_synthea_2.png)
+
+> Note that the person id in this case corresponds a person id in Azure SQL.  For example, you can query for a person id in Azure SQL:
+
+```sql
+SELECT TOP 1 [person_id]
+  FROM [dbo].[person]
+```
+
+# Troubleshooting Notes
+
+Check the corresponding [troubleshooting notes](/docs/troubleshooting/troubleshooting_achilles_synthea.md) for more details.

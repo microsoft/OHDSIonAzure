@@ -10,7 +10,7 @@ parameters:
   - Dev
   - Release
 
-- name: cdmBuildConfiguration
+- name: cdmVersion
   type: string
   default: v5.3.1
   displayName: Common Data Model Configuration for Dacpac Build
@@ -112,7 +112,7 @@ steps:
 # Build Vocabulary DDL Dacpac
 - template: templates/build_and_publish_dacpac_artifact.yml
   parameters:
-    sourceFolder: '${{ parameters.sourceFolder }}/CDM/${{ parameters.cdmBuildConfiguration }}'
+    sourceFolder: '${{ parameters.sourceFolder }}/CDM/${{ parameters.cdmVersion }}'
     sourceProjectFolderName: '${{ parameters.sourceProjectFolderNameVocabularyDDL }}'
     targetFolder: '${{ parameters.buildConfiguration }}'
     sourceFileName: ${{ parameters.sourceFileNameVocabularyDDL }}
@@ -124,7 +124,7 @@ steps:
 # Build Vocabulary Indexes and Constraints Dacpac
 - template: templates/build_and_publish_dacpac_artifact.yml
   parameters:
-    sourceFolder: '${{ parameters.sourceFolder }}/CDM/${{ parameters.cdmBuildConfiguration }}'
+    sourceFolder: '${{ parameters.sourceFolder }}/CDM/${{ parameters.cdmVersion }}'
     sourceProjectFolderName: '${{ parameters.sourceProjectFolderNameVocabularyIndexesConstraints }}'
     targetFolder: '${{ parameters.buildConfiguration }}'
     sourceFileName: ${{ parameters.sourceFileNameVocabularyIndexesConstraints }}

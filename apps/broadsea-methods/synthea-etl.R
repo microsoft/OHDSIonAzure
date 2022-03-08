@@ -11,7 +11,7 @@ sql_database_name <- Sys.getenv("SQL_DATABASE_NAME")
 # Schemas and other configurations
 # cdm
 cdm_schema <- Sys.getenv("CDM_SCHEMA")
-# 5.3.1
+# 5.3.1 should map to 5.3
 cdm_version <- Sys.getenv("CDM_VERSION")
 # synthea
 synthea_schema <- Sys.getenv("SYNTHEA_SCHEMA")

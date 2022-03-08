@@ -8,6 +8,9 @@ Sys.setenv("DATABASECONNECTOR_JAR_FOLDER" = "/home/jdbc_drivers")
 sql_server_name <- Sys.getenv("SQL_SERVER_NAME")
 sql_database_name <- Sys.getenv("SQL_DATABASE_NAME")
 cdm_schema <- Sys.getenv("CDM_SCHEMA")
+# note that the CDM Version should be simplified e.g. instead of 5.3.1, use 5.3
+# see https://github.com/OHDSI/Achilles/blob/c6b7adb6330e75c2311880db2eb3dc4c12341c4f/inst/sql/sql_server/validate_schema.sql#L501 for details
+cdm_version <- Sys.getenv("CDM_VERSION")
 results_schema <- Sys.getenv("RESULTS_SCHEMA")
 vocab_schema <- Sys.getenv("VOCAB_SCHEMA")
 source_name <- Sys.getenv("SOURCE_NAME")
@@ -41,7 +44,7 @@ result <- tryCatch({
             resultsDatabaseSchema = stringr::str_interp("${sql_database_name}.${results_schema}"),
             vocabDatabaseSchema = stringr::str_interp("${sql_database_name}.${vocab_schema}"),
             sourceName = source_name,
-            cdmVersion = 5.3,
+            cdmVersion = cdm_version,
             numThreads = num_threads,
             outputFolder = "output")
 }, warning = function(warning_condition) {

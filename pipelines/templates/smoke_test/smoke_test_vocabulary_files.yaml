@@ -1,0 +1,47 @@
+parameters:
+
+- name: serviceConnection # Service Connection used to connect to Azure SQL
+  default: ''
+  displayName: Service Connection Used to connect to Azure Storage
+- name: vocabulariesContainerPath # This assumes that the vocabularies have a form of vocabularies/some/path e.g. vocabularies/02-SEP-21, defaults to empty
+  default: ''
+  displayName: Vocabularies Container Path to check, e.g. the vocabularies are stored in the storage account under vocabularies/some/path for a given vocabulary version
+- name: storageAccount # Vocabularies Storage Account to check
+  default: ''
+  displayName: Vocabularies Storage Account Name to check e.g. 'my-storage-account'
+
+steps:
+- task: AzureCLI@2
+  displayName: Smoke Test - Validate that Vocabulary Files Exists in Storage Account
+  inputs:
+    azureSubscription: ${{ parameters.serviceConnection }}
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      echo "------------------------ SMOKE TEST: VALIDATE VOCAB FILES ------------------------"
+
+      vocabContainerPath=$(echo "${{ parameters.vocabulariesContainerPath }}")
+      # This assumes that the vocabularies have a form of vocabularies/some/path e.g. vocabularies/02-SEP-21
+      vocabContainerPathArr=($(echo $vocabContainerPath | tr "/" "\n"))
+      vocabContainerName=$(echo ${vocabContainerPathArr[0]})
+      vocabPrefix=""
+      if [ ${#vocabContainerPathArr[*]} -gt 1 ]; then
+        printf -v vocabPrefix "%s/" "${vocabContainerPathArr[@]:1}"
+        vocabPrefix=${vocabPrefix%?} # remove last character
+      else
+        echo "Unable to detect rest of vocabulary container path, so will proceed with searching for an empty string"
+      fi
+      echo "Searching for Prefix $vocabPrefix in Container $vocabContainerName"
+
+      # sanity check
+      az storage blob list -c "$vocabContainerName" --account-name "${{ parameters.storageAccount }}" --prefix "$vocabPrefix" -o tsv
+      blobArr=($(az storage blob list -c "$vocabContainerName" --account-name "${{ parameters.storageAccount }}" --prefix "$vocabPrefix" | jq '.[].name'))
+      echo $blobArr
+
+      if [ ${#blobArr[*]} -gt 0 ]; then
+        echo 'Vocabulary files exists.'
+      else
+        echo "Vocabulary files not found!"
+        echo "Could not find vocabulary files in vocabContainerPath $vocabContainerPath in the storage account"
+        exit 1
+      fi

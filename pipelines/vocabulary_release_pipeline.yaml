@@ -15,11 +15,11 @@ parameters:
 
   # For artifact retrieval
 - name: sourcePipelineArtifactProjectName
-  displayName: Source Pipeline Artifact Project Name (e.g. use myproject for https://dev.azure.com/myorg/<myproject>/)
+  displayName: Project Name which has the Source Pipeline with the built the pipeline artifacts (e.g. use myproject for https://dev.azure.com/myorg/<myproject>/)
   type: string
   default: OHDSIonAzure
 - name: sourcePipelineArtifactPipelineName
-  displayName: Source Pipeline Artifact Pipeline Name (E.g Vocabulary Build)
+  displayName: Pipeline Name which has built the pipeline artifacts (E.g Vocabulary Build)
   type: string
   default: Vocabulary Build
 
@@ -42,10 +42,10 @@ parameters:
   displayName: Build Artifact Name for Vocabulary DDL Dacpac
   values:
   - VocabularyDDLDacpac
-- name: scriptFileNameVocabularyDDL
+- name: dacpacFileNameVocabularyDDL
   type: string
   default: OMOP_Vocabulary_DDL.dacpac
-  displayName: OMOP CDM Vocabulary DDL Script file name (e.g. my_omop_vocabulary_ddl.dacpac)
+  displayName: OMOP CDM Vocabulary DDL Dacpac file name (e.g. my_omop_vocabulary_ddl.dacpac)
 
 # Vocabulary Indexes and Constraints Parameters
 - name: buildArtifactNameVocabularyIndexesConstraints
@@ -54,10 +54,10 @@ parameters:
   displayName: Build Artifact Name for Vocabulary Indexes Constriants Dacpac
   values:
   - VocabularyIndexesConstraintsDacpac
-- name: scriptFileNameVocabularyIndexesConstraints
+- name: dacpacFileNameVocabularyIndexesConstraints
   type: string
   default: OMOP_Vocabulary_Indexes_Constraints.dacpac
-  displayName: OMOP CDM Vocabulary Indexes and Constraints Script file name (e.g. my_omop_vocabulary_indexes_constraints.dacpac)
+  displayName: OMOP CDM Vocabulary Indexes and Constraints Dacpac file name (e.g. my_omop_vocabulary_indexes_constraints.dacpac)
 
 variables:
   - template: variables.yaml
@@ -128,40 +128,12 @@ stages:
           sqlcmdCommandLineParameters: '-v StorageAccountName="${{ variables.storageAccount }}" -v BroadseaAppServiceName="${{ variables.appSvcName }}" -v ADOVMSSBuildAgentPoolName="${{ variables.adoVMSSBuildAgentPoolName }}"'
       
     - ${{ if eq(variables.PublishVocabularyDDL, 'true') }}:
-      - task: AzureCLI@2
-        displayName: Smoke Test - Validate that Vocabulary Files Exists in Storage Account
-        inputs:
-          azureSubscription: ${{ variables.serviceConnection }}
-          scriptType: bash
-          scriptLocation: inlineScript
-          inlineScript: |
-            echo "------------------------ SMOKE TEST: VALIDATE VOCAB FILES ------------------------"
-
-            vocabContainerPath=$(echo "${{ variables.vocabulariesContainerPath }}")
-            # This assumes that the vocabularies have a form of vocabularies/some/path e.g. vocabularies/02-SEP-21
-            vocabContainerPathArr=($(echo $vocabContainerPath | tr "/" "\n"))
-            vocabContainerName=$(echo ${vocabContainerPathArr[0]})
-            vocabPrefix=""
-            if [ ${#vocabContainerPathArr[*]} -gt 1 ]; then
-              printf -v vocabPrefix "%s/" "${vocabContainerPathArr[@]:1}"
-              vocabPrefix=${vocabPrefix%?} # remove last character
-            else
-              echo "Unable to detect rest of vocabulary container path, so will proceed with searching for an empty string"
-            fi
-            echo "Searching for Prefix $vocabPrefix in Container $vocabContainerName"
-
-            # sanity check
-            az storage blob list -c "$vocabContainerName" --account-name "${{ variables.storageAccount }}" --prefix "$vocabPrefix" -o tsv
-            blobArr=($(az storage blob list -c "$vocabContainerName" --account-name "${{ variables.storageAccount }}" --prefix "$vocabPrefix" | jq '.[].name'))
-            echo $blobArr
-
-            if [ ${#blobArr[*]} -gt 0 ]; then
-              echo 'Vocabulary files exists.'
-            else
-              echo "Vocabulary files not found!"
-              echo "Could not find vocabulary files in vocabContainerPath $vocabContainerPath in the storage account"
-              exit 1
-            fi
+      # Run Smoke test for vocabulary files
+      - template: templates/smoke_test/smoke_test_vocabulary_files.yaml
+        parameters:
+          serviceConnection: ${{ variables.serviceConnection }}
+          vocabulariesContainerPath: ${{ variables.vocabulariesContainerPath }}
+          storageAccount: ${{ variables.storageAccount }}
 
       - template: templates/run_sqlpackage_script.yml
         parameters:
@@ -169,7 +141,7 @@ stages:
           sqlServerName: ${{ variables.sqlServerName }}
           sqlServerDbName: ${{ variables.sqlServerDbName }}
           sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNameVocabularyDDL }}'
-          scriptFileName: ${{ parameters.scriptFileNameVocabularyDDL }}
+          scriptFileName: ${{ parameters.dacpacFileNameVocabularyDDL }}
           sqlPackageCommandLineParameters: '/v:VocabulariesContainerPath="${{ variables.vocabulariesContainerPath }}" /v:DSVocabularyBlobStorageName="${{ variables.dSVocabularyBlobStorageName }}"'
 
     - ${{ if eq(variables.PublishVocabularyIndexesConstraints, 'true') }}:
@@ -179,5 +151,5 @@ stages:
           sqlServerName: ${{ variables.sqlServerName }}
           sqlServerDbName: ${{ variables.sqlServerDbName }}
           sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNameVocabularyIndexesConstraints }}'
-          scriptFileName: ${{ parameters.scriptFileNameVocabularyIndexesConstraints }}
+          scriptFileName: ${{ parameters.dacpacFileNameVocabularyIndexesConstraints }}
           sqlPackageCommandLineParameters: ''

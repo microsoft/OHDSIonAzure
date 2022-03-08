@@ -1,4 +1,4 @@
-# Build and publish broadsea-webtools (Atlas / WebApi) and broadsea-methods (Achilles / Synthea-ETL) to ACR pipeline
+# Build and publish broadsea-webtools (Atlas / WebApi) and broadsea-methods (Achilles / ETL-Synthea) to ACR pipeline
 trigger:
   branches:
     include:
@@ -16,11 +16,11 @@ parameters:
 - name: publishBroadseaWebtools
   type: boolean
   default: true
-  displayName: Build and publish broadsea-webtools (Atlas / WebApi)
+  displayName: Build and publish broadsea-webtools (Atlas / WebApi) to ACR
 - name: publishBroadseaMethods
   type: boolean
   default: true
-  displayName: Build and publish broadsea-methods (Achilles / Synthea-ETL)
+  displayName: Build and publish broadsea-methods (Achilles / ETL-Synthea) to ACR
 
 - name: buildConfiguration
   type: string
@@ -28,13 +28,10 @@ parameters:
   displayName: Build Configuration for scripts
   values:
   - Dev
-  - Stage
-  - Qa
-  - Prod
 - name: sourceFolder
   type: string
-  default: sql/
-  displayName: Source folder for scripts (e.g. for sql/scripts use sql/)
+  default: sql
+  displayName: Source folder for scripts (e.g. for sql/scripts use sql)
 
 # WebAPI Parameters
 - name: buildArtifactFolderPathWebApi
@@ -58,30 +55,30 @@ parameters:
 - name: dockerBuildSourceFolderBroadseaWebTools
   type: string
   default: apps/broadsea-webtools
-  displayName: Source Folder used for docker build for broadsea-webtools, e.g. if the folder 'my-folder' has the Dockerfile, specify 'my-folder'.  Defaults to empty.
+  displayName: Source Folder used for docker build for broadsea-webtools, e.g. if the folder 'my-folder' has the Dockerfile, specify 'my-folder'.  Defaults to apps/broadsea-webtools.
 - name: dockerBuildImageNameBroadseaWebTools
   type: string
   default: broadsea-webtools
-  displayName: Image Name for broadsea-webtools (e.g. broadsea-webtools) to push into ACR.  Defaults to empty.
+  displayName: Image Name for broadsea-webtools (e.g. broadsea-webtools) to push into ACR.  Defaults to broadsea-webtools.
 - name: dockerBuildImageTagBroadseaWebTools
   type: string
   default: latest
-  displayName: Image Tag for broadsea-webtools (e.g. latest) to push into ACR.  Defaults to empty.
+  displayName: Image Tag for broadsea-webtools (e.g. latest) to push into ACR.  Defaults to latest.
 
-# Broadsea Methods (Achilles / Synthea-ETL) Docker to ACR Settings
+# Broadsea Methods (Achilles / ETL-Synthea) Docker to ACR Settings
 - name: dockerBuildSourceFolderBroadseaMethods
   type: string
   default: apps/broadsea-methods
-  displayName: Source Folder used for docker build for broadsea-methods, e.g. if the folder 'my-folder' has the Dockerfile, specify 'my-folder'.  Defaults to empty.
+  displayName: Source Folder used for docker build for broadsea-methods, e.g. if the folder 'my-folder' has the Dockerfile, specify 'my-folder'.  Defaults to apps/broadsea-methods.
 # TODO: move to variables.yaml
 - name: dockerBuildImageNameBroadseaMethods
   type: string
   default: broadsea-methods
-  displayName: Image Name for broadsea-methods (e.g. broadsea-methods) to push into ACR.  Defaults to empty.
+  displayName: Image Name for broadsea-methods (e.g. broadsea-methods) to push into ACR.  Defaults to broadsea-methods.
 - name: dockerBuildImageTagBroadseaMethods
   type: string
   default: latest
-  displayName: Image Tag for broadsea-methods (e.g. latest) to push into ACR.  Defaults to empty.
+  displayName: Image Tag for broadsea-methods (e.g. latest) to push into ACR.  Defaults to latest.
 
 variables:
 - template: variables.yaml
@@ -125,7 +122,7 @@ stages:
 
 - ${{ if eq(variables.PublishBroadseaMethods, 'true') }}:
   - stage: Build_and_push_broadsea_methods
-    displayName: Build and Publish broadsea-methods (Achilles / Synthea-ETL) Docker image
+    displayName: Build and Publish broadsea-methods (Achilles / ETL-Synthea) Docker image
     jobs:
     - job:
       steps:

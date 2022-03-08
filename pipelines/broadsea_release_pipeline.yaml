@@ -1,0 +1,388 @@
+# Pipeline to deploy the broadsea-webtools docker container
+# and for demonstrating achilles and synthea-etl via ohdsi/broadsea-methods container
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - achilles
+    - pipeline/achilles_pipeline.yaml
+
+parameters:
+- name: deployBroadseaWebtools
+  displayName: Deploy Broadsea Webtools (Atlas & WebApi)
+  type: boolean
+  default: true
+- name: runETL
+  displayName: Run ETL-Synthea (optional, generate synthetic data & ETL into CDM)
+  type: boolean
+  default: true
+- name: runAchilles
+  displayName: Run Achilles Characterization (uses data populated in the CDM)
+  type: boolean
+  default: true
+
+# Broadsea Webtools Docker Settings
+- name: broadseaWebtoolsDockerBuildImageName
+  type: string
+  default: broadsea-webtools
+  displayName: Broadsea Webtools Container Image Name (e.g. broadsea-webtools) to pull from ACR.  Defaults to broadsea-webtools.
+- name: broadseaWebtoolsDockerBuildImageTag
+  type: string
+  default: latest
+  displayName: Broadsea Webtools Container Image Tag (e.g. latest) to pull from ACR.  Defaults to latest.
+
+# For artifact retrieval
+- name: sourcePipelineArtifactProjectName
+  displayName: Source Pipeline Artifact Project Name (e.g. use myproject for https://dev.azure.com/<myorg>/<myproject>/)
+  type: string
+  default: OHDSIonAzure
+- name: sourcePipelineArtifactPipelineName
+  displayName: Source Pipeline Artifact Pipeline Name (E.g Broadsea Build)
+  type: string
+  default: Broadsea Build
+
+# web Api Parameters
+- name: buildArtifactNameWebApi
+  type: string
+  default: webApiScript
+  displayName: Build Artifact for WebApi Script
+  values:
+  - webApiScript
+- name: scriptFileNameWebApi
+  type: string
+  default: Web_Api_Refresh.sql
+  displayName: Web API Script file name (e.g. Web_Api_Refresh.sql)
+
+# Broadsea Methods Docker Settings
+- name: broadseaMethodsDockerBuildImageName
+  type: string
+  default: broadsea-methods
+  displayName: Broadsea Methods container Image Name (e.g. broadsea-methods) to pull from ACR.  Defaults to broadsea-methods.
+- name: broadseaMethodsDockerBuildImageTag
+  type: string
+  default: latest
+  displayName: Broadsea Methods Image Tag (e.g. latest) to pull for broadsea-methods from ACR.  Defaults to latest.
+
+# Script Settings
+- name: sourceFolder
+  type: string
+  default: apps/broadsea-methods
+  displayName: Source Folder with Achilles and Synthea scripts (e.g. apps/broadsea-methods)
+
+# Synthea Settings
+- name: populationSize
+  displayName: Synthea Live Population Size
+  type: number
+  default: 100
+- name: syntheaETLScriptFileName
+  type: string
+  default: synthea-etl.R
+  displayName: Synthea ETL script file name (e.g. synthea-etl.R)
+- name: syntheaETLSmokeTestScriptFileName
+  type: string
+  default: synthea-etl-test.R
+  displayName: Synthea ETL smoke test script file name (e.g. synthea-etl-test.R)
+
+# Achilles Settings
+- name: achillesScriptFileName
+  type: string
+  default: achilles.R
+  displayName: Achilles script file name (e.g. achilles.R)
+- name: achillesSmokeTestScriptFileName
+  type: string
+  default: achilles-test.R
+  displayName: Achilles smoke test script file name (e.g. achilles-test.R)
+# TODO: move to variables.yaml
+
+variables:
+- template: variables.yaml
+- name: DeployBroadseaWebtools
+  value: ${{ parameters.deployBroadseaWebtools }}
+- name: broadseaWebtoolsAcrImageTag
+  value: "${{ variables.containerRegistry }}.azurecr.io/${{ parameters.broadseaWebtoolsDockerBuildImageName }}:${{ parameters.broadseaWebtoolsDockerBuildImageTag }}"
+- name: populationSize
+  value: ${{ parameters.populationSize }}
+- name: "RunETL"
+  value: ${{ parameters.runETL }}
+- name: "RunAchilles"
+  value: ${{ parameters.runAchilles }}
+- name: broadseaMethodsAcrImageTag
+  value: "${{ variables.containerRegistry }}.azurecr.io/${{ parameters.broadseaMethodsDockerBuildImageName }}:${{ parameters.broadseaMethodsDockerBuildImageTag }}"
+- name: syntheaETLScriptPath
+  value: "${{ parameters.syntheaETLScriptFileName }}"
+- name: syntheaETLSmokeTestScriptFileName
+  value: "${{ parameters.syntheaETLSmokeTestScriptFileName }}"
+- name: achillesScriptPath
+  value: "${{ parameters.sourceFolder }}/${{ parameters.achillesScriptFileName }}"
+- name: achillesSmokeTestScriptFileName
+  value: "${{ parameters.sourceFolder }}/${{ parameters.achillesSmokeTestScriptFileName }}"
+
+stages:
+- ${{ if eq(variables.DeployBroadseaWebtools, 'true') }}:
+  - stage: Deploy_Broadsea_Webtools
+    pool: 'Azure Pipelines'
+    displayName: Deploy Broadsea Webtools to App Service
+    jobs:
+      - job:
+        steps:
+          - task: AzureCLI@2
+            displayName: Configure App Service with Latest Docker Image
+            inputs:
+              azureSubscription: ${{ variables.serviceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                # Deploy latest image by setting App Service container configuration to latest image
+                echo "az webapp config container set --docker-custom-image-name ${{ lower(variables.broadseaWebtoolsAcrImageTag) }} --name ${{ variables.appSvcName }} --resource-group ${{ variables.appSvcRg}}"
+                az webapp config container set --docker-custom-image-name ${{ lower(variables.broadseaWebtoolsAcrImageTag) }} --name ${{ variables.appSvcName }} --resource-group ${{ variables.appSvcRg }}
+
+          # install sqlcmd
+          - template: templates/install_sqlcmd.yml
+
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              source: 'specific'
+              project: '${{ parameters.sourcePipelineArtifactProjectName }}'
+              pipeline: '${{ parameters.sourcePipelineArtifactPipelineName }}'
+              runVersion: 'latest'
+              runBranch: 'refs/heads/$(Build.SourceBranchName)'
+              path: $(Build.SourcesDirectory)/artifacts
+
+          # TODO: Do we need to make sure the [webapi].[source] / [webapi].[source_daimon] tables are empty?
+          - script: |
+              echo "APP SERVICE HOST: ${{ variables.webapiSources }}/sources"
+
+              response=$(curl -s -H "Accept: application/json" -o response.txt -w "%{http_code}" "${{ variables.webapiSources }}/sources")
+
+              echo "Entering iteration now..."
+
+              for i in {1..50}; do
+                if [[ $i == 50 ]]; then
+                  echo "WebAPI has not responded. Session timeout."
+                  exit 1
+                else
+                  # Curl Response
+                  echo "Checking if container has started yet..."
+                  response=$(curl -s -H "Accept: application/json" -o response.txt -w "%{http_code}" "${{ variables.webapiSources }}/sources")
+                  cat response.txt
+                fi
+
+                if [[ $response == "200" ]]; then
+                    echo ""
+                    echo "Container has started. Exiting verification cycle..."
+                    echo "Got response status code: $response"
+                    break
+                fi
+
+                # Wait 30 seconds
+                echo "WebAPI needs more time. Waiting 30 seconds."
+                sleep 30
+              done
+            displayName: 'Confirm Web API is Available'
+
+          - template: templates/run_sqlcmd_script.yml
+            parameters:
+              serviceConnection: ${{ variables.serviceConnection }}
+              sqlServerName: ${{ variables.sqlServerName }}
+              sqlServerDbName: ${{ variables.sqlServerDbName }}
+              sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNameWebApi }}'
+              scriptFileName: ${{ parameters.scriptFileNameWebApi }}
+              sqlcmdCommandLineParameters: '-v SQL_SERVER_NAME="${{ variables.sqlServerName }}" -v SQL_DATABASE_NAME="${{ variables.sqlServerDbName }}"'
+
+          - script: |
+                # curl response again
+                response=$(curl "${{ variables.webapiSources }}/sources")
+                echo "Curl Response ${{ variables.webapiSources }}/sources for : $response"
+
+                # refresh sources endpoint once more
+                response=$(curl "${{ variables.webapiSources }}/refresh")
+                echo "Curl Response for ${{ variables.webapiSources }}/refresh: $response"
+            displayName: 'Refresh Web Api'
+
+- ${{ if or(eq(variables.RunETL, 'true'), eq(variables.RunAchilles, 'true')) }}:
+  - stage: Deploy_Broadsea_Methods
+    pool: 'Linux-VMSS-Pool' # attempt to run with Linux VMSS
+    displayName: Deploy Broadsea Methods
+    jobs:
+      - job:
+        steps:
+          - task: AzureCLI@2
+            displayName: Download Synthea ETL Docker Image
+            inputs:
+              azureSubscription: ${{ variables.serviceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az acr login -n "${{ variables.containerRegistry }}"
+
+                # test to see the list of images in ACR.
+                az acr repository list -n "${{ variables.containerRegistry }}"
+
+                TOKEN=$(az acr login --name "${{ variables.containerRegistry }}" --expose-token --output tsv --query accessToken)
+
+                sudo docker login ${{ variables.containerRegistry }}.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password $TOKEN
+
+                echo "docker pull ${{ variables.broadseaMethodsAcrImageTag }}"
+                sudo docker pull "${{ variables.broadseaMethodsAcrImageTag }}"
+
+          - ${{ if eq(variables.RunETL, 'true') }}:
+            - script: |
+                sudo apt install openjdk-11-jdk -y
+                java -version
+
+                cd ${{ parameters.sourceFolder }}
+                wget https://github.com/synthetichealth/synthea/releases/download/v$(syntheaVersion)/synthea-with-dependencies.jar
+
+                echo "Generating Synthea data with living population size: $(populationSize)"
+                echo java -jar synthea-with-dependencies.jar -p $(populationSize) -c synthea-settings.conf
+                java -jar synthea-with-dependencies.jar -p $(populationSize) -c synthea-settings.conf
+
+                echo "----------LIST SYNTHEA CSVs------------"
+                ls
+                cd synthea_data
+                ls
+                cd csv
+                ls
+                echo "----------CSV PATH------------"
+                pwd
+              displayName: Download Synthea Release & Generate Data
+
+            - task: AzureCLI@2
+              displayName: Run ETL
+              inputs:
+                azureSubscription: ${{ variables.serviceConnection }}
+                scriptType: bash
+                scriptLocation: inlineScript
+                inlineScript: |
+                  # test to see the list of images in ACR.
+                  az acr repository list -n "${{ variables.containerRegistry }}"
+
+                  TOKEN=$(az acr login --name "${{ variables.containerRegistry }}" --expose-token --output tsv --query accessToken)
+
+                  sudo docker login ${{ variables.containerRegistry }}.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password $TOKEN
+
+                  # Check Azure SQL Access
+
+                  echo '****************Checking without private link resolution******************'
+                  echo 'nslookup "${{ variables.sqlServerName }}.database.windows.net"'
+                  nslookup "${{ variables.sqlServerName }}.database.windows.net"
+
+                  echo "*****************Performing ETL Operation******************"
+                  # TODO: Check MI Login into Azure SQL?
+                  # Include the source folder to pick up synthea settings
+
+                  # Simplify the cdmVersion (e.g it may come in as 5.3.1, but Synthea expects just 5.3)
+                  # see https://github.com/OHDSI/ETL-Synthea/blob/master/R/CreateVocabMapTables.r#L25
+                  simpleCDMVersion="$(echo $CDM_VERSION | cut -d '.' -f1).$(echo $CDM_VERSION | cut -d '.' -f2)"
+
+                  echo "docker run -t --rm -v "$PWD/${{ parameters.sourceFolder }}":/home/docker -w /home/docker \
+                  -e SQL_SERVER_NAME=$SQL_SERVER_NAME -e SQL_DATABASE_NAME=$SQL_DATABASE_NAME \
+                  -e CDM_SCHEMA=$CDM_SCHEMA -e CDM_VERSION="$simpleCDMVersion" \
+                  -e SYNTHEA_SCHEMA=$SYNTHEA_SCHEMA -e SYNTHEA_VERSION=$SYNTHEA_VERSION \
+                  -e SYNTHEA_PATH=$SYNTHEA_PATH -e VOCAB_PATH=$VOCAB_PATH \
+                  ${{ variables.broadseaMethodsAcrImageTag }} Rscript ${{ variables.syntheaETLScriptPath }}"
+
+                  sudo docker run -t --rm -v "$PWD/${{ parameters.sourceFolder }}":/home/docker -w /home/docker \
+                  -e SQL_SERVER_NAME=$SQL_SERVER_NAME -e SQL_DATABASE_NAME=$SQL_DATABASE_NAME \
+                  -e CDM_SCHEMA=$CDM_SCHEMA -e CDM_VERSION="$simpleCDMVersion" \
+                  -e SYNTHEA_SCHEMA=$SYNTHEA_SCHEMA -e SYNTHEA_VERSION=$SYNTHEA_VERSION \
+                  -e SYNTHEA_PATH=$SYNTHEA_PATH -e VOCAB_PATH=$VOCAB_PATH \
+                  "${{ variables.broadseaMethodsAcrImageTag }}" Rscript ${{ variables.syntheaETLScriptPath }}
+              env:
+                CDM_SCHEMA: $(cdmSchema)
+                CDM_VERSION: $(cdmVersion)
+                SYNTHEA_SCHEMA: $(syntheaSchema)
+                SYNTHEA_PATH: '/home/docker/synthea_data/csv/'
+                SYNTHEA_VERSION: $(syntheaVersion)
+                VOCAB_PATH: '/home/docker/vocab_files'
+                SQL_SERVER_NAME: $(sqlServerName)
+                SQL_DATABASE_NAME: $(sqlServerDbName)
+
+            # Run Smoke Test for Synthea
+            - template: templates/smoke_test/smoke_test_validate_synthetic_data.yaml
+              parameters:
+                serviceConnection: ${{ variables.serviceConnection }}
+                sqlServerName: ${{ variables.sqlServerName }}
+                sqlServerDbName: ${{ variables.sqlServerDbName }}
+                containerRegistry: ${{ variables.containerRegistry }}
+                broadseaMethodsAcrImageTag: ${{ variables.broadseaMethodsAcrImageTag }}
+                syntheaETLSmokeTestScriptFileName: ${{ variables.syntheaETLSmokeTestScriptFileName }}
+                sourceFolder: ${{ parameters.sourceFolder }}
+
+          - ${{ if eq(variables.RunAchilles, 'true') }}:
+            - task: AzureCLI@2
+              displayName: 'Run Achilles characterization on omop db via Docker container'
+              inputs:
+                azureSubscription: ${{ variables.serviceConnection }}
+                scriptType: bash
+                scriptLocation: inlineScript
+                inlineScript: |
+                  az acr login -n "${{ variables.containerRegistry }}"
+
+                  # test to see the list of images in ACR.
+                  az acr repository list -n "${{ variables.containerRegistry }}"
+
+                  TOKEN=$(az acr login --name "${{ variables.containerRegistry }}" --expose-token --output tsv --query accessToken)
+                  
+                  # Check Azure SQL Access
+
+                  echo '****************Checking without private link resolution******************'
+                  echo 'nslookup "${{ variables.sqlServerName }}.database.windows.net"'
+                  nslookup "${{ variables.sqlServerName }}.database.windows.net"
+
+                  # Simplify the cdmVersion (e.g it may come in as 5.3.1, but Achilles expects just 5.3)
+                  # see https://github.com/OHDSI/Achilles/blob/c6b7adb6330e75c2311880db2eb3dc4c12341c4f/inst/sql/sql_server/validate_schema.sql#L501
+                  simpleCDMVersion="$(echo $CDM_VERSION | cut -d '.' -f1).$(echo $CDM_VERSION | cut -d '.' -f2)"
+
+                  # TODO: Check MI Login into Azure SQL?
+                  sudo docker login ${{ variables.containerRegistry }}.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password $TOKEN
+                  echo "docker run -t --rm -v "$PWD":/home/docker -w /home/docker \
+                  -e SQL_SERVER_NAME=$SQL_SERVER_NAME -e SQL_DATABASE_NAME=$SQL_DATABASE_NAME \
+                  -e CDM_SCHEMA=$CDM_SCHEMA -e CDM_VERSION="$simpleCDMVersion" \
+                  -e RESULTS_SCHEMA=$RESULTS_SCHEMA -e VOCAB_SCHEMA=$VOCAB_SCHEMA \
+                  -e SOURCE_NAME="$SOURCE_NAME" -e NUM_THREADS=$NUM_THREADS \
+                  ${{ variables.broadseaMethodsAcrImageTag }} Rscript ${{ variables.achillesScriptPath}}"
+
+                  sudo docker run -t --rm -v "$PWD":/home/docker -w /home/docker \
+                  -e SQL_SERVER_NAME=$SQL_SERVER_NAME -e SQL_DATABASE_NAME=$SQL_DATABASE_NAME \
+                  -e CDM_SCHEMA=$CDM_SCHEMA -e CDM_VERSION="$simpleCDMVersion" \
+                  -e RESULTS_SCHEMA=$RESULTS_SCHEMA -e VOCAB_SCHEMA=$VOCAB_SCHEMA \
+                  -e SOURCE_NAME="$SOURCE_NAME" -e NUM_THREADS=$NUM_THREADS \
+                  "${{ variables.broadseaMethodsAcrImageTag }}" Rscript "${{ variables.achillesScriptPath}}"
+
+                  # check for errors
+                  ls errorReportSql.txt
+                  cat errorReportSql.txt
+              env:
+                SQL_SERVER_NAME: $(sqlServerName)
+                SQL_DATABASE_NAME: $(sqlServerDbName)
+                CDM_SCHEMA: $(cdmSchema)
+                CDM_VERSION: $(cdmVersion)
+                RESULTS_SCHEMA: $(resultsSchema)
+                VOCAB_SCHEMA: $(vocabSchema)
+                SOURCE_NAME: "OHDSI CDM V5 Database"
+                NUM_THREADS: 1
+            
+            # Run Smoke Test for Achilles
+            - template: templates/smoke_test/smoke_test_achilles_characterization.yaml
+              parameters:
+                serviceConnection: ${{ variables.serviceConnection }}
+                sqlServerName: ${{ variables.sqlServerName }}
+                sqlServerDbName: ${{ variables.sqlServerDbName }}
+                containerRegistry: ${{ variables.containerRegistry }}
+                broadseaMethodsAcrImageTag: ${{ variables.broadseaMethodsAcrImageTag }}
+                achillesSmokeTestScriptFileName: ${{ variables.achillesSmokeTestScriptFileName }}
+            
+            - bash: |
+                cd /home/azureuser/agent/_work/
+                sudo find . -type d -name 'output' -exec rm -rf {} +
+              displayName: 'Delete Achilles Files'
+            
+          - task: DeleteFiles@1
+            displayName: Clean Up Working Dir
+            condition: always()
+            inputs:
+              SourceFolder: '$(Agent.BuildDirectory)'
+              Contents: '*'

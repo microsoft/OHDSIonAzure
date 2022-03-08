@@ -1,28 +1,53 @@
 # Terraform release pipeline for environment
 # TODO update resource group in .tfvars
+parameters: 
+# this should come from the /infra/scripts/ado_bootstrap.sh
+- name: variableGroupName
+  type: string 
+  default: ado-omop-bootstrap-vg
+  displayName: Variable Group Name
+  values:
+  - ado-omop-bootstrap-vg
+  - ado-sharing-dev-omop-bootstrap-vg
+
 variables:
-  tf_directory: 'infra/terraform'
-  terraform_version: '1.1.4'
-  pool: 'Azure Pipelines'
+- group: ${{ parameters.variableGroupName }}
+- name: tf_directory
+  value: 'infra/terraform'
+- name: terraform_version
+  value: '1.1.4'
+- name: pool
+  value: 'Azure Pipelines'
   
-  azure_service_connection: 'sp-omop-service-connection'
+- name: azure_service_connection
+  value: 'sp-omop-service-connection'
 
-  tf_storage_resource_group: 'ado-omop-bootstrap-rg'
-  tf_storage_region: 'westus3'
-  tf_storage_account_name: 'omopdevtfstatestoracc'
-  tf_storage_container_name: 'dev-omop-statefile-container'
-  tf_state_filename: 'terraform.tfstate'
+- name: tf_storage_resource_group
+  value: 'ado-omop-bootstrap-rg'
+- name: tf_storage_region
+  value: 'westus3'
+- name: tf_storage_account_name
+  value: 'omopdevtfstatestoracc'
+- name: tf_storage_container_name
+  value: 'dev-omop-statefile-container'
+- name: tf_state_filename
+  value: 'terraform.tfstate'
 
-  tf_init_command_options: '-input=false'
-  tf_validate_command_options: ''
-  tf_refresh_command_options: '-input=false -lock=false'
-  tf_plan_command_options: '-input=false -lock=false -refresh=false -out plan.out'
-  tf_apply_command_options: '-input=false -refresh=false'
+- name: tf_init_command_options
+  value: '-input=false'
+- name: tf_validate_command_options
+  value: ''
+- name: tf_refresh_command_options
+  value: '-input=false -lock=false'
+- name: tf_plan_command_options
+  value: '-input=false -lock=false -refresh=false -out plan.out -var="omop_password=$(omopPassword)"'
+- name: tf_apply_command_options
+  value: '-input=false -refresh=false -var="omop_password=$(omopPassword)"'
 
-  tf_plan_environment: 'omop-tf-plan-environment'
-  tf_approval_environment: 'omop-tf-approval-environment'
-
-  disable_tf_cleanup: 'true'
+- name: tf_plan_environment
+  value: 'omop-tf-plan-environment'
+- name: tf_approval_environment
+  value: 'omop-tf-approval-environment'
 
 # Disable CI Triggers
 trigger: none
@@ -72,11 +97,3 @@ stages:
           steps:
           # TODO point to higher environment path for higher environments
             - template: ../templates/terraform/tf_apply.yml
-            
-            - task: DeleteFiles@1
-              displayName: 'Clean up working dir'
-              # Run directory cleanup always
-              condition: always()
-              inputs:
-                SourceFolder: '$(Agent.BuildDirectory)'
-                Contents: '*'

@@ -20,7 +20,7 @@ ALTER COLUMN [krb_auth_method] [varchar](10) NULL -- NOT NULL in existing setup,
 
 -- SET webapi CDM source
 INSERT INTO webapi.source( source_id, source_name, source_key, source_connection, source_dialect)
-VALUES (1, 'webapi CDM V5 Database', 'webapi-CDMV5','$(SOURCE_CONNECTION)', 'sql server');
+VALUES (1, 'webapi CDM V5 Database', 'webapi-CDMV5','jdbc:sqlserver://$(SQL_SERVER_NAME).database.windows.net:1433;database=$(SQL_DATABASE_NAME);encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;Authentication=ActiveDirectoryMsi', 'sql server');
 
 -- CDM daimon
 INSERT INTO webapi.source_daimon( source_daimon_id, source_id, daimon_type, table_qualifier, priority) VALUES (1, 1, 0, 'dbo', 2);

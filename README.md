@@ -1,14 +1,49 @@
-# Project
+# Introduction 
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+The goal of this project is to ease running OHDSI projects in Azure.
 
-As the maintainer of this project, please make a few updates:
+Some of the OHDSI projects include:
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+* [Common Data Model (CDM)](https://github.com/OHDSI/CommonDataModel), including [Vocabulary](https://github.com/OHDSI/Vocabulary-v5.0)
+* [Atlas](https://github.com/OHDSI/Atlas)
+* [WebApi](https://github.com/OHDSI/WebAPI)
+* [Achilles](https://github.com/OHDSI/Achilles)
+* [ETL-Synthea](https://github.com/OHDSI/ETL-Synthea)
+
+## Overview
+
+![Overview](/docs/media/azure_overview.png)
+
+You can use [Azure DevOps pipelines](/pipelines/README.md/#pipelines) to manage your [environment](/docs/creating_your_environment.md).
+
+The Azure resources in the OMOP resource group are [managed through Terraform](/infra/README.md/#running-terraform).
+
+You will also need to work with your Azure administrator to setup the Azure DevOps [bootstrap resources](/infra/README.md/#administrative-steps).
+
+You can host your [CDM in Azure SQL](/sql/README.md#cdm-notes).  You can [load your vocabularies](/docs/setup/setup_vocabulary.md) using Azure Storage so that the [Azure DevOps Vocabulary Release Pipeline](/pipelines/README.md/#vocabulary-release-pipeline) can populate your [Azure SQL CDM](/sql/README.md/#vocabulary-notes).
+
+You can [setup Atlas and Webapi](/docs/setup/setup_atlas_webapi.md) using the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) to build and push the [Broadsea webtools (for Atlas / WebApi)](/apps/broadsea-webtools/README.md) image into Azure Container Registry. You can then run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) to configure Atlas and WebApi in your Azure App Service.
+
+You can also [setup Achilles and Synthea](/docs/setup/setup_achilles_synthea.md) using the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) to build and push the [Broadsea Methods (for Achilles and Synthea)](/apps/broadsea-methods/README.md) image into  Azure Container Registry.  You can then run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) to perform the following steps:
+
+1. Run an [ETL job](/apps/broadsea-methods/README.md/#synthea-etl) and use [Synthea to generate synthetic patient data](/apps/broadsea-methods/README.md/#use-synthea-to-generate-synthetic-patient-data) as an optional step
+2. Run [Achilles](/apps/broadsea-methods/README.md/#achilles) to characterize the CDM data in Azure SQL
+
+## CDM Version
+
+This setup supports a modified version of the CDM [v5.3.1](/sql/cdm/v5.3.1/) schema based on the [CDM v5.3.1 for SQL Server](https://github.com/OHDSI/CommonDataModel/tree/v5.3.1/Sql%20Server).
+
+You can review more notes on the modifications in the [readme](/sql/README.md/#modifications-from-ohdsi).
+
+# Getting Started
+
+To get started, first clone the repository.
+
+```console
+git clone https://github.com/microsoft/OHDSIonAzure
+```
+
+You can work through the notes on [creating your environment](/docs/creating_your_environment.md) which will walk through how to set up OHDSI on Azure.
 
 ## Contributing
 
