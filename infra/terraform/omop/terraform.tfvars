@@ -1,5 +1,5 @@
-omop_password   = "replaceP@SSW0RD!"
 prefix          = "sharing"
+environment     = "dev"
 ad_admin_login_name  = "My-Sharing-DB-Admins"
 ad_admin_object_id   = "d5cde78b-9312-461b-bfa2-7e67e6c9f2d7"
 

@@ -21,7 +21,7 @@ steps:
 - task: AzureCLI@2
   displayName: 'Build and Push ${{ parameters.imageName}} to ACR'
   inputs:
-    azureSubscription: ${{ parameters.serviceConnection }} 
+    azureSubscription: ${{ parameters.serviceConnection }}
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |

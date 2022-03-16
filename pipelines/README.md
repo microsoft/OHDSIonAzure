@@ -18,7 +18,7 @@ The pipelines are intended to be run after working through the [infra setup](/in
 
 The environment pipeline can help run your changes in [Terraform](../infra/terraform/) for your environment.
 
-You can work through the details in the [setup notes](/docs/setup/setup_infra.md) for your environment, which includes more details around using the [example environment pipeline](/pipelines/environments/TF-OMOP-DEV.yaml) which will run [Terraform](/infra/terraform/) for your environment.
+You can work through the details in the [setup notes](/docs/setup/setup_infra.md) for your environment, which includes more details around using the [example environment pipeline](/pipelines/environments/TF-OMOP.yaml) which will run [Terraform](/infra/terraform/) for your environment.
 
 ## Vocabulary Pipelines
 

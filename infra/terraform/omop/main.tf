@@ -16,6 +16,7 @@ terraform {
   }
 }
 
+data "azuread_client_config" "current" {}
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_resource_group" "omop_rg" {
@@ -116,6 +117,7 @@ resource "azurerm_mssql_server" "omop_sql_server" {
   }
 
   # https://registry.terraform.io/providers/hashicorp/azurerm/2.90.0/docs/resources/mssql_server#azuread_administrator
+  # Cover this with az cli call?
   azuread_administrator {
     login_username             = var.ad_admin_login_name
     object_id                  = var.ad_admin_object_id
@@ -251,5 +253,3 @@ resource "azurerm_role_assignment" "app_service_acr_pull" {
   role_definition_name = "AcrPull"
   principal_id         = azurerm_app_service.omop_broadsea.identity[0].principal_id
 }
-
-

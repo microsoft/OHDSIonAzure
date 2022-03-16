@@ -54,7 +54,7 @@ This script also relies on the following [SQLCMD variables](https://docs.microso
 |--------------|-----------|
 | StorageAccountName | Azure Storage Account name with your [Vocabularies](/docs/setup/setup_vocabulary.md).  For example, if your Azure Storage Account URL is `https://mystorageaccount.blob.core.windows.net` you would use `mystorageaccount`.  This should be setup as part of your [variables.yaml](/docs//update_your_variables.yaml.md/#storageaccount) for your environment. |
 | BroadseaAppServiceName | Azure App Service name which hosts the [Broadsea webtools](/docs/setup/setup_atlas_webapi.md) image. This should be setup as part of your [variables.yaml](/docs/update_your_variables.yaml.md/#appsvcname) for your environment.|
-| ADOVMSSBuildAgentPoolName | Azure VMSS MI (which is the same name as the Azure VMSS) used for the Azure DevOps Agent Pool as part of the [setup infra prerequisites](/docs/setup/setup_infra.md/#prerequisites).  This should be setup as part of your [variables.yaml](/docs/update_your_variables.yaml.md/#adovmssbuildagentpoolname) for your environment. |
+| ADOAgentPoolVMSSName | Azure VMSS MI (which is the same name as the Azure VMSS) used for the Azure DevOps Agent Pool as part of the [setup infra prerequisites](/docs/setup/setup_infra.md/#prerequisites).  This should be setup as part of your [variables.yaml](/docs/update_your_variables.yaml.md/#adoagentpoolvmssname) for your environment. |
 
 ## Web Api Notes
 

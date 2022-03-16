@@ -58,7 +58,7 @@ Before running terraform, you will need to provide the required variables:
 - environment name (i.e `dev`)
 - resource location (i.e. `westus3`)
 
-These variables can be used in the `variables.tf` file itself or provided upon running terraform commands. Execute the following commands when in the `infra/terraform` directory:
+These variables can be used in the `variables.tf` file itself or provided upon running terraform commands. Execute the following commands when in the `infra/terraform/omop` directory:
 
 ```
 terraform init
@@ -66,7 +66,7 @@ terraform plan
 terraform apply
 ```
 
-Note, while you can run the terraform steps locally, you can also utilize the [TF environment pipeline](../pipelines/environments/TF-OMOP-DEV.yaml) to manage your environment too assuming that you have already pushed your [backend state to Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli).
+Note, while you can run the terraform steps locally, you can also utilize the [TF environment pipeline](../pipelines/environments/TF-OMOP.yaml) to manage your environment too assuming that you have already pushed your [backend state to Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli).
 
 ### Security
 

@@ -18,7 +18,26 @@ variable "location" {
   default = "westus3"
 }
 
+### Filled in through Azure Key Vault from bootstrap VG ###
 variable "omop_password" {
+  type = string
+  sensitive = true
+}
+
+### Filled in through Azure Key Vault from bootstrap VG ###
+variable "bootstrap_admin_object_id" {
+  type = string
+  sensitive = true
+}
+
+### Filled in through Azure Key Vault from bootstrap VG ###
+variable "sp_service_connection_object_id" {
+  type = string
+  sensitive = true
+}
+
+### Filled in through Azure Key Vault from bootstrap VG ###
+variable "vmss_managed_identity_object_id" {
   type = string
   sensitive = true
 }
@@ -77,6 +96,16 @@ variable "broadsea_image_tag" {
 variable "cdr_vocab_container_name" {
   description = "The name of the blob container in the CDR storage account that will be used for vocabulary file uploads."
   default     = "vocabularies"
+}
+
+variable "cdr_vocab_version" {
+  description = "The path in the vocabulary blob container in the CDR storage account that will be used for vocabulary file uploads.  E.g. if the vocabulries are stored under /vocabularies/19-AUG-2021 you should specify 19-AUG-2021."
+  default     = "19-AUG-2021"
+}
+
+variable "data_source_vocabulary_name" {
+  description = "The Data Source name in Azure SQL for mapping the vocabulary from Azure Blob Storage.  E.g. DSVocabularyBlobStorage"
+  default     = "DSVocabularyBlobStorage"
 }
 
 /* Application Service Plan */

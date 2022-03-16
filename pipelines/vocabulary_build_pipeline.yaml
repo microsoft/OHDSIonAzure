@@ -2,6 +2,24 @@
 trigger: none
 
 parameters:
+# this should come from /infra/terraform/bootstrap
+- name: envVariableGroupName
+  type: string
+  displayName: Variable Group Name with Environment Settings
+  default: sharing-dev-omop-env-vg
+  values:
+  - sharing-prod-omop-env-vg
+  - sharing-stage-omop-env-vg
+  - sharing-qa-omop-env-vg
+  - sharing-dev-omop-env-vg
+- name: overrideBranchEnvVariableGroupName
+  type: boolean
+  default: false
+  displayName: Use the parameter value for envVariableGroupName for the variable group name instead of relying on the branch name to derive the variable group
+  values:
+  - true
+  - false
+
 - name: buildConfiguration
   type: string
   default: Release
@@ -96,8 +114,20 @@ pool:
   name: 'Azure Pipelines'
   demands: 'msbuild'
   vmImage: 'windows-latest'
+
 variables:
-  - template: variables.yaml
+  - ${{ if eq(parameters['overrideBranchEnvVariableGroupName'], true) }}:
+    - group: ${{ parameters.envVariableGroupName }}
+  - ${{ elseif eq(variables['Build.SourceBranchName'], 'master') }}:
+    - group: sharing-prod-omop-env-vg
+  - ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
+    - group: sharing-stage-omop-env-vg
+  - ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
+    - group: sharing-qa-omop-env-vg
+  - ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
+    - group: sharing-dev-omop-env-vg
+  - ${{ else }}:
+    - group: sharing-dev-omop-env-vg
 
 steps:
 # publish the post tf deploy script

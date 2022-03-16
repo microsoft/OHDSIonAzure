@@ -55,7 +55,7 @@ Your administrator can help populate the Azure Key Vault and your linked Variabl
 
 We will initialize the infrastructure using the existing state file.
 
-1. Update your [TF environment pipeline](/pipelines/environments/TF-OMOP-DEV.yaml) variables to include values to reflect your environment.
+1. Update your [TF environment pipeline](/pipelines/environments/TF-OMOP.yaml) variables to include values to reflect your environment.
   > For convenience, variables which may need to be updated for your environment when **just getting started** are marked as bold, e.g. **some setting name**.
   > You will also want to ensure you're using the correct [Azure DevOps Variable Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml) which should be setup by your administrator through the [administrative steps](/infra/README.md/#administrative-steps) including the [ado bootstrap script](/infra/scripts/ado_bootstrap.sh).
 
@@ -81,7 +81,7 @@ We will initialize the infrastructure using the existing state file.
 
 ### Step 3: Run and Validate the Terraform Pipeline
 
-1. Locate pipeline to run that points to the directory and run the [pipeline](/pipelines/README.md/#environment-pipeline), see an [example pipeline](/pipelines/environments/TF-OMOP-DEV.yaml)
+1. Locate pipeline to run that points to the directory and run the [pipeline](/pipelines/README.md/#environment-pipeline), see an [example pipeline](/pipelines/environments/TF-OMOP.yaml)
 
 2. Manually validate resource deployment in Azure portal.
 

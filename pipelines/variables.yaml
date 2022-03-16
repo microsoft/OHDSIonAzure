@@ -22,7 +22,7 @@ variables:
     value: 'sp-omop-service-connection'
 
 # ADO VMSS Build Agent Pool Name.  Currently from ./scripts/ado_bootstrap.sh
-- name: adoVMSSBuildAgentPoolName
+- name: adoAgentPoolVMSSName
   ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
     value: ''
   ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:

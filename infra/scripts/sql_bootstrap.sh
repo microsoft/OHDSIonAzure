@@ -12,6 +12,8 @@ adoBuildAgentRgName=ado-omop-bootstrap-rg
 vmssIdentityJson=$(az vmss identity assign --identities '[system]' -n $adoBuildAgentPoolName -g $adoBuildAgentRgName)
 vmssIdentityObjectId=$(echo $vmssIdentityJson | jq -r ".systemAssignedIdentity") # add this identity to DB admin group
 
+# TODO: can this be covered through TF?
+
 # You can set up your Azure SQL Admin
 # https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?tabs=azure-powershell#powershell-for-sql-database-and-azure-synapse
 sqlAdminGroupJson=$(az ad group create --display-name $sqlAdminsAADGroupName --mail-nickname $sqlAdminsAADMailNickname)

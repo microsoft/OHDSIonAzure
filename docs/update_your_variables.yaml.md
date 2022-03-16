@@ -14,7 +14,7 @@ The following is a list of variables used in the [variables.yaml](/pipelines/var
 |--|--|--|--|
 | environment | string | `DEV` | This is the designated environment, see the notes for [more details](#environment). |
 | serviceConnection | string | `my-service-connection` | This is the name of the Azure DevOps Service Connection to the Azure Subscription, see the notes for [more details](#serviceconnection). |
-| adoVMSSBuildAgentPoolName | string | `vmssagentspool` | This is the name of the Azure Virtual Machine Scale Set used for the Azure DevOps Agent Pool, see [where to find it](#adovmssbuildagentpoolname). |
+| adoAgentPoolVMSSName | string | `vmssagentspool` | This is the name of the Azure Virtual Machine Scale Set used for the Azure DevOps Agent Pool, see [where to find it](#adoagentpoolvmssname). |
 | containerRegistry | string | my-container-registry | This is the Azure Container Registry Name, see [where to find it](#containerregistry). |
 | appSvcRg | string | my-rg-CI | This is the Resource Group name which hosts the Azure App Service, see [where to find it](#appsvcrg). |
 | appSvcName | string | my-app-service | This is the name of the Azure App Service for Broadsea, see [where to find it](#appsvcname). |
@@ -49,7 +49,7 @@ These are notes on where to find the values to supply to your [variables.yaml](/
 
 > If you are unable to view the appropriate one for your environment, reach out to your Administrator to get the appropriate value.
 
-### adoVMSSBuildAgentPoolName
+### adoAgentPoolVMSSName
 
 1. Check your Azure DevOps project settings and navigate to your Azure DevOps Agent pools which is using your [Azure VMSS](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops)
 
