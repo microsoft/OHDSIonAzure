@@ -170,7 +170,7 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
     # }
     ```
 
-    * For example, you may prefer to use an [Azure Linux VM](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview) for your jumpbox, so you can uncomment the resource in the Terraform script.
+    * You can choose which Azure VM to use for your jumpbox.  For example, you may prefer to use an [Azure Linux VM](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview) for your jumpbox, so you can uncomment the resource in the Terraform script.
 
       ```hcl
       ## Uncomment if you prefer to use an Azure Linux VM for your jumpbox
