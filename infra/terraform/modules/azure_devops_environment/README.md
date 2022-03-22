@@ -1,6 +1,6 @@
 # Azure DevOps Environment
 
-This module uses the [Azuredevops provider](https://registry.terraform.io/providers/microsoft/azuredevops/latest/docs/resources/environment) to create an Azure DevOps environment.
+This module uses the [Azure devops provider](https://registry.terraform.io/providers/microsoft/azuredevops/latest/docs/resources/environment) to create an Azure DevOps environment.
 
 ## Local Version Usage
 
@@ -16,7 +16,18 @@ rm _
 chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
 ```
 
-With this setup, you can refer to your provider like the following:
+If you are running mac, you can use these steps instead:
+
+```console
+PLUGIN_PATH=/Library/Application Support/io.terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/darwin_amd64
+mkdir darwin_amd64
+curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_darwin_amd64.zip'
+unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
+rm _
+chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
+```
+
+With this setup, you can refer to your second provider:
 
 ```hcl
 resource "azuredevops_environment" "adoenvironment" {
@@ -24,7 +35,7 @@ resource "azuredevops_environment" "adoenvironment" {
   ...
 ```
 
-You will need to ensure that you can successfully from `terraform init` from the root of your project to confirm that are able to run multiple versions of the same provider.
+You will need to ensure that you can successfully `terraform init` from the root of your project to confirm that you are able to run multiple versions of the same provider.
 
 ## How to configure
 

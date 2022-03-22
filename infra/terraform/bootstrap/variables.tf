@@ -13,21 +13,23 @@ variable "resource_group_name" {
 }
 
 variable "location" {
-  default     = "eastus"
+  default     = "westus3"
   description = "Location where resources will be created"
 }
 
 variable "tags" {
   description = "Map of the tags to use for the resources that are deployed"
-  type        = map(string)
-  default = {
-    environment = "codelab"
-  }
+  type        = map(any)
+  default     = {}
 }
 
-variable "application_port" {
-  description = "Port that you want to expose to the external load balancer"
-  default     = 80
+variable "admin_user_jumpbox" {
+  description = "User name to use as the admin account on the Azure VM Jumpbox"
+  default     = "azureuser"
+}
+
+variable "admin_password_jumpbox" {
+  description = "Default password for admin account for the Azure VM Jumpbox"
 }
 
 variable "admin_user" {
@@ -61,6 +63,10 @@ variable "ado_pat" {
   sensitive   = true
 }
 
+variable "azure_subscription_name" {
+  description = "This is your Azure Subscription Name for your Azure Service Connection"
+}
+
 variable "environment_pipeline_path" {
   description = "Azure DevOps Environment Pipeline path e.g. /pipelines/environments/TF-OMOP.yaml"
 }
@@ -81,10 +87,6 @@ variable "broadsea_release_pipeline_path" {
   description = "Azure DevOps Broadsea Release Pipeline path e.g. /pipelines/broadsea_release_pipeline.yaml"
 }
 
-variable "azure_subscription_name" {
-  description = "Azure Subscription name used for Service Connection"
-}
-
 variable "cdr_vocab_container_name" {
   description = "The name of the blob container in the CDR storage account that will be used for vocabulary file uploads."
   default     = "vocabularies"
@@ -99,3 +101,23 @@ variable "data_source_vocabulary_name" {
   description = "The Data Source name in Azure SQL for mapping the vocabulary from Azure Blob Storage.  E.g. DSVocabularyBlobStorage"
   default     = "DSVocabularyBlobStorage"
 }
+
+variable "omop_db_size" {
+  type    = string
+  default = 20 # max size gb
+}
+
+variable "omop_db_sku" {
+  type = string
+  # default = "BC_Gen5_10"
+  default = "GP_Gen5_2"
+}
+
+/* ACR */
+variable "acr_sku_edition" {}
+
+
+/* Application Service Plan */
+variable "asp_kind_edition" {}
+variable "asp_sku_tier" {}
+variable "asp_sku_size" {}

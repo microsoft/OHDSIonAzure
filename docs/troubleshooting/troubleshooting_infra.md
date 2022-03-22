@@ -35,7 +35,7 @@ You can also confirm if there's any errors using the [Azure App Service logstrea
 
 ## How to tear down Infrastructure
 
-1. Comment out code in [main.tf](/infra/terraform/main.tf) in your branch.
+1. Comment out code in [main.tf](/infra/terraform/omop/main.tf) in your branch.
 > You will want to keep the provider and the cred data block commented in for the TF tear down
 
 ```terraform

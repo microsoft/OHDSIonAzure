@@ -20,15 +20,27 @@ This page assumes you have completed all the steps in the [infra setup doc](/doc
 
 2. Create a feature branch (e.g. [your_alias)]/[new_feature_name]). An example would be `jane_doe/new_feature`
 
-3. Update your [variables.yaml](/pipelines/variables.yaml) to reflect your environment settings. See how you can [update your variables.yaml](/docs/update_your_variables.yaml.md) for more info.
+3. Confirm your [variable groups](/docs/update_your_variable_groups.md) reflect your environment settings.
  
 > These settings will be used with the application pipelines (for more information, you can review how to run the [vocabulary pipelines](/pipelines/README.md/#vocabulary-pipelines) and the [broadsea pipelines](/pipelines/README.md/#broadsea-pipelines))
 
-### Step 2. Running the Pipelines
+### Step 2. Run the Pipelines
 
-1. Run the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) to build and push Broadsea to Azure Container Registry
+1. Locate your [Broadsea Pipelines](/pipelines/README.md/#broadsea-pipelines)
 
-1. Run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) on your feature branch to get Azure App Service to pull the Broadsea image from ACR and refresh WebAPI
+![Locate Broadsea Pipelines](/docs/media/run_broadsea_pipeline_0.png)
+
+2. Run the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) to build and push [broadsea-webtools](/apps/broadsea-webtools/README.md) to Azure Container Registry
+
+![Broadsea Build Pipeline for Atlas / WebApi](/docs/media/broadsea_build_pipeline_atlas_webapi.png)
+
+> Note that the [broadsea-webtools](/apps/broadsea-webtools/README.md) image is a combined image used both by Atlas & WebApi. The option to **Build and publish broadseawebtools (Atlas / WebApi)** will **build and push** the image to ACR. You will need to ensure that the `broadsea-webtools` container image is in ACR in order to run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline).
+
+You should be able to review ACR to see broadsea methods in your environment.
+
+![Confirm Broadsea Methods in ACR](/docs/media/confirm_acr_broadsea_webtools_1.png)
+
+3. Run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) on your feature branch to get Azure App Service to pull the [broadsea-webtools](/apps/broadsea-webtools/README.md) image from ACR and refresh WebAPI
 
 ### Step 3. Validate the Results
 

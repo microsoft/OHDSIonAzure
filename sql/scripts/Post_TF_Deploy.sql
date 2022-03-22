@@ -1,4 +1,4 @@
--- This is a one time script that will setup Azure SQL MI Access
+-- This is a one time script that will setup Azure SQL Access for your Managed Identities
 BEGIN TRY
     CREATE DATABASE SCOPED CREDENTIAL DSCAzureSqlServerMI
     WITH IDENTITY = 'Managed Identity'
@@ -26,6 +26,7 @@ END CATCH
 /* Add in Azure App Service MI User */
 BEGIN TRY
     /* TODO: Could add service connection SP */
+    -- Grant access to your Azure App Service MI in Azure SQL
     CREATE USER [$(BroadseaAppServiceName)] FROM EXTERNAL PROVIDER
     ALTER ROLE db_datareader ADD MEMBER [$(BroadseaAppServiceName)]
     ALTER ROLE db_datawriter ADD MEMBER [$(BroadseaAppServiceName)]
@@ -41,8 +42,10 @@ END CATCH
 
 /* Add in Azure VMSS builder MI User */
 BEGIN TRY
-    /* Get the ADO Build Agent VMSS Name from the ./scripts/ado_bootstrap.sh
+    /* Get the ADO Build Agent VMSS Name 
+    This should come from the Variable Group through /infra/terraform/bootstrap/main.tf
     The ADO builder should have MI enabled */
+    -- Grant access to your Azure VMSS MI used for the Agent Pool in Azure SQL
     CREATE USER [$(ADOAgentPoolVMSSName)] FROM EXTERNAL PROVIDER;
     ALTER ROLE db_datareader ADD MEMBER [$(ADOAgentPoolVMSSName)]
     ALTER ROLE db_datawriter ADD MEMBER [$(ADOAgentPoolVMSSName)]

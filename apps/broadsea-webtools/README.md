@@ -2,7 +2,9 @@
 
 This is a combined image for [Atlas](https://github.com/OHDSI/Atlas) and [WebAPI](https://github.com/OHDSI/WebAPI).
 
-You can review the [setup Atlas & WebApi notes](/docs/setup/setup_atlas_webapi.md) for more details.
+You can build and push the broadsea-webtools (which includes Atlas and WebAPI) image to Azure Container Registry using the [broadsea_build_pipeline](/pipelines/broadsea_build_pipeline.yaml).  You can refer to these [Pipeline Notes](/pipelines/README.md/#broadsea-build-pipeline) for more details.
+
+You can also review the [setup Atlas & WebApi notes](/docs/setup/setup_atlas_webapi.md) for additional guidance.
 
 ## Atlas notes
 

@@ -119,8 +119,8 @@ resource "azurerm_mssql_server" "omop_sql_server" {
   # https://registry.terraform.io/providers/hashicorp/azurerm/2.90.0/docs/resources/mssql_server#azuread_administrator
   # Cover this with az cli call?
   azuread_administrator {
-    login_username             = var.ad_admin_login_name
-    object_id                  = var.ad_admin_object_id
+    login_username = var.aad_admin_login_name
+    object_id      = var.aad_admin_object_id
   }
   # you can access the principal_id e.g. azurerm_mssql_server.omop_sql_server.identity[0].principal_id
   # and the tenant_id with azurerm_mssql_server.omop_sql_server.identity[0].tenant_id
@@ -154,12 +154,12 @@ resource "azurerm_sql_firewall_rule" "allow_azure_services" {
 }
 
 resource "azurerm_mssql_database" "OHDSI-CDMV5" {
-  name           = "${var.prefix}_${var.environment}_omop_db"
-  server_id      = azurerm_mssql_server.omop_sql_server.id
-  collation      = "SQL_Latin1_General_CP1_CI_AS"
-  license_type   = "LicenseIncluded"
-  max_size_gb    = var.omop_db_size
-  sku_name       = var.omop_db_sku
+  name         = "${var.prefix}_${var.environment}_omop_db"
+  server_id    = azurerm_mssql_server.omop_sql_server.id
+  collation    = "SQL_Latin1_General_CP1_CI_AS"
+  license_type = "LicenseIncluded"
+  max_size_gb  = var.omop_db_size
+  sku_name     = var.omop_db_sku
   # zone_redundant = true
 }
 
@@ -182,8 +182,8 @@ resource "azurerm_container_registry" "acr" {
 # This creates the plan that the service use
 resource "azurerm_app_service_plan" "omop_asp" {
   name                = "${var.prefix}-${var.environment}-omop-asp"
-  location            = "${azurerm_resource_group.omop_rg.location}"
-  resource_group_name = "${azurerm_resource_group.omop_rg.name}"
+  location            = azurerm_resource_group.omop_rg.location
+  resource_group_name = azurerm_resource_group.omop_rg.name
   kind                = var.asp_kind_edition
   reserved            = true
 
@@ -196,14 +196,14 @@ resource "azurerm_app_service_plan" "omop_asp" {
 # This creates the Broadsea app service definition
 resource "azurerm_app_service" "omop_broadsea" {
   name                = "${var.prefix}-${var.environment}-omop-broadsea"
-  location            = "${azurerm_resource_group.omop_rg.location}"
-  resource_group_name = "${azurerm_resource_group.omop_rg.name}"
-  app_service_plan_id = "${azurerm_app_service_plan.omop_asp.id}"
+  location            = azurerm_resource_group.omop_rg.location
+  resource_group_name = azurerm_resource_group.omop_rg.name
+  app_service_plan_id = azurerm_app_service_plan.omop_asp.id
 
   site_config {
-    app_command_line = ""
-    linux_fx_version = "DOCKER|${azurerm_container_registry.acr.name}.azurecr.io/${var.broadsea_image}:${var.broadsea_image_tag}" # could be handled through pipeline instead
-    always_on        = true
+    app_command_line                     = ""
+    linux_fx_version                     = "DOCKER|${azurerm_container_registry.acr.name}.azurecr.io/${var.broadsea_image}:${var.broadsea_image_tag}" # could be handled through pipeline instead
+    always_on                            = true
     acr_use_managed_identity_credentials = true # Connect ACR with MI
   }
 

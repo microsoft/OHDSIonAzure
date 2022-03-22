@@ -24,7 +24,7 @@ Here's some notes for troubleshooting around Atlas and WebAPI.  Be sure to work 
     * Confirm the Azure App Service Managed Identity has `AcrPull` access to Azure Container Registry
     ![Azure App Service MI has access to Azure Container Registry](/docs/media/azure_app_service_acr_access_2.png)
 
-2. You should also confirm that the ACR has your image built and pushed to it with the appropriate tag.  Be sure to your [variables.yaml](/docs/update_your_variables.yaml.md) in your branch points to your ACR before running the [Broadsea Build pipeline](/pipelines/README.md/#broadsea-build-pipeline) and [Broadsea Release pipeline](/pipelines/README.md/#broadsea-release-pipeline)
+2. You should also confirm that the ACR has your image built and pushed to it with the appropriate tag.  Confirm your [variable groups](/docs/update_your_variable_groups.md) reflect your environment ACR before running the [Broadsea Build pipeline](/pipelines/README.md/#broadsea-build-pipeline) and [Broadsea Release pipeline](/pipelines/README.md/#broadsea-release-pipeline)
 
 ![Confirm ACR Has Broadsea Webtools](/docs/media/confirm_acr_broadsea_webtools_1.png)
 
@@ -34,7 +34,7 @@ Here's some notes for troubleshooting around Atlas and WebAPI.  Be sure to work 
 
 If you need to set the Docker settings, you can use the [Broadea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) using your branch.
 
-You can also set the site settings for the App Service within [Terraform](/infra/terraform/main.tf) and then re-run the [TF environment pipeline](/pipelines/README.md/#environment-pipeline) against your branch:
+You can also set the site settings for the App Service within [Terraform](/infra/terraform/omop/main.tf) and then re-run the [TF environment pipeline](/pipelines/README.md/#environment-pipeline) against your branch:
 
 ```json
   site_config {
@@ -49,7 +49,7 @@ You can also set the site settings for the App Service within [Terraform](/infra
 ## Connecting Azure App Service to Azure SQL
 
 1. Confirm that the Azure App Service MI is added to Azure SQL, which should be handled through the [Post TF Deploy script](/sql/scripts/Post_TF_Deploy.sql)
-    * Validate that the Azure App Service MI has [Directory Reader](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role) enabled with **your administrator**, and that the administrator is able to grant the Azure App Service MI login access to Azure SQL.  An example is included as part of the [sql_boostrap.sh](/infra/scripts/sql_bootstrap.sh).
+    * Validate that the Azure App Service MI has [Directory Reader](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role) enabled with **your administrator**, and that the administrator is able to grant the Azure App Service MI login access to Azure SQL.  An example is included as part of the [Post Terraform Deployment steps](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps).
 
 Within Azure SQL, you can the following query for your Azure App Service:
 
@@ -82,10 +82,10 @@ You can verify the [MI is added as a user in Azure SQL](#verify-user-roles-in-az
 ## Connecting the Build Agent to Azure SQL
 
 1. Check that the Azure VMSS build agent has the system assigned MI setup:
-![Confirm Azure VMSS MI Enabled](/docs/media/azure_vmss_mi.png).  This should be handled through the [ado bootstrap script](/infra/scripts/ado_bootstrap.sh) by your administrator.
+![Confirm Azure VMSS MI Enabled](/docs/media/azure_vmss_mi.png).  This should be handled through the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-ad-group) by your administrator.
 
 2. Confirm that the Azure VMSS MI is added to Azure SQL, which should be handled through the [Post TF Deploy script](/sql/scripts/Post_TF_Deploy.sql)
-    * Validate that the Azure VMSS MI has [Directory Reader](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role) enabled with **your administrator**, and that the administrator is able to grant the Azure VMSS MI login access to Azure SQL.  An example is included as part of the [sql_boostrap.sh](/infra/scripts/sql_bootstrap.sh).
+    * Validate that the Azure VMSS MI has [Directory Reader](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role) enabled with **your administrator**, and that the administrator is able to grant the Azure VMSS MI login access to Azure SQL.  An example is included as part of the [Post Terraform Deployment Steps](/infra/terraform/omop/README.md#step-4-run-post-terraform-deployment-steps).
 
 You can use the following query to create to add your Azure VMSS MI to Azure SQL:
 
@@ -121,7 +121,7 @@ You may run into 404's when trying to connect to https://my-app-service.azureweb
 3. Confirm connectivity for the [Build Agent to Azure SQL](#connecting-the-build-agent-to-azure-sql)
 4. Restart the App Service in the portal
 ![Restart Azure App Service](/docs/media/azure_app_service_restart.png)
-5. Run the [Broadsea Release Pipeline](/pipelines/README.md#broadsea-release-pipeline) on your feature branch to get Azure App Service to pull the Broadsea Webtools image from ACR and refresh WebAPI.  Make sure you have updated your [variables.yaml](/docs/update_your_variables.yaml.md) for your environment.
+5. Run the [Broadsea Release Pipeline](/pipelines/README.md#broadsea-release-pipeline) on your feature branch to get Azure App Service to pull the [Broadsea Webtools](/apps/broadsea-webtools/README.md) image from ACR and refresh WebAPI.  Make sure you have updated your [variable groups](/docs/update_your_variable_groups.md) to reflect your environment.
 
 ### Manually Check logs from Azure App Service
 

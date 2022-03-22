@@ -9,8 +9,8 @@ terraform {
     # Using 0.1.8 provider for variable groups until fix is pushed for
     # https://github.com/microsoft/terraform-provider-azuredevops/issues/541
     azuredevops = {
-      source  = "microsoft/azuredevops"
-    #   version = ">=0.2.0"
+      source = "microsoft/azuredevops"
+      #   version = ">=0.2.0"
       version = "~>0.1.8"
     }
   }
@@ -77,8 +77,8 @@ resource "azuredevops_project" "project" {
 resource "azuredevops_serviceendpoint_generic_git" "serviceendpoint" {
   project_id     = azuredevops_project.project.id
   repository_url = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}"
-#   username              = "username"
-#   password              = var.ado_pat
+  #   username              = "username"
+  #   password              = var.ado_pat
   service_endpoint_name = "Sample Generic Git"
   description           = "Managed by Terraform"
 }
@@ -116,19 +116,19 @@ resource "azuredevops_git_repository" "repo" {
 #############################
 
 module "azure_devops_environment_tf_plan" {
-    source = "../modules/azure_devops_environment"
-    environment_name = "${var.prefix}-${var.environment}-omop-tf-plan-environment"
-    ado_org_service_url = var.ado_org_service_url
-    ado_pat = var.ado_pat
-    ado_project_id = azuredevops_project.project.id
+  source              = "../modules/azure_devops_environment"
+  environment_name    = "${var.prefix}-${var.environment}-omop-tf-plan-environment"
+  ado_org_service_url = var.ado_org_service_url
+  ado_pat             = var.ado_pat
+  ado_project_id      = azuredevops_project.project.id
 }
 
 module "azure_devops_environment_tf_apply" {
-    source = "../modules/azure_devops_environment"
-    environment_name = "${var.prefix}-${var.environment}-omop-tf-apply-environment"
-    ado_org_service_url = var.ado_org_service_url
-    ado_pat = var.ado_pat
-    ado_project_id = azuredevops_project.project.id
+  source              = "../modules/azure_devops_environment"
+  environment_name    = "${var.prefix}-${var.environment}-omop-tf-apply-environment"
+  ado_org_service_url = var.ado_org_service_url
+  ado_pat             = var.ado_pat
+  ado_project_id      = azuredevops_project.project.id
 }
 
 #############################
@@ -174,60 +174,60 @@ resource "azurerm_key_vault" "keyvault" {
 
   access_policy = [
     {
-        tenant_id      = data.azurerm_client_config.current.tenant_id
-        object_id      = data.azurerm_client_config.current.object_id
-        application_id = null
+      tenant_id      = data.azurerm_client_config.current.tenant_id
+      object_id      = data.azurerm_client_config.current.object_id
+      application_id = null
 
-        secret_permissions = [
-            "Backup",
-            "Get",
-            "List",
-            "Purge",
-            "Recover",
-            "Restore",
-            "Set",
-            "Delete",
-        ]
-        certificate_permissions = [
-            "Get",
-            "List",
-            "Update",
-            "Create",
-            "Import",
-            "Delete",
-            "Recover",
-            "Backup",
-            "Restore",
-        ]
-        key_permissions = [
-            "Get",
-            "List",
-            "Update",
-            "Restore",
-            "Backup",
-            "Recover",
-            "Delete",
-            "Import",
-            "Create",
-        ]
-        storage_permissions = [
-        ]  
+      secret_permissions = [
+        "Backup",
+        "Get",
+        "List",
+        "Purge",
+        "Recover",
+        "Restore",
+        "Set",
+        "Delete",
+      ]
+      certificate_permissions = [
+        "Get",
+        "List",
+        "Update",
+        "Create",
+        "Import",
+        "Delete",
+        "Recover",
+        "Backup",
+        "Restore",
+      ]
+      key_permissions = [
+        "Get",
+        "List",
+        "Update",
+        "Restore",
+        "Backup",
+        "Recover",
+        "Delete",
+        "Import",
+        "Create",
+      ]
+      storage_permissions = [
+      ]
     },
     ## Grant SP permissions
     {
-        tenant_id = data.azurerm_client_config.current.tenant_id
-        object_id = azuread_service_principal.spomop.object_id
-        application_id = null  
-        secret_permissions = [
-            "Get",
-            "List",
-        ]  
-        certificate_permissions = [
-        ]
-        key_permissions = [
-        ]
-        storage_permissions = [
-        ]
+      tenant_id      = data.azurerm_client_config.current.tenant_id
+      object_id      = azuread_service_principal.spomop.object_id
+      application_id = null
+      secret_permissions = [
+        "Get",
+        "List",
+      ]
+      certificate_permissions = [
+      ]
+      key_permissions = [
+      ]
+      storage_permissions = [
+      ]
     }
   ]
 }
@@ -303,28 +303,28 @@ resource "azuredevops_variable_group" "adobootstrapvg" {
   # Link Secret from Azure Key Vault into Azure DevOps Variable Group
   # Note that key vault secrets must match the name (and key vault secrets don't allow underscores)
   variable {
-    name    = "omopPassword"
+    name = "omopPassword"
   }
 
   variable {
-    name    = "bootstrapAdminObjectId"
+    name = "bootstrapAdminObjectId"
   }
 
   variable {
-    name    = "spServiceConnectionObjectId"
+    name = "spServiceConnectionObjectId"
   }
 
   variable {
-    name    = "vmssManagedIdentityObjectId"
+    name = "vmssManagedIdentityObjectId"
   }
 
   depends_on = [
-      azurerm_key_vault.keyvault,
-      azurerm_key_vault_secret.omopPassword,
-      azurerm_key_vault_secret.bootstrapAdminObjectId,
-      azurerm_key_vault_secret.spServiceConnectionObjectId,
-      azurerm_key_vault_secret.vmssManagedIdentityObjectId,
-      azuredevops_serviceendpoint_azurerm.endpointazure
+    azurerm_key_vault.keyvault,
+    azurerm_key_vault_secret.omopPassword,
+    azurerm_key_vault_secret.bootstrapAdminObjectId,
+    azurerm_key_vault_secret.spServiceConnectionObjectId,
+    azurerm_key_vault_secret.vmssManagedIdentityObjectId,
+    azuredevops_serviceendpoint_azurerm.endpointazure
   ]
 }
 
@@ -349,55 +349,125 @@ resource "azuredevops_variable_group" "adobootstrapsettingsvg" {
   description  = "Azure DevOps Variable Group without KV used for bootstrapping an environment"
   allow_access = false # should only be used by the environment stand up pipeline
 
+  /* Add in environment configuration settings */
   variable {
-    name    = "azure_service_connection_name"
-    value   = azuredevops_serviceendpoint_azurerm.endpointazure.service_endpoint_name
+    name  = "prefix"
+    value = var.prefix
+  }
+
+  variable {
+    name  = "environment"
+    value = var.environment
+  }
+
+  variable {
+    name  = "location"
+    value = var.location
+  }
+
+  variable {
+    name  = "cdr_vocab_container_name"
+    value = var.cdr_vocab_container_name
+  }
+
+  variable {
+    name  = "omop_db_size"
+    value = var.omop_db_size
+  }
+
+  variable {
+    name  = "omop_db_sku"
+    value = var.omop_db_sku
+  }
+
+  variable {
+    name  = "acr_sku_edition"
+    value = var.acr_sku_edition
+  }
+
+  variable {
+    name  = "asp_kind_edition"
+    value = var.asp_kind_edition
+  }
+
+  variable {
+    name  = "asp_sku_tier"
+    value = var.asp_sku_tier
+  }
+
+  variable {
+    name  = "asp_sku_size"
+    value = var.asp_sku_size
   }
 
   # Pass along the Azure AD Group to add to Azure SQL as AAD administrator
   variable {
-    name    = "ad_admin_object_id"
-    value   = azuread_group.dbadminsaadgroup.object_id
+    name  = "aad_admin_object_id"
+    value = azuread_group.dbadminsaadgroup.object_id
   }
 
   variable {
-    name    = "ad_admin_login_name"
-    value   = azuread_group.dbadminsaadgroup.display_name
+    name  = "aad_admin_login_name"
+    value = azuread_group.dbadminsaadgroup.display_name
+  }
+
+  # Pass along the Azure AD Group for Directory Readers to add in Azure SQL Server Managed Identity access
+  variable {
+    name  = "aad_directory_readers_object_id"
+    value = azuread_group.directoryreadersaadgroup.object_id
   }
 
   variable {
-    name      = "tf_storage_resource_group"
-    value     = azurerm_resource_group.adobootstrap.name
+    name  = "aad_directory_readers_login_name"
+    value = azuread_group.directoryreadersaadgroup.display_name
+  }
+
+  /* Add in Service Connection information */
+  variable {
+    name  = "azure_service_connection_name"
+    value = azuredevops_serviceendpoint_azurerm.endpointazure.service_endpoint_name
+  }
+
+  /* Add in Azure DevOps Agent Pool VMSS Name */
+  variable {
+    name  = "ado_agent_pool_vmss_name"
+    value = azurerm_linux_virtual_machine_scale_set.vmss.name
+  }
+
+  /* Add in Terraform Configuration for Environment Pipeline */
+  variable {
+    name  = "tf_storage_resource_group"
+    value = azurerm_resource_group.adobootstrap.name
   }
 
   variable {
-    name      = "tf_storage_region"
-    value     = var.location
+    name  = "tf_storage_region"
+    value = var.location
   }
 
   variable {
-    name      = "tf_storage_account_name"
-    value     = azurerm_storage_account.tfstatesa.name
+    name  = "tf_storage_account_name"
+    value = azurerm_storage_account.tfstatesa.name
   }
 
   variable {
-    name      = "tf_storage_container_name"
-    value     = azurerm_storage_container.tfstatecontainer.name
+    name  = "tf_storage_container_name"
+    value = azurerm_storage_container.tfstatecontainer.name
   }
 
   variable {
-    name      = "tf_state_filename"
-    value     = "terraform.tfstate"
+    name  = "tf_state_filename"
+    value = "terraform.tfstate"
   }
 
   variable {
-    name      = "tf_plan_environment"
-    value     = module.azure_devops_environment_tf_plan.azure_devops_environment_name
+    name  = "tf_plan_environment"
+    value = module.azure_devops_environment_tf_plan.azure_devops_environment_name
   }
 
   variable {
-    name      = "tf_approval_environment"
-    value     = module.azure_devops_environment_tf_apply.azure_devops_environment_name
+    name  = "tf_approval_environment"
+    value = module.azure_devops_environment_tf_apply.azure_devops_environment_name
   }
 
   depends_on = [
@@ -425,7 +495,6 @@ resource "azuredevops_resource_authorization" "adobootstrapsettingsvgauth" {
 # Used to hold environment settings
 # This will be filled in as a first pass, but should be updated to reflect the settings
 # in the environment (e.g. from /terraform/omop/main.tf)
-# This is based on the variables.yaml (see /pipelines/variables.yaml)
 #############################
 
 resource "azuredevops_variable_group" "adoenvvg" {
@@ -435,80 +504,80 @@ resource "azuredevops_variable_group" "adoenvvg" {
   allow_access = false
 
   variable {
-    name    = "prefix"
-    value   = "${var.prefix}"
+    name  = "prefix"
+    value = var.prefix
   }
 
   variable {
-    name    = "environment"
-    value   = "${var.environment}"
+    name  = "environment"
+    value = var.environment
   }
 
   variable {
-    name    = "serviceConnection"
-    value   = azuredevops_serviceendpoint_azurerm.endpointazure.service_endpoint_name
+    name  = "serviceConnection"
+    value = azuredevops_serviceendpoint_azurerm.endpointazure.service_endpoint_name
   }
- 
+
   # This is the Azure VMSS used for the Azure DevOps Build Agent Pool
   variable {
-    name    = "adoAgentPoolVMSSName"
-    value   = azurerm_linux_virtual_machine_scale_set.vmss.name
+    name  = "adoAgentPoolVMSSName"
+    value = azurerm_linux_virtual_machine_scale_set.vmss.name
   }
 
   # This is the name of the Azure DevOps Agent Pool which will use the Azure VMSS
   variable {
-    name    = "adoVMSSBuildAgentPoolName"
-    value   = "${azurerm_linux_virtual_machine_scale_set.vmss.name}-pool"
+    name  = "adoVMSSBuildAgentPoolName"
+    value = "${azurerm_linux_virtual_machine_scale_set.vmss.name}-pool"
   }
 
   variable {
-    name    = "vocabularyBuildPipelineId"
-    value   = azuredevops_build_definition.vocabularybuildpipeline.id
+    name  = "vocabularyBuildPipelineId"
+    value = azuredevops_build_definition.vocabularybuildpipeline.id
   }
 
   variable {
-    name    = "vocabularyBuildPipelineName"
-    value   = azuredevops_build_definition.vocabularybuildpipeline.name
+    name  = "vocabularyBuildPipelineName"
+    value = azuredevops_build_definition.vocabularybuildpipeline.name
   }
 
   variable {
-    name    = "vocabularyReleasePipelineName"
-    value   = azuredevops_build_definition.vocabularyreleasepipeline.name
+    name  = "vocabularyReleasePipelineName"
+    value = azuredevops_build_definition.vocabularyreleasepipeline.name
   }
 
   variable {
-    name    = "broadseaBuildPipelineName"
-    value   = azuredevops_build_definition.broadseabuildpipeline.name
+    name  = "broadseaBuildPipelineName"
+    value = azuredevops_build_definition.broadseabuildpipeline.name
   }
 
   variable {
-    name    = "vocabularyReleasePipelineName"
-    value   = azuredevops_build_definition.broadseareleasepipeline.name
+    name  = "broadseaReleasePipelineName"
+    value = azuredevops_build_definition.broadseareleasepipeline.name
   }
 
   variable {
-    name    = "containerRegistry"
-    value   = "${var.prefix}${var.environment}acr"
+    name  = "containerRegistry"
+    value = "${var.prefix}${var.environment}acr"
   }
 
   variable {
-    name    = "appSvcRg"
-    value   = "${var.prefix}-${var.environment}-omop-rg"
+    name  = "appSvcRg"
+    value = "${var.prefix}-${var.environment}-omop-rg"
   }
 
   variable {
-    name    = "appSvcName"
-    value   = "${var.prefix}-${var.environment}-omop-broadsea"
+    name  = "appSvcName"
+    value = "${var.prefix}-${var.environment}-omop-broadsea"
   }
 
   variable {
-    name    = "sqlServerName"
-    value   = "${var.prefix}-${var.environment}-omop-sql-server"
+    name  = "sqlServerName"
+    value = "${var.prefix}-${var.environment}-omop-sql-server"
   }
 
   variable {
-    name    = "sqlServerDbName"
-    value   = "${var.prefix}_${var.environment}_omop_db"
+    name  = "sqlServerDbName"
+    value = "${var.prefix}_${var.environment}_omop_db"
   }
 
   # this should be filled in through either through the environment (e.g. from /terraform/omop/main.tf)
@@ -516,73 +585,74 @@ resource "azuredevops_variable_group" "adoenvvg" {
   # This is a combination of the /container/vocabularyVersion which represents which vocabulary to use
   # from the environment storage account
   variable {
-    name    = "vocabulariesContainerPath"
-    value   = "${var.cdr_vocab_container_name}/${var.cdr_vocab_version}"
+    name  = "vocabulariesContainerPath"
+    value = "${var.cdr_vocab_container_name}/${var.cdr_vocab_version}"
   }
 
   variable {
-    name    = "vocabularyVersion"
-    value   = "${var.cdr_vocab_version}"
+    name  = "vocabularyVersion"
+    value = var.cdr_vocab_version
   }
 
   variable {
-    name    = "dSVocabularyBlobStorageName"
-    value   = "${var.data_source_vocabulary_name}"
+    name  = "dSVocabularyBlobStorageName"
+    value = var.data_source_vocabulary_name
   }
 
   variable {
-    name    = "storageAccount"
-    value   = "${var.prefix}${var.environment}omopsa"
+    name  = "storageAccount"
+    value = "${var.prefix}${var.environment}omopsa"
   }
 
   variable {
-    name    = "webapiSources"
-    value   = "https://${var.prefix}-${var.environment}-omop-broadsea.azurewebsites.net/WebAPI/source"
+    name  = "webapiSources"
+    value = "https://${var.prefix}-${var.environment}-omop-broadsea.azurewebsites.net/WebAPI/source"
   }
 
   variable {
-    name    = "cdmVersion"
-    value   = "5.3.1"
+    name  = "cdmVersion"
+    value = "5.3.1"
   }
 
   variable {
-    name    = "cdmSchema"
-    value   = "dbo"
-  }
-  
-  variable {
-    name    = "syntheaSchema"
-    value   = "synthea"
+    name  = "cdmSchema"
+    value = "dbo"
   }
 
   variable {
-    name    = "syntheaVersion"
-    value   = "2.7.0"
+    name  = "syntheaSchema"
+    value = "synthea"
   }
 
   variable {
-    name    = "vocabSchema"
-    value   = "dbo"
+    name  = "syntheaVersion"
+    value = "2.7.0"
   }
 
   variable {
-    name    = "resultsSchema"
-    value   = "webapi"
+    name  = "vocabSchema"
+    value = "dbo"
   }
 
   variable {
-    name    = "resultsSchema"
-    value   = "2.7.0"
+    name  = "resultsSchema"
+    value = "webapi"
+  }
+
+  variable {
+    name  = "resultsSchema"
+    value = "2.7.0"
   }
 }
 
 # Authorize the VG for the Application Pipelines
+# You may need to comment this out for a first time run
 resource "azuredevops_resource_authorization" "adoenvvgauth" {
   for_each = toset([
-      azuredevops_build_definition.vocabularybuildpipeline.id, 
-      azuredevops_build_definition.vocabularyreleasepipeline.id, 
-      azuredevops_build_definition.broadseabuildpipeline.id, 
-      azuredevops_build_definition.broadseareleasepipeline.id])
+    azuredevops_build_definition.vocabularybuildpipeline.id,
+    azuredevops_build_definition.vocabularyreleasepipeline.id,
+    azuredevops_build_definition.broadseabuildpipeline.id,
+  azuredevops_build_definition.broadseareleasepipeline.id])
   project_id    = azuredevops_project.project.id
   resource_id   = azuredevops_variable_group.adoenvvg.id
   definition_id = each.key
@@ -741,21 +811,21 @@ resource "azurerm_public_ip" "vmss" {
 #############################
 
 resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
-  name                            = "${var.prefix}-${var.environment}-ado-build-agentpool-vmss"
-  location                        = var.location
-  resource_group_name             = azurerm_resource_group.adobootstrap.name
-  upgrade_mode                    = "Manual"
-  admin_username                  = var.admin_user
-  admin_password                  = var.admin_password
+  name                = "${var.prefix}-${var.environment}-ado-build-vmss-agent"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.adobootstrap.name
+  upgrade_mode        = "Manual"
+  admin_username      = var.admin_user
+  admin_password      = var.admin_password
 
   custom_data                     = base64encode(file("adobuilder.conf"))
   disable_password_authentication = false
-  sku                             = "Standard_D4s_v3" 
+  sku                             = "Standard_D4s_v3"
   instances                       = 2
   overprovision                   = false
   single_placement_group          = false
   platform_fault_domain_count     = 1
-  
+
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
@@ -777,13 +847,13 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
     primary = true
 
     ip_configuration {
-      name                                   = "IPConfiguration"
-      subnet_id                              = azurerm_subnet.vmss.id
-      primary                                = true
+      name      = "IPConfiguration"
+      subnet_id = azurerm_subnet.vmss.id
+      primary   = true
     }
   }
 
-   boot_diagnostics {
+  boot_diagnostics {
     storage_account_uri = null
   }
 
@@ -817,40 +887,68 @@ resource "azurerm_network_interface" "jumpbox" {
 #############################
 # Azure VM
 # This is a jumpbox for testing VMSS instances
+# You can either use an Azure Linux VM or an Azure Windows VM as your jumpbox
 #############################
 
-resource "azurerm_virtual_machine" "jumpbox" {
-  name                  = "${var.prefix}-${var.environment}-jumpbox"
-  location              = var.location
-  resource_group_name   = azurerm_resource_group.adobootstrap.name
-  network_interface_ids = [azurerm_network_interface.jumpbox.id]
-  vm_size               = "Standard_DS1_v2"
+## Uncomment if you prefer to use an Azure Linux VM for your jumpbox
+# resource "azurerm_virtual_machine" "jumpbox" {
+#   name                  = "${var.prefix}-${var.environment}-jumpbox"
+#   location              = var.location
+#   resource_group_name   = azurerm_resource_group.adobootstrap.name
+#   network_interface_ids = [azurerm_network_interface.jumpbox.id]
+#   vm_size               = "Standard_DS1_v2"
 
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+#   storage_image_reference {
+#     publisher = "Canonical"
+#     offer     = "UbuntuServer"
+#     sku       = "18.04-LTS"
+#     version   = "latest"
+#   }
+
+#   storage_os_disk {
+#     name              = "${var.prefix}-${var.environment}-jumpbox-osdisk"
+#     caching           = "ReadWrite"
+#     create_option     = "FromImage"
+#     managed_disk_type = "Standard_LRS"
+#   }
+
+#   os_profile {
+#     computer_name  = "${var.prefix}-${var.environment}-jumpbox"
+#     admin_username = var.admin_user_jumpbox
+#     admin_password = var.admin_password_jumpbox
+#   }
+
+#   os_profile_linux_config {
+#     disable_password_authentication = false
+#   }
+
+#   tags = var.tags
+# }
+
+## Uncomment if you prefer to use an Azure Windows VM for your jumpbox
+resource "azurerm_windows_virtual_machine" "jumpbox-windows" {
+  name                = "${var.prefix}${var.environment}jump" # 15 character limit
+  resource_group_name = azurerm_resource_group.adobootstrap.name
+  location            = var.location
+  size                = "Standard_DS1_v2"
+  admin_username      = var.admin_user_jumpbox
+  admin_password      = var.admin_password_jumpbox
+  network_interface_ids = [
+    azurerm_network_interface.jumpbox.id,
+  ]
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  # Windows Server 2019 includes Open SSH
+  source_image_reference {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku       = "2019-Datacenter"
     version   = "latest"
   }
-
-  storage_os_disk {
-    name              = "${var.prefix}-${var.environment}-jumpbox-osdisk"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-
-  os_profile {
-    computer_name  = "${var.prefix}-${var.environment}-jumpbox"
-    admin_username = var.admin_user
-    admin_password = var.admin_password
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-
-  tags = var.tags
 }
 
 #############################
@@ -861,12 +959,16 @@ resource "azurerm_virtual_machine" "jumpbox" {
 #############################
 
 resource "azuread_group" "dbadminsaadgroup" {
-  display_name     = "${var.prefix}-${var.environment}-omop-sql-server-admins"
-  mail_nickname    = "${var.prefix}-${var.environment}-omop-sql-server-admins"
-  owners           = toset([
+  display_name  = "${var.prefix}-${var.environment}-omop-sql-server-admins"
+  mail_nickname = "${var.prefix}-${var.environment}-omop-sql-server-admins"
+  owners = toset([
     data.azuread_client_config.current.object_id,
   ])
   security_enabled = true
+
+  # uncomment this if you have AAD premium enabled in your Azure subscription
+  # https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept
+  # assignable_to_role = true
 
   members = toset([
     data.azuread_client_config.current.object_id,
@@ -874,3 +976,38 @@ resource "azuread_group" "dbadminsaadgroup" {
     azurerm_linux_virtual_machine_scale_set.vmss.identity[0].principal_id
   ])
 }
+
+# This AAD Group is for Directory Readers.  You can add in the Azure SQL Server Managed Identity as a separate step.
+# https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial#add-azure-sql-managed-identity-to-the-group
+resource "azuread_group" "directoryreadersaadgroup" {
+  display_name  = "${var.prefix}-${var.environment}-omop-sql-server-directory-readers"
+  mail_nickname = "${var.prefix}-${var.environment}-omop-sql-server-directory-readers"
+  owners = toset([
+    data.azuread_client_config.current.object_id,
+  ])
+  security_enabled = true
+
+  # You need AAD premium enabled in your Azure subscription to assign a role to the group
+  # https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept
+  assignable_to_role = true
+
+  members = toset([
+    data.azuread_client_config.current.object_id,
+  ])
+}
+
+#############################
+# Uncomment the following section if you have AAD premium enabled in your Azure subscription
+# The following section will allow you to assign Directory Reader to your Azure AD group
+# https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept
+# Look to add in Directory Reader to your Azure AD Group: https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity
+#############################
+
+# resource "azuread_directory_role" "directoryreaders" {
+#   display_name = "Directory Readers"
+# }
+
+# resource "azuread_directory_role_member" "directoryreadersmember" {
+#   role_object_id   = azuread_directory_role.directoryreaders.object_id
+#   member_object_id = azuread_group.directoryreadersaadgroup.object_id
+# }

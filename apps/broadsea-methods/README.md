@@ -20,9 +20,9 @@ As a prerequisite to running Achilles, you will need to have OMOP CDM data.  You
 
 1. For development and test purposes, you can import data to your OMOP CDM using the [broadsea_release_pipeline](/pipelines/broadsea_release_pipeline.yaml) which includes a step to run [synthea-etl](/pipelines/README.md/#broadsea-release-pipeline).
 
-## Step 2. Build achilles-synthea-etl Image
+## Step 2. Build broadsea-methods Image
 
-1. You can build and push the achilles-synthea-etl image to Azure Container Registry using the [broadsea_build_pipeline](/pipelines/broadsea_build_pipeline.yaml).  You can refer to these [Pipeline Notes](/pipelines/README.md/#broadsea-build-pipeline) for more details.
+1. You can build and push the broadsea-methods (which includes achilles and ETL-Synthea) image to Azure Container Registry using the [broadsea_build_pipeline](/pipelines/broadsea_build_pipeline.yaml).  You can refer to these [Pipeline Notes](/pipelines/README.md/#broadsea-build-pipeline) for more details.
 
 ### Script Notes
 
@@ -36,9 +36,9 @@ The [achilles.R script](/apps/broadsea-methods/achilles.R) will be loaded with t
     ```sql
     ALTER DATABASE [my_sql_database_name] SET compatibility_level = 110
     ```
-    > This step is included in the script as a workaround for the issue where ['the query processor ran out of internal resources and could not produce a query plan'](../docs/synthea-etl-achilles.md/#known_issue_query_plan).  By setting the compatibility level to 110, Azure SQL will take the default compatibility level associated with SQL Server 2012, which will cause Azure SQL to use an [older query optimizer](https://docs.microsoft.com/en-us/sql/t-sql/statements/alter-database-transact-sql-compatibility-level?view=sql-server-ver15#differences-between-lower-compatibility-levels-and-level-120) to produce the query plan.  Using this setting has a tradeoff which is Azure SQL will not be able to run ADF pipelines which require the default compatibility level for Azure SQL.
+    > This step is included in the script as a workaround for the issue where ['the query processor ran out of internal resources and could not produce a query plan'](/docs/troubleshooting/troubleshooting_achilles_synthea.md#the-query-processor-ran-out-of-internal-resources-and-could-not-produce-a-query-plan).  By setting the compatibility level to 110, Azure SQL will take the default compatibility level associated with SQL Server 2012, which will cause Azure SQL to use an [older query optimizer](https://docs.microsoft.com/en-us/sql/t-sql/statements/alter-database-transact-sql-compatibility-level?view=sql-server-ver15#differences-between-lower-compatibility-levels-and-level-120) to produce the query plan.  Using this setting has a tradeoff which is Azure SQL will not be able to run SQL queries which require the default compatibility level for Azure SQL.
 2. Run [achilles](https://raw.githubusercontent.com/OHDSI/Achilles/master/extras/Achilles.pdf)
-   > You may run into an known issue with an [arithmetic overflow error](../docs/synthea-etl-achilles.md/#known_issue_arithmetic_overflow).  You will need to ensure you're picking up the latest changes for Achilles by [rebuilding Achilles](#step-2-build-achilles-synthea-etl-image) to pick up the [Achilles committed](https://github.com/OHDSI/Achilles/commit/e21c7e16cb4cbd653e3e572db86b536cdda86aca) fix.
+   > You may run into an known issue with an [arithmetic overflow error](/docs/troubleshooting/troubleshooting_achilles_synthea.md/#arithmetic-overflow-error-converting-numeric-to-data-type-varchar).  You will need to ensure you're picking up the latest changes for Achilles by [rebuilding Achilles](#step-2-build-achilles-synthea-etl-image) to pick up the [Achilles committed](https://github.com/OHDSI/Achilles/commit/e21c7e16cb4cbd653e3e572db86b536cdda86aca) fix.
 3. Set database compatibility level back to the default for Azure SQL
     ```sql
     ALTER DATABASE [my_sql_database_name] SET compatibility_level = 150

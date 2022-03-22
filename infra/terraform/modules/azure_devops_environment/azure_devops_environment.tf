@@ -15,7 +15,7 @@ terraform {
       version = "~>2.0"
     }
     azuredevops2 = {
-      source  = "microsoft/azuredevops2"
+      source = "microsoft/azuredevops2"
     }
   }
 }
@@ -25,13 +25,13 @@ provider "azurerm" {
 }
 
 provider "azuredevops2" {
-    org_service_url       = var.ado_org_service_url
-    personal_access_token = var.ado_pat
+  org_service_url       = var.ado_org_service_url
+  personal_access_token = var.ado_pat
 }
 
 # Azure DevOps Environment
 resource "azuredevops_environment" "adoenvironment" {
-  provider = azuredevops2
+  provider   = azuredevops2
   project_id = var.ado_project_id
-  name       = "${var.environment_name}"
+  name       = var.environment_name
 }

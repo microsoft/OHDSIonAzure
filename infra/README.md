@@ -2,7 +2,7 @@
 
 This guide will assist you in deploying the infrastructure required for an OHDSI CDM in Azure using Azure SQL Server. The OHDSI on Azure comes in two parts: (1) Infrastructure Deployment (2) [OHDSI Application Deployment](/apps/README.md).
 
-Separation between infrastructure and application deployment allows for the benefit of removing dependencies between the two components. With OHDSI applications in constant development, it makes it challenging for Azure resources to pin to specific version everytime they are deployed or modified. Logical separation between infrastructure and application code could help reduce upkeeping of the terraform state file, difficulties with rolling back, and troubleshooting when an error occurs.
+Separation between infrastructure and application deployment allows for the benefit of removing dependencies between the two components. With OHDSI applications in constant development, it makes it challenging for Azure resources to pin to a specific version everytime they are deployed or modified. Logical separation between infrastructure and application code could help reduce upkeeping of the terraform state file, difficulties with rolling back, and troubleshooting when an error occurs.
 
 ## Setup
 
@@ -10,34 +10,50 @@ Separation between infrastructure and application deployment allows for the bene
 
 This installation requires that you have access to the following:
 
-1. Azure subscription
-2. Terraform
-3. Azure Storage Account to store TF state files
+1. Azure subscription including:
+    * [Azure DevOps](https://docs.microsoft.com/en-us/azure/devops/user-guide/project-admin-tutorial?toc=%2Fazure%2Fdevops%2Forganizations%2Ftoc.json&bc=%2Fazure%2Fdevops%2Forganizations%2Fbreadcrumb%2Ftoc.json&view=azure-devops)
+    * Azure AD including [group management](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept?msclkid=29f71e72abce11ecbb4df889d79893a7)
+2. [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/azure-get-started)
+3. Azure Storage Account to [store TF state files](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?msclkid=196f68cbabce11eca9588223ff7c344e)
 
 ### Administrative Steps
 
 You can work with your administrator to setup your Azure environment.
 
-Prior to working with [Terraform](/infra/README.md/#running-terraform), you will need to set up Azure DevOps.
+Prior to working with the [Environment Terraform](/infra/README.md/#running-terraform), you will need to set up Azure DevOps.
 
 #### Bootstrap Deployment Overview
 
-![bootstrap setup](/infra/media/bootstrap_deplyment.png)
+![bootstrap setup](/infra/media/bootstrap_deployment.png)
 
-You can work with your administrator to setup the bootstrap resource group (depicted on the left side), and to setup Azure Devops.
+You can work with your administrator to setup the bootstrap resource group and to setup Azure Devops which are depicted on the left side.
 
-Working with your administrator in Azure DevOps, you can import this repository, [import the pipelines](https://docs.microsoft.com/en-us/azure/devops/pipelines/get-started/clone-import-pipeline?view=azure-devops&tabs=yaml#export-and-import-a-pipeline), set up [Azure DevOps Environments](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops), and set up your [Service Connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml).
+For convenience, your administrator can use the [bootstrap terraform project](/infra/terraform/bootstrap/README.md) to setup Azure DevOps along with your bootstrap resource group.
 
-You can use a [custom image](/infra/scripts/ado_builder_capture.sh) with your [Azure VMSS](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops#update-an-existing-scale-set-with-a-new-custom-image) for your [Azure DevOps agent pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops), and your Azure DevOps pipelines can use a [Variable Group Linked to Azure Key Vault](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault).
+Working with your administrator in Azure DevOps, you can [import this repository](https://docs.microsoft.com/en-us/azure/devops/repos/git/import-git-repository?msclkid=1d9a74a7aa0711ec98db3919bbeee325&view=azure-devops), [import the pipelines](https://docs.microsoft.com/en-us/azure/devops/pipelines/get-started/clone-import-pipeline?view=azure-devops&tabs=yaml#export-and-import-a-pipeline), set up [Azure DevOps Environments](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops), and set up your [Service Connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml).
+
+You can use setup your Azure VMSS using [cloud-init](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init) including a [configuration](/infra/terraform/bootstrap/adobuilder.conf) to link to your [Azure DevOps VMSS Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops#update-an-existing-scale-set-with-a-new-custom-image), and your Azure DevOps pipelines can use a [Variable Groups](/docs/update_your_variable_groups.md) including a [Variable Group Linked to Azure Key Vault](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault) to manage secrets.
 
 #### Administrative Steps Detailed
 
-You will need to work with your administrator to work through the steps noted in the [scripts](./scripts/) directory:
+You will need to work with your administrator through the following steps:
 
-1. Work through the guidance in the [ado_bootstrap script](./scripts/ado_bootstrap.sh) to setup a [Service Connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml), [Azure DevOps Builder VMSS](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops), [Azure DevOps Variable Group Linked to Azure Key Vault](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault), and to [store your TF State in Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli)
-    - Make sure to setup an [ado_builder image](./scripts/ado_builder.sh)
-    - Be sure to capture the image based on the [ado_builder_capture notes](./scripts/ado_builder_capture.sh)
-2. Set up [Azure SQL with AAD access](./scripts/sql_bootstrap.sh)
+1. Your administrator can run the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md#bootstrap-terraform) locally to setup Azure DevOps and the bootstrap resource group, which should include the following:
+    * An Azure DevOps [Service Connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml)
+    
+    * An [Azure Virtual Machine Scale Set](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview?msclkid=1d561148a94111ec949a814170f966ae) which you can manually link to an [Azure DevOps VMSS Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops)
+    
+    * [Azure DevOps Variable Groups](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?msclkid=ae56333ca94a11ec876141a976a04b73&view=azure-devops&tabs=yaml) including:
+        * Two (2) variable groups for environment setup:
+            1. A variable group ending with `bootstrap-vg` which is linked to [Azure Key Vault secrets](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault) to run with your Environment Pipeline
+            2. A variable group ending with `bootstrap-settings-vg` which is **not** linked to Azure Key Vault to configure running your Environment pipeline
+        * One (1) variable group ending with `env-rg` for application pipelines per environment
+
+    * An Azure Storage Account to [store your TF State in Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli) for your environment
+
+    > You can review the [setup Azure Bootstrap Resource Group notes](/infra/terraform/bootstrap/README.md#setup-azure-bootstrap-resource-group), [setup Azure DevOps notes](/infra/terraform/bootstrap/README.md#setup-azure-devops), and [setup Azure AD Group notes](/infra/terraform/bootstrap/README.md#setup-azure-ad-group) for the full setup list included through the bootstrap Terraform project.
+    
+2. You will also need your administrator to run the [Environment Post Terraform Deployment Steps](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps) to complete your setup with your [environment Terraform](/infra/terraform/omop/README.md).
 
 You can also review the [setup infra notes](/docs/setup/setup_infra.md) to ensure that you have completed the Azure DevOps configuration.
 
@@ -66,7 +82,9 @@ terraform plan
 terraform apply
 ```
 
-Note, while you can run the terraform steps locally, you can also utilize the [TF environment pipeline](../pipelines/environments/TF-OMOP.yaml) to manage your environment too assuming that you have already pushed your [backend state to Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli).
+Note, while you can run the terraform steps locally, you can also utilize the [TF environment pipeline](/pipelines/environments/TF-OMOP.yaml) to manage your environment too assuming that you have already pushed your [backend state to Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli).
+
+For more details, you can refer to the [Environment Terraform Readme](/infra/terraform/omop/README.md).
 
 ### Security
 

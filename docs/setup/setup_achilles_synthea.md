@@ -6,25 +6,40 @@ Below are steps to setup [Achilles](https://github.com/OHDSI/Achilles) and [ETL-
   
 1. You've successfully setup [Atlas](/docs/setup/setup_atlas_webapi.md)
 
-2. Update your [variables.yaml](/pipelines/variables.yaml) to reflect your environment settings. See how you can [update your variables.yaml](/docs/update_your_variables.yaml.md) for more info.
+2. Confirm your [variable groups](/docs/update_your_variable_groups.md) reflect your environment settings.
 
 ## Steps
 
-### Step 1. Run the Broadsea Build pipeline
+### Step 1. Setup your Repo
 
-1. Run the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) on your feature branch to **Build and publish broadsea-methods (Achilles / ETL-Synthea)**
+1. Clone the repository
+    ```bash
+    git clone https://github.com/microsoft/OHDSIonAzure
+    ```
+
+2. Create a feature branch (e.g. [your_alias)]/[new_feature_name]). An example would be `jane_doe/new_feature`
+
+3. Confirm your [variable groups](/docs/update_your_variable_groups.md) reflect your environment settings.
+ 
+> These settings will be used with the application pipelines (for more information, you can review how to run the [vocabulary pipelines](/pipelines/README.md/#vocabulary-pipelines) and the [broadsea pipelines](/pipelines/README.md/#broadsea-pipelines))
+
+### Step 2. Run the Pipelines
+
+1. Locate your [Broadsea Pipelines](/pipelines/README.md/#broadsea-pipelines)
+
+![Locate Broadsea Pipelines](/docs/media/run_broadsea_pipeline_0.png)
+
+2. Run the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) on your feature branch to **Build and publish broadsea-methods (Achilles / ETL-Synthea)** to Azure Container Registry.
 
 ![Broadsea Build Pipeline for Achilles / ETL-Synthea](/docs/media/broadsea_build_pipeline_achilles_etl_synthea.png)
 
-> Note that the `broadsea-methods` image is a combined image used both by Achilles & ETL-Synthea. The option to **Build Docker Container** will **build and push** the image to ACR. You will need to ensure that the `broadsea-methods` container image is in ACR in order to run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline).
+> Note that the [broadsea-methods](/apps/broadsea-methods/README.md) image is a combined image used both by Achilles & ETL-Synthea. The option to **Build and publish broadsea-methods (Achilles / ETL-Synthea)** will **build and push** the image to ACR. You will need to ensure that the `broadsea-methods` container image is in ACR in order to run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline).
 
-You should be able to review ACR to see broadsea methods in your environment.
+You should be able to review ACR to see the [broadsea-methods](/apps/broadsea-methods/README.md) image in your environment.
 
 ![Confirm Broadsea Methods in ACR](/docs/media/confirm_acr_broadsea_methods_1.png)
 
-### Step 2. Run the Broadsea Release Pipeline
-
-1. Run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) on your feature branch.
+3. Run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) on your feature branch.
 - You can fill in the [pipeline parameter details](/pipelines/README.md/#broadsea-release-pipeline-parameters), whether to run the [ETL-Synthea](/apps/broadsea-methods/README.md/#synthea-etl) process, and whether to run the [achilles characterization](/apps/broadsea-methods/README.md/#achilles) on your Azure SQL DB.
 
 ![Select Broadsea Release Pipeline Settings](/docs/media/broadsea_release_pipeline_achilles_etl_synthea_1.png)

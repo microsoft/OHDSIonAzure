@@ -54,7 +54,7 @@ result <- tryCatch({
 }, finally={
     # Restore default compatibility level for Azure SQL
     # Note that if you don't reset the compabitibility level 
-    # you will notice issues with other components such as running the transform data load ADF pipeline
+    # you will notice issues with other components such as running queries which rely on the default compatibility level may not work
     print ("Restore default compatibility level for Azure SQL")
     query <- stringr::str_interp("ALTER DATABASE [${db_name}] SET compatibility_level = ${DEFAULT_AZURE_SQL_SERVER_COMPATIBILITY_LEVEL};")
     DatabaseConnector::executeSql(conn, query)

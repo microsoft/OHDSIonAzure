@@ -12,7 +12,7 @@ There's also a [vocabulary loading script](/sql/cdm/v5.3.1/omop_vocabulary_ddl/S
 
 ### Deployment Notes
 
-You can use the [Vocabulary Build Pipeline](/pipelines/README.md/#vocabulary-build-pipeline) to build the artifacts ([script](#post-tf-deploy-script-notes) and [dacpacs](#cdm-notes)) for the vocabulary, and you can use the [Vocabulary Release Pipeline](/pipelines/README.md/#vocabulary-release-pipeline) to publish the artifacts to your Azure SQL CDM.
+You can use the [Vocabulary Build Pipeline](/pipelines/README.md/#vocabulary-build-pipeline) to build the artifacts ([script](#post-tf-deploy-script-notes) and [dacpacs](#cdm-notes)) for the vocabulary, and you can use the [Vocabulary Release Pipeline](/pipelines/README.md/#vocabulary-release-pipeline) to publish the artifacts to your Azure SQL CDM.  The dacpacs are built using [.NET 4.8](https://docs.microsoft.com/en-us/dotnet/framework/install/guide-for-developers), so for local development purposes, you need to ensure you have the associated developer pack installed.
 
 Similarly, you can use the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) to build the [web api script](#web-api-notes) and the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) to publish the script to your Azure SQL CDM.
 
@@ -41,20 +41,22 @@ This script also relies on the following [SQLCMD variables](https://docs.microso
 
 | Variable Name | Description  |
 |--------------|-----------|
-| DSVocabularyBlobStorageName | Name of the linked data source in Azure SQL for your Azure Storage account with your vocabulary files.  This should be setup through your [variables.yaml](/docs/update_your_variables.yaml.md/#dsvocabularyblobstoragename) for your environment. |
-| VocabulariesContainerPath | This is the vocabularies container path (e.g. `vocabularies/19-AUG-2021`) which has the vocabulary files.  This should be setup as part of your [variables.yaml](/docs//update_your_variables.yaml.md/#vocabulariescontainerpath) for your environment. |
+| DSVocabularyBlobStorageName | Name of the linked data source in Azure SQL for your Azure Storage account with your vocabulary files.  This should be setup through your [variable groups](/docs/update_your_variable_groups.md#dsvocabularyblobstoragename) for your environment settings. |
+| VocabulariesContainerPath | This is the vocabularies container path (e.g. `vocabularies/19-AUG-2021`) which has the vocabulary files.  This should be setup as part of your [variable groups](/docs/update_your_variable_groups.md#vocabulariescontainerpath) for your environment settings. |
 
 #### Post TF Deploy script Notes
 
 The [Post TF Deploy script](/sql/scripts/Post_TF_Deploy.sql) will setup access for Azure SQL and Azure Storage, as well as access for Azure App Service MI and the Azure VMSS MI to access Azure SQL.
 
+> You will need to ensure that you have [Directory Reader enabled](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal) for your Azure SQL Managed Identity.  If you don't have this enabled you can manually grant access to your Azure Managed Identities (for Azure App Service and Azure VMSS) with your [Azure SQL Azure AD Administrator](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?tabs=azure-powershell), see the [workaround](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps) for more details.
+
 This script also relies on the following [SQLCMD variables](https://docs.microsoft.com/en-us/sql/ssms/scripting/sqlcmd-use-with-scripting-variables?view=sql-server-ver15):
 
 | Variable Name | Description  |
 |--------------|-----------|
-| StorageAccountName | Azure Storage Account name with your [Vocabularies](/docs/setup/setup_vocabulary.md).  For example, if your Azure Storage Account URL is `https://mystorageaccount.blob.core.windows.net` you would use `mystorageaccount`.  This should be setup as part of your [variables.yaml](/docs//update_your_variables.yaml.md/#storageaccount) for your environment. |
-| BroadseaAppServiceName | Azure App Service name which hosts the [Broadsea webtools](/docs/setup/setup_atlas_webapi.md) image. This should be setup as part of your [variables.yaml](/docs/update_your_variables.yaml.md/#appsvcname) for your environment.|
-| ADOAgentPoolVMSSName | Azure VMSS MI (which is the same name as the Azure VMSS) used for the Azure DevOps Agent Pool as part of the [setup infra prerequisites](/docs/setup/setup_infra.md/#prerequisites).  This should be setup as part of your [variables.yaml](/docs/update_your_variables.yaml.md/#adoagentpoolvmssname) for your environment. |
+| StorageAccountName | Azure Storage Account name with your [Vocabularies](/docs/setup/setup_vocabulary.md).  For example, if your Azure Storage Account URL is `https://mystorageaccount.blob.core.windows.net` you would use `mystorageaccount`.  This should be setup as part of your [variable groups](/docs/update_your_variable_groups.md#storageaccount) for your environment settings. |
+| BroadseaAppServiceName | Azure App Service name which hosts the [Broadsea webtools](/docs/setup/setup_atlas_webapi.md) image. This should be setup as part of your [variable groups](/docs/update_your_variable_groups.md#appsvcname) for your environment settings.|
+| ADOAgentPoolVMSSName | Azure VMSS MI (which is the same name as the Azure VMSS) used for the Azure DevOps Agent Pool as part of the [setup infra prerequisites](/docs/setup/setup_infra.md/#prerequisites).  This should be setup as part of your [variable groups](/docs/update_your_variable_groups.md#adoagentpoolvmssname) for your environment settings. |
 
 ## Web Api Notes
 
@@ -66,5 +68,5 @@ This script also relies on the following [SQLCMD variables](https://docs.microso
 
 | Variable Name | Description  |
 |--------------|-----------|
-| SQL_SERVER_NAME | Azure SQL Server Name (e.g. `my-sql-server` if you using `my-sql-server.database.windows.net`).  This should be setup as part of your [variables.yaml](/docs/update_your_variables.yaml.md/#sqlservername) for your environment. |
-| SQL_DATABASE_NAME | Azure SQL Database Name (e.g. `my-sql-server-db`) which has the CDM.  This should be setup as part of your [variables.yaml](/docs/update_your_variables.yaml.md/#sqlserverdbname) for your environment. |
+| SQL_SERVER_NAME | Azure SQL Server Name (e.g. `my-sql-server` if you using `my-sql-server.database.windows.net`).  This should be setup as part of your [variable groups](/docs/update_your_variable_groups.md#sqlservername) for your environment settings. |
+| SQL_DATABASE_NAME | Azure SQL Database Name (e.g. `my-sql-server-db`) which has the CDM.  This should be setup as part of your [variable groups](/docs/update_your_variable_groups.md#sqlserverdbname) for your environment settings. |
