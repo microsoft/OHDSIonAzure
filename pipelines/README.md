@@ -14,6 +14,38 @@ You can use the pipelines in this repository as part of your OHDSIonAzure setup.
 
 The pipelines are intended to be run after working through the [infra setup](/infra/README.md) including the [administrative steps](/infra/README.md/#administrative-steps) with your administrator.
 
+### Azure DevOps Agent Pool Usage
+
+The pipelines can use the [Microsoft Hosted Azure DevOps Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/agents), but you may run into [limitations](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?msclkid=8f192dd7aeda11eca460e7d8bc1031b3&view=azure-devops&tabs=yaml#capabilities-and-limitations) such as running into a time usage limit.
+
+To address this limitation, the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#bootstrap-terraform) provisions an Azure VMSS which you can [connect to your Azure DevOps Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops).
+
+The [environment pipeline](#environment-pipeline), [Vocabulary Release Pipeline](#vocabulary-release-pipeline), [Broadsea Build Pipeline](#broadsea-build-pipeline), and [Broadsea Release Pipeline](#broadsea-release-pipeline) can use your Azure Linux VMSS as your Azure DevOps Agent Pool.  For example, you can switch your Azure DevOps Agent Pool from using the Microsoft Hosted Azure DevOps Agent Pool to your Azure VMSS in the pipeline:
+
+```diff
+...
+
++ pool: 'some-ado-build-linux-vmss-agent-pool' # this should match the name of your azure devops VMSS agent pool.
+- pool: 'Azure Pipelines' # you can use the Microsoft Hosted Azure DevOps Agent Pool
+
+...
+```
+
+The [Vocabulary Build Pipeline](#vocabulary-build-pipeline) can use your Azure Windows VMSS as your Azure DevOps Agent Pool.  Similarly, you can switch your Azure DevOps Agent Pool from using the Microsoft Hosted Azure DevOps Agent Pool to your Azure VMSS in the pipeline:
+
+```diff
+...
+
++ pool: 'some-ado-build-windows-vmss-agent-pool' # this should match the name of your azure devops Windows VMSS agent pool.
+- pool: #  you can use the Microsoft Hosted Azure DevOps Agent Pool.
+-   name: 'Azure Pipelines'
+-   demands: 'msbuild' # The Azure DevOps Agent Pool should have msbuild
+-   vmImage: 'windows-latest' # The Azure DevOps Agent Pool should be running Windows
+...
+```
+
+You should also ensure that you have [authorized your agent pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/pools-queues?view=azure-devops&tabs=yaml%2Cbrowser) for use with your pipeline.
+
 ## Environment Pipeline
 
 The environment pipeline can help run your changes in [Terraform](/infra/terraform/omop) for your environment.

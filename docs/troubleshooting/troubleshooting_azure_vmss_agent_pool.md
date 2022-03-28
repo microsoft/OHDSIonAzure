@@ -46,6 +46,16 @@ You can use the following steps to confirm your Azure VMSS instance has its depe
     ```bash
     az --version
     ```
+  
+  * unzip
+    ```bash
+    unzip --version
+    ```
+
+  * jq
+    ```bash
+    jq --version
+    ```
 
 3. If these dependencies aren't available, you may need to check the cloud-init status:
     ```bash
@@ -81,3 +91,45 @@ You can use the following steps to confirm your Azure VMSS instance has its [clo
     > You can also manually restart the VMSS instance in the Azure Portal.
 
     ![Restart Azure VMSS Instance](/docs/media/azure_vmss_restart_instance.png)
+
+## Confirm your Azure Windows VMSS Instance Dependencies Installed
+
+You can use the following steps to confirm your Azure Windows VMSS instance has its dependencies installed:
+
+1. Connect to your [Azure Windows VMSS Instance using your Jumpbox](#connect-from-your-jumpbox-to-your-azure-vmss-instance)
+
+2. Within a shell, you can confirm the following dependencies are available:
+  * .NET 4.8
+
+    ```powershell
+    Write-Host "Confirm .NET 4.8 is installed"
+    (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full").Release -ge 528040
+    ```
+    > See the [docs](https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/how-to-determine-which-versions-are-installed#minimum-version) for more details
+
+  * SSDT
+
+    ```powershell
+    ls -l "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VisualStudio\v17.0\SSDT"
+    ```
+
+    > Alternatively you can use `test-path`, which help in cases where the installation path or versions are different:
+    ```powershell
+    test-path "C:\Program Files\Microsoft Visual Studio\2022\*\MSBuild\Microsoft\VisualStudio\*\SSDT"
+    ```
+
+  * msbuild
+
+    ```powershell
+    powershell "& 'C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe' -version"
+    ```
+  
+3. If these dependencies aren't available you can also check the [build script](/infra/terraform/bootstrap/scripts/build-agent-dependencies.ps1) logs:
+
+  ```powershell
+  cat C:\WindowsAzure\Logs\build-agent-dependencies.log
+  ```
+
+  > You can also manually restart the VMSS instance in the Azure Portal.
+
+  ![Restart Azure VMSS Instance](/docs/media/azure_windows_vmss_restart_instance.png)

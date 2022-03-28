@@ -434,6 +434,13 @@ resource "azuredevops_variable_group" "adobootstrapsettingsvg" {
     value = azurerm_linux_virtual_machine_scale_set.vmss.name
   }
 
+  # This is the name of the Azure DevOps Agent Pool which will use the Azure VMSS
+  # TODO: revisit naming
+  variable {
+    name  = "adoVMSSBuildAgentPoolName"
+    value = "${azurerm_linux_virtual_machine_scale_set.vmss.name}-pool"
+  }
+
   /* Add in Terraform Configuration for Environment Pipeline */
   variable {
     name  = "tf_storage_resource_group"
@@ -528,6 +535,18 @@ resource "azuredevops_variable_group" "adoenvvg" {
   variable {
     name  = "adoVMSSBuildAgentPoolName"
     value = "${azurerm_linux_virtual_machine_scale_set.vmss.name}-pool"
+  }
+
+  /* Add in Azure DevOps Agent Pool Windows VMSS Name */
+  variable {
+    name  = "adoAgentPoolWindowsVMSSName"
+    value = azurerm_windows_virtual_machine_scale_set.vmss.name
+  }
+
+  # This is the name of the Azure DevOps Agent Pool which will use the Azure Windows VMSS
+  variable {
+    name  = "adoWindowsVMSSBuildAgentPoolName"
+    value = "${azurerm_windows_virtual_machine_scale_set.vmss.name}-pool"
   }
 
   variable {
@@ -762,9 +781,7 @@ resource "azurerm_storage_account" "tfstatesa" {
   account_tier             = "Standard"
   account_replication_type = "GRS"
 
-  tags = {
-    environment = "staging"
-  }
+  tags = var.tags
 }
 
 resource "azurerm_storage_container" "tfstatecontainer" {
@@ -811,7 +828,7 @@ resource "azurerm_public_ip" "vmss" {
 #############################
 
 resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
-  name                = "${var.prefix}-${var.environment}-ado-build-vmss-agent"
+  name                = "${var.prefix}-${var.environment}-ado-build-linux-vmss-agent"
   location            = var.location
   resource_group_name = azurerm_resource_group.adobootstrap.name
   upgrade_mode        = "Manual"
@@ -820,17 +837,17 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
 
   custom_data                     = base64encode(file("adobuilder.conf"))
   disable_password_authentication = false
-  sku                             = "Standard_D4s_v3"
-  instances                       = 2
+  sku                             = var.azure_vmss_sku
+  instances                       = var.azure_vmss_instances
   overprovision                   = false
   single_placement_group          = false
   platform_fault_domain_count     = 1
 
   source_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
+    publisher = var.azure_vmss_source_image_publisher
+    offer     = var.azure_vmss_source_image_offer
+    sku       = var.azure_vmss_source_image_sku
+    version   = var.azure_vmss_source_image_version
   }
 
   os_disk {
@@ -858,7 +875,102 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
   }
 
   tags = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      # ignore changes to tags for Azure DevOps
+      tags["__AzureDevOpsElasticPool"],
+      tags["__AzureDevOpsElasticPoolTimeStamp"],
+    ]
+  }
 }
+
+#############################
+# Azure Windows Virtual Machine Scale Set (VMSS)
+# This will be used for the Azure DevOps agent pool
+# Note that linking the Windows VMSS to Azure DevOps as an agent pool in TF is still a TODO
+# https://github.com/microsoft/terraform-provider-azuredevops/issues/204
+# And revisit setting up elastic pools https://github.com/microsoft/terraform-provider-azuredevops/issues/368
+#############################
+
+resource "azurerm_windows_virtual_machine_scale_set" "vmss" {
+  name                 = "${var.prefix}-${var.environment}-ado-build-windows-vmss-agent"
+  computer_name_prefix = "ado-build" # 9 character limit for prefix
+  location             = var.location
+  resource_group_name  = azurerm_resource_group.adobootstrap.name
+  upgrade_mode         = "Manual"
+  admin_username       = var.admin_user
+  admin_password       = var.admin_password
+
+  # Copy in script data
+  custom_data = base64encode(file("scripts/build-agent-dependencies.ps1"))
+
+  sku                         = var.azure_windows_vmss_sku
+  instances                   = var.azure_windows_vmss_instances
+  overprovision               = false
+  single_placement_group      = false
+  platform_fault_domain_count = 1
+
+  source_image_reference {
+    publisher = var.azure_windows_vmss_source_image_publisher
+    offer     = var.azure_windows_vmss_source_image_offer
+    sku       = var.azure_windows_vmss_source_image_sku
+    version   = var.azure_windows_vmss_source_image_version
+  }
+
+  os_disk {
+    caching              = "ReadOnly"
+    storage_account_type = "Standard_LRS"
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  network_interface {
+    name    = "terraformnetworkprofile"
+    primary = true
+
+    ip_configuration {
+      name      = "IPConfiguration"
+      subnet_id = azurerm_subnet.vmss.id
+      primary   = true
+    }
+  }
+
+  boot_diagnostics {
+    storage_account_uri = null
+  }
+
+  tags = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      # ignore changes to tags for Azure DevOps
+      tags["__AzureDevOpsElasticPool"],
+      tags["__AzureDevOpsElasticPoolTimeStamp"],
+    ]
+  }
+}
+
+resource "azurerm_virtual_machine_scale_set_extension" "script_build_agent_dependencies" {
+  name                         = "${var.prefix}-${var.environment}-build-agent-dependencies"
+  virtual_machine_scale_set_id = azurerm_windows_virtual_machine_scale_set.vmss.id
+  publisher                    = "Microsoft.Compute"
+  type                         = "CustomScriptExtension"
+  type_handler_version         = "1.10"
+
+  # run custom script
+  settings = jsonencode(
+    {
+      "commandToExecute" : "powershell.exe -ExecutionPolicy Unrestricted -Command \"Copy-Item C:/AzureData/CustomData.bin ./build-agent-dependencies.ps1 -Force; ./build-agent-dependencies.ps1 *> C:/WindowsAzure/Logs/build-agent-dependencies.log\""
+  })
+}
+
+
+#############################
+# Jumpbox Settings
+#############################
 
 resource "azurerm_public_ip" "jumpbox" {
   name                = "${var.prefix}-${var.environment}-jumpbox-public-ip"

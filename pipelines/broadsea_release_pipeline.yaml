@@ -152,9 +152,9 @@ variables:
 stages:
 - ${{ if eq(variables.DeployBroadseaWebtools, 'true') }}:
   - stage: Deploy_Broadsea_Webtools
-    # TODO: investigate installing sqlcmd in Azure VMSS
-    # pool: $(adoVMSSBuildAgentPoolName) # re-enable when VMSS is ready
-    pool: 'Azure Pipelines'
+    # pool: 'Azure Pipelines' # This can run into a time limit
+    pool: $(adoVMSSBuildAgentPoolName) # re-enable when VMSS is ready
+    # pool: 'sharing-dev-ado-build-linux-vmss-agent-pool' # this should match the name of your azure devops VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
     displayName: Deploy Broadsea Webtools to App Service
     jobs:
       - job:
@@ -235,8 +235,8 @@ stages:
 
 - ${{ if or(eq(variables.RunETL, 'true'), eq(variables.RunAchilles, 'true')) }}:
   - stage: Deploy_Broadsea_Methods
-    # pool: $(adoVMSSBuildAgentPoolName) # re-enable when VMSS is ready and you have granted access to the agent pool
-    pool: 'sharing-dev-ado-build-vmss-agent-pool' # this should match the name of your azure devops VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
+    pool: $(adoVMSSBuildAgentPoolName) # re-enable when VMSS is ready and you have granted access to the agent pool
+    # pool: 'sharing-dev-ado-build-linux-vmss-agent-pool' # this should match the name of your azure devops VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
     displayName: Deploy Broadsea Methods
     jobs:
       - job:

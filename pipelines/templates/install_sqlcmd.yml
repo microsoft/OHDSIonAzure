@@ -4,12 +4,15 @@ steps:
     curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
     curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
 
-    sudo apt-get update 
-    sudo apt-get install mssql-tools unixodbc-dev
+    sudo apt-get update
+    sudo ACCEPT_EULA=Y apt-get install -y mssql-tools unixodbc-dev
     
     # make sqlcmd accessible from non-login sessions
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
     source ~/.bashrc
+    # Set the path locally
+    export PATH="$PATH:/opt/mssql-tools/bin"
+    ls -l /opt/mssql-tools/bin
 
     # confirm you can use sqlcmd
     sqlcmd -?

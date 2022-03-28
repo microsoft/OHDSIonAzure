@@ -119,7 +119,10 @@ variables:
   - name: "PublishBroadseaMethods"
     value: ${{ parameters.publishBroadseaMethods }}
 
-pool: 'Azure Pipelines'
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?msclkid=8f192dd7aeda11eca460e7d8bc1031b3&view=azure-devops&tabs=yaml#capabilities-and-limitations
+# pool: 'Azure Pipelines' # You can use the default Azure DevOps agent pool provided you have not run into time limits
+pool: $(adoVMSSBuildAgentPoolName) # re-enable when VMSS is ready and you have granted access to the agent pool
+# pool: 'sharing-dev-ado-build-linux-vmss-agent-pool' # this should match the name of your azure devops VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
 
 stages:
 - stage: Build_and_push_broadsea_webtools

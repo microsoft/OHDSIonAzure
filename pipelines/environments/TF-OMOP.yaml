@@ -69,7 +69,11 @@ variables:
 - name: terraform_version
   value: '1.1.4'
 - name: pool
-  value: 'Azure Pipelines'
+  value: $(adoVMSSBuildAgentPoolName) # re-enable when VMSS is ready and you have granted access to the agent pool
+# - name: pool
+#   value: 'sharing-dev-ado-build-linux-vmss-agent-pool' # this should match the name of your azure devops VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
+# - name: pool
+#   value: 'Azure Pipelines'
 
 # Environment settings should come from bootstrap VG setup through bootstrap TF
 - name: tf_command_variables

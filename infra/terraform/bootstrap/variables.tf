@@ -113,9 +113,74 @@ variable "omop_db_sku" {
   default = "GP_Gen5_2"
 }
 
+/* Azure VMSS Settings */
+variable "azure_vmss_sku" {
+  type = string
+  description = "Azure VMSS SKU"
+  default = "Standard_D4s_v3"
+}
+variable "azure_vmss_instances" {
+  type = number
+  description = "Number of Azure VMSS Instances"
+  default = 2
+}
+
+variable "azure_vmss_source_image_publisher" {
+  type = string
+  description = "Azure VMSS Source Image Publisher"
+  default = "Canonical"
+}
+variable "azure_vmss_source_image_offer" {
+  type = string
+  description = "Azure VMSS Source Image Offer"
+  default = "0001-com-ubuntu-server-focal"
+}
+variable "azure_vmss_source_image_sku" {
+  type = string
+  description = "Azure VMSS Source Image SKU"
+  default = "20_04-lts"
+}
+variable "azure_vmss_source_image_version" {
+  type = string
+  description = "Azure VMSS Source Image Version"
+  default = "latest"
+}
+
+/* Azure Windows VMSS Settings */
+variable "azure_windows_vmss_sku" {
+  type = string
+  description = "Azure VMSS SKU"
+  default = "Standard_D4s_v3"
+}
+variable "azure_windows_vmss_instances" {
+  type = number
+  description = "Number of Azure VMSS Instances"
+  default = 1
+}
+
+variable "azure_windows_vmss_source_image_publisher" {
+  type = string
+  description = "Azure VMSS Source Image Publisher"
+  default = "MicrosoftWindowsServer"
+}
+variable "azure_windows_vmss_source_image_offer" {
+  type = string
+  description = "Azure VMSS Source Image Offer"
+  default = "WindowsServer"
+}
+variable "azure_windows_vmss_source_image_sku" {
+  type = string
+  description = "Azure VMSS Source Image SKU"
+  default = "2019-Datacenter"
+}
+variable "azure_windows_vmss_source_image_version" {
+  type = string
+  description = "Azure VMSS Source Image Version"
+  default = "latest"
+}
+
 /* ACR */
 variable "acr_sku_edition" {}
-
 
 /* Application Service Plan */
 variable "asp_kind_edition" {}

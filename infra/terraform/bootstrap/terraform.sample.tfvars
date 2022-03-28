@@ -31,6 +31,13 @@ azure_subscription_name = "my Azure subscription name"
 omop_db_size = 100
 omop_db_sku  = "GP_Gen5_8"
 
+#### Azure VMSS Settings
+azure_vmss_sku = "Standard_D4s_v3"
+azure_vmss_instances = 2
+
+azure_windows_vmss_sku = "Standard_D4s_v3"
+azure_windows_vmss_instances = 1
+
 #### ACR
 acr_sku_edition = "Premium" # Network_rule_set_set can only be specified for a Premium Sku, the default is Standard sku and we are currently overriding this with Premium
 

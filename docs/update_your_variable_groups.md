@@ -40,6 +40,7 @@ This variable group (ending in `bootstrap-settings-vg`) is **not** linked to Azu
 | aad_directory_readers_object_id | string | `some-guid` | This is the Azure AD Group Object Id that will be assigned [Directory Reader for your Azure SQL Server Managed Identity](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial#add-azure-sql-managed-identity-to-the-group).  This Azure AD group should be provisioned by your administrator. |
 | acr_sku_edition | string | `Premium` | This is the SKU for your [Azure Container Registry](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-skus?msclkid=a5537ec1aa1111eca1ac128561448abb) in your [Environment](/infra/terraform/omop/README.md).  The default is `Premium` as this SKU supports networking rules. |
 | ado_agent_pool_vmss_name | string | `some-ado-build-vmss-agent` | This is the name of your [Azure VMSS](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops) used for Azure DevOps, see the notes for [more details](#adoagentpoolvmssname) |
+| adoVMSSBuildAgentPoolName | string | `some-ado-build-agent-vmss-pool` | This is the name of the Azure Virtual Machine Scale Set used for the Azure DevOps Agent Pool, see [where to find it](#adovmssbuildagentpoolname). |
 | asp_kind_edition | string | `Linux` | This is the Operating System for your [Azure App Service Plan](https://docs.microsoft.com/en-us/azure/app-service/overview-hosting-plans) in your [Environment](/infra/terraform/omop/README.md), and the default is `Linux` to host the [broadsea-webtools container](/apps/broadsea-webtools/README.md). |
 | asp_sku_tier | string | `PremiumV2` |  This is the tier for your [Azure App Service Plan](https://docs.microsoft.com/en-us/azure/app-service/overview-hosting-plans) in your [Environment](/infra/terraform/omop/README.md), and the default is `PremiumV2`. |
 | asp_sku_size | string | `P2V2` | This is the size for your [Azure App Service Plan](https://docs.microsoft.com/en-us/azure/app-service/overview-hosting-plans) in your [Environment](/infra/terraform/omop/README.md), and the default is `P2V2`. |
@@ -65,7 +66,9 @@ The following variables are included through the [bootstrap Terraform project](/
 | Setting Name | Setting Type | Sample Value | Notes |
 |--|--|--|--|
 | adoAgentPoolVMSSName | string | `some-ado-build-agent-vmss` | This is the name of the Azure Virtual Machine Scale Set used for the Azure DevOps Agent Pool, see [where to find it](#adoagentpoolvmssname). |
+| adoAgentPoolWindowsVMSSName | string | `some-ado-build-agent-windows-vmss` | This is the name of the Azure Windows Virtual Machine Scale Set used for the Azure DevOps Agent Pool, see [where to find it](#adoagentpoolwindowsvmssname). |
 | adoVMSSBuildAgentPoolName | string | `some-ado-build-agent-vmss-pool` | This is the name of the Azure Virtual Machine Scale Set used for the Azure DevOps Agent Pool, see [where to find it](#adovmssbuildagentpoolname). |
+| adoWindowsVMSSBuildAgentPoolName | string | `some-ado-build-agent-windows-vmss-pool` | This is the name of the Azure Windows Virtual Machine Scale Set used for the Azure DevOps Agent Pool, see [where to find it](#adowindowsvmssbuildagentpoolname). |
 | appSvcName | string | `my-app-service` | This is the name of the Azure App Service for Broadsea, see [where to find it](#appsvcname). |
 | appSvcRg | string | `my-rg-CI` | This is the Resource Group name which hosts the Azure App Service, see [where to find it](#appsvcrg). |
 | broadseaBuildPipelineName | string | `Broadsea Build Pipeline` | This is the default name for the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) after you import the pipeline with the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-devops). |
@@ -103,9 +106,21 @@ These are notes on where to find the values to supply to your variable groups to
 
 ![Azure Devops Agent Pool VMSS Name](/docs/media/azure_devops_agent_pool_vmss_name.png)
 
+### adoAgentPoolWindowsVMSSName
+
+1. Check your Azure DevOps project settings and navigate to your Azure DevOps Agent pools which is using your [Azure VMSS](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops)
+
+![Azure Devops Agent Pool Windows VMSS Name](/docs/media/azure_devops_agent_pool_vmss_name.png)
+
 ### adoVMSSBuildAgentPoolName
 
 1. Check your Azure DevOps project settings and navigate to your Azure DevOps Agent pools which is using your [Azure VMSS](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops)
+
+![Azure Devops VMSS Agent Pool Name](/docs/media/azure_devops_vmss_agent_pool_name.png)
+
+### adoWindowsVMSSBuildAgentPoolName
+
+1. Check your Azure DevOps project settings and navigate to your Azure DevOps Agent pools which is using your [Azure Windows VMSS](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops)
 
 ![Azure Devops VMSS Agent Pool Name](/docs/media/azure_devops_vmss_agent_pool_name.png)
 

@@ -110,10 +110,16 @@ parameters:
   default: OMOP_Vocabulary_Indexes_Constraints.dacpac
   displayName: OMOP CDM Indexes and Constraints Dacpac file name (e.g. OMOP_Vocabulary_Indexes_Constraints.dacpac)
 
-pool:
-  name: 'Azure Pipelines'
-  demands: 'msbuild'
-  vmImage: 'windows-latest'
+
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?msclkid=8f192dd7aeda11eca460e7d8bc1031b3&view=azure-devops&tabs=yaml#capabilities-and-limitations
+# You can use the default Azure DevOps agent pool provided you have not run into time limits
+# pool:
+#   name: 'Azure Pipelines'
+#   demands: 'msbuild'
+#   vmImage: 'windows-latest'
+
+pool: $(adoWindowsVMSSBuildAgentPoolName) # re-enable when Azure Windows VMSS is ready and you have granted access to the agent pool
+# pool: 'sharing-dev-ado-build-windows-vmss-agent-pool' # this should match the name of your azure devops Windows VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
 
 variables:
   - ${{ if eq(parameters['overrideBranchEnvVariableGroupName'], true) }}:
