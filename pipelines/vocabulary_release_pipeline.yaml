@@ -103,7 +103,7 @@ resources:
   pipelines:
   - pipeline: Vocabulary Build Pipeline  # Internal name of the source pipeline, used elsewhere within app-ci YAML
                             # e.g. to reference published artifacts
-    source: Vocabulary Build Pipeline # Azure Pipelines name of the source pipeline referenced
+    source: "\\OHDSIOnAzure\\Vocabulary\\Vocabulary Build Pipeline" # Azure Pipelines name of the source pipeline referenced
     # project: FabrikamProject # Required only if the source pipeline is in another project
     trigger: true # Run app-ci pipeline when any run of Vocabulary Build completes
 

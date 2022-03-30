@@ -59,16 +59,28 @@ You will need to ensure you have completed the following steps before running th
 
 3. You have setup an [Azure DevOps PAT](/infra/terraform/bootstrap/README.md/#ado-pat-notes)
 
-4. You have [installed terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/azure-get-started) locally
+4. Ensure you have appropriate [permissions](#azure-ad-permissions) setup
+
+5. You have [installed terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/azure-get-started) locally
     > Ensure you have also setup the Azure DevOps provider for Terraform.  Until the next release for the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/541) is available, you will need to ensure that you can run [two different versions](/infra/terraform/modules/azure_devops_environment/README.md/#local-version-usage) of the Azure DevOps provider.
     
     > This has been tested with `Terraform v1.0.10`, and you can confirm your terraform version with `terraform --version`
 
-5. You have `git clone` the repository
+6. You have `git clone` the repository
 
 ```bash
 git clone https://github.com/microsoft/OHDSIonAzure
 ```
+
+### Azure AD Permissions
+
+The [bootstrap Terraform project](/infra/terraform/bootstrap/main.tf) includes setting up Azure AD groups.
+
+Your administrator should have the appropriate [permissions](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/resources/group#api-permissions) including one of the following directory roles:
+
+* [Groups Administrator](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#groups-administrator)
+* [User Administrator](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#user-administrator)
+* [Global Administrator](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#global-administrator)
 
 ### ADO PAT Notes
 
@@ -167,22 +179,12 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
     ```
 
 2. Review the [main.tf resources](/infra/terraform/bootstrap/main.tf) before you run the project
-    * For a first time run, you should comment out your Azure DevOps resource authorization for the build definitions.  Once you are able to run `terraform apply` successfully, you can uncomment and re-run the `terraform apply`:
+    * You may need to import your existing Azure DevOps project into your terraform state
 
-    ```hcl
-    # resource "azuredevops_resource_authorization" "adoenvvgauth" {
-    #   for_each = toset([
-    #     azuredevops_build_definition.vocabularybuildpipeline.id,
-    #     azuredevops_build_definition.vocabularyreleasepipeline.id,
-    #     azuredevops_build_definition.broadseabuildpipeline.id,
-    #   azuredevops_build_definition.broadseareleasepipeline.id])
-    #   project_id    = azuredevops_project.project.id
-    #   resource_id   = azuredevops_variable_group.adoenvvg.id
-    #   definition_id = each.key
-    #   authorized    = true
-    #   type          = "variablegroup"
-    # }
-    ```
+      ```bash
+      terraform init # ensure you have initialized the project
+      terraform import azuredevops_project.project "OHDSIonAzure" # Import your existing project assuming your project in ADO is named "OHDSIonAzure"
+      ```
 
     * You can choose which Azure VM to use for your jumpbox.  For example, you may prefer to use an [Azure Linux VM](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview) for your jumpbox, so you can uncomment the resource in the Terraform script.
 

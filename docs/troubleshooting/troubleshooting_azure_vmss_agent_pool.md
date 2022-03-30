@@ -57,6 +57,11 @@ You can use the following steps to confirm your Azure VMSS instance has its depe
     jq --version
     ```
 
+  * dotnet
+    ```bash
+    dotnet --version
+    ```
+
 3. If these dependencies aren't available, you may need to check the cloud-init status:
     ```bash
     sudo cloud-init status

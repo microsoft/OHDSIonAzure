@@ -74,15 +74,6 @@ resource "azuredevops_project" "project" {
 #   }
 # }
 
-resource "azuredevops_serviceendpoint_generic_git" "serviceendpoint" {
-  project_id     = azuredevops_project.project.id
-  repository_url = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}"
-  #   username              = "username"
-  #   password              = var.ado_pat
-  service_endpoint_name = "Sample Generic Git"
-  description           = "Managed by Terraform"
-}
-
 # you can import the repo 
 # terraform import azuredevops_git_repository.repo projectName/repoName
 # e.g. terraform import azuredevops_git_repository.repo OHDSIonAzure/OHDSIonAzure
