@@ -7,11 +7,6 @@ variable "environment" {
   default = "dev"
 }
 
-variable "resource_group_name" {
-  description = "Name of the resource group in which the resources will be created"
-  default     = "myResourceGroup"
-}
-
 variable "location" {
   default     = "westus3"
   description = "Location where resources will be created"
@@ -63,12 +58,79 @@ variable "ado_pat" {
   sensitive   = true
 }
 
+variable "ado_linux_vmss_agent_pool_settings" {
+  description = "Azure DevOps Linux VMSS Agent Pool Settings"
+  type = object({
+    max_capacity           = number # VMSS Max Capacity
+    desired_size           = number # VMSS desired size
+    desired_idle           = number # VMSS desired idle
+    time_to_live_minutes   = number # VMSS time to live in minutes
+    recycle_after_each_use = bool   # VMSS recycle after each use
+    ostype                 = string # VMSS ostype e.g. linux
+  })
+
+  default = {
+    max_capacity           = 2
+    desired_size           = 1
+    desired_idle           = 1
+    time_to_live_minutes   = 30
+    recycle_after_each_use = false
+    ostype                 = "linux"
+  }
+}
+
+variable "ado_windows_vmss_agent_pool_settings" {
+  description = "Azure DevOps Windows VMSS Agent Pool Settings"
+  type = object({
+    max_capacity           = number # VMSS Max Capacity
+    desired_size           = number # VMSS desired size
+    desired_idle           = number # VMSS desired idle
+    time_to_live_minutes   = number # VMSS time to live in minutes
+    recycle_after_each_use = bool   # VMSS recycle after each use
+    ostype                 = string # VMSS ostype e.g. windows
+  })
+
+  default = {
+    max_capacity           = 2
+    desired_size           = 1
+    desired_idle           = 1
+    time_to_live_minutes   = 30
+    recycle_after_each_use = false
+    ostype                 = "windows"
+  }
+}
+
 variable "azure_subscription_name" {
   description = "This is your Azure Subscription Name for your Azure Service Connection"
 }
 
 variable "environment_pipeline_path" {
   description = "Azure DevOps Environment Pipeline path e.g. /pipelines/environments/TF-OMOP.yaml"
+}
+
+variable "tf_environment_build_pipeline_name" {
+  default     = "TF OMOP Environment Pipeline"
+  description = "Terraform Environment Build Pipeline Name"
+}
+
+variable "vocabulary_build_pipeline_name" {
+  default     = "Vocabulary Build Pipeline"
+  description = "Vocabulary Build Pipeline Name"
+}
+
+variable "vocabulary_release_pipeline_name" {
+  default     = "Vocabulary Release Pipeline"
+  description = "Vocabulary Release Pipeline Name"
+}
+
+variable "broadsea_build_pipeline_name" {
+  default     = "Broadsea Build Pipeline"
+  description = "Broadsea Build Pipeline Name"
+}
+
+variable "broadsea_release_pipeline_name" {
+  default     = "Broadsea Release Pipeline"
+  description = "Broadsea Release Pipeline Name"
 }
 
 variable "vocabulary_build_pipeline_path" {
@@ -115,68 +177,68 @@ variable "omop_db_sku" {
 
 /* Azure VMSS Settings */
 variable "azure_vmss_sku" {
-  type = string
+  type        = string
   description = "Azure VMSS SKU"
-  default = "Standard_D4s_v3"
+  default     = "Standard_D4s_v3"
 }
 variable "azure_vmss_instances" {
-  type = number
+  type        = number
   description = "Number of Azure VMSS Instances"
-  default = 2
+  default     = 2
 }
 
 variable "azure_vmss_source_image_publisher" {
-  type = string
+  type        = string
   description = "Azure VMSS Source Image Publisher"
-  default = "Canonical"
+  default     = "Canonical"
 }
 variable "azure_vmss_source_image_offer" {
-  type = string
+  type        = string
   description = "Azure VMSS Source Image Offer"
-  default = "0001-com-ubuntu-server-focal"
+  default     = "0001-com-ubuntu-server-focal"
 }
 variable "azure_vmss_source_image_sku" {
-  type = string
+  type        = string
   description = "Azure VMSS Source Image SKU"
-  default = "20_04-lts"
+  default     = "20_04-lts"
 }
 variable "azure_vmss_source_image_version" {
-  type = string
+  type        = string
   description = "Azure VMSS Source Image Version"
-  default = "latest"
+  default     = "latest"
 }
 
 /* Azure Windows VMSS Settings */
 variable "azure_windows_vmss_sku" {
-  type = string
+  type        = string
   description = "Azure VMSS SKU"
-  default = "Standard_D4s_v3"
+  default     = "Standard_D4s_v3"
 }
 variable "azure_windows_vmss_instances" {
-  type = number
+  type        = number
   description = "Number of Azure VMSS Instances"
-  default = 1
+  default     = 1
 }
 
 variable "azure_windows_vmss_source_image_publisher" {
-  type = string
+  type        = string
   description = "Azure VMSS Source Image Publisher"
-  default = "MicrosoftWindowsServer"
+  default     = "MicrosoftWindowsServer"
 }
 variable "azure_windows_vmss_source_image_offer" {
-  type = string
+  type        = string
   description = "Azure VMSS Source Image Offer"
-  default = "WindowsServer"
+  default     = "WindowsServer"
 }
 variable "azure_windows_vmss_source_image_sku" {
-  type = string
+  type        = string
   description = "Azure VMSS Source Image SKU"
-  default = "2019-Datacenter"
+  default     = "2019-Datacenter"
 }
 variable "azure_windows_vmss_source_image_version" {
-  type = string
+  type        = string
   description = "Azure VMSS Source Image Version"
-  default = "latest"
+  default     = "latest"
 }
 
 /* ACR */

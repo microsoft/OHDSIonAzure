@@ -24,7 +24,7 @@ Here's some notes for troubleshooting around Atlas and WebAPI.  Be sure to work 
     * Confirm the Azure App Service Managed Identity has `AcrPull` access to Azure Container Registry
     ![Azure App Service MI has access to Azure Container Registry](/docs/media/azure_app_service_acr_access_2.png)
 
-2. You should also confirm that the ACR has your image built and pushed to it with the appropriate tag.  Confirm your [variable groups](/docs/update_your_variable_groups.md) reflect your environment ACR before running the [Broadsea Build pipeline](/pipelines/README.md/#broadsea-build-pipeline) and [Broadsea Release pipeline](/pipelines/README.md/#broadsea-release-pipeline)
+2. You should also confirm that the ACR has your image built and pushed to it with the appropriate tag.  Confirm your [variable groups](/docs/update_your_variables.md) reflect your environment ACR before running the [Broadsea Build pipeline](/pipelines/README.md/#broadsea-build-pipeline) and [Broadsea Release pipeline](/pipelines/README.md/#broadsea-release-pipeline)
 
 ![Confirm ACR Has Broadsea Webtools](/docs/media/confirm_acr_broadsea_webtools_1.png)
 
@@ -121,7 +121,7 @@ You may run into 404's when trying to connect to https://my-app-service.azureweb
 3. Confirm connectivity for the [Build Agent to Azure SQL](#connecting-the-build-agent-to-azure-sql)
 4. Restart the App Service in the portal
 ![Restart Azure App Service](/docs/media/azure_app_service_restart.png)
-5. Run the [Broadsea Release Pipeline](/pipelines/README.md#broadsea-release-pipeline) on your feature branch to get Azure App Service to pull the [Broadsea Webtools](/apps/broadsea-webtools/README.md) image from ACR and refresh WebAPI.  Make sure you have updated your [variable groups](/docs/update_your_variable_groups.md) to reflect your environment.
+5. Run the [Broadsea Release Pipeline](/pipelines/README.md#broadsea-release-pipeline) on your feature branch to get Azure App Service to pull the [Broadsea Webtools](/apps/broadsea-webtools/README.md) image from ACR and refresh WebAPI.  Make sure you have updated your [variable groups](/docs/update_your_variables.md) to reflect your environment.
 
 ### Manually Check logs from Azure App Service
 

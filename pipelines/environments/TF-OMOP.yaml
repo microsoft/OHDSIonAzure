@@ -1,79 +1,13 @@
 # Terraform release pipeline for environment
-# TODO update resource group in .tfvars
-parameters: 
-# this should come from /infra/terraform/bootstrap
-- name: bootstrapVariableGroupName
-  type: string
-  displayName: Variable Group Name with Key Vault Link
-  default: ado-sharing-dev-omop-bootstrap-vg
-  values:
-  - ado-omop-bootstrap-vg
-  - ado-sharing-prod-omop-bootstrap-vg
-  - ado-sharing-stage-omop-bootstrap-vg
-  - ado-sharing-qa-omop-bootstrap-vg
-  - ado-sharing-dev-omop-bootstrap-vg
-- name: overrideBranchBootstrapVariableGroupName
-  type: boolean
-  default: false
-  displayName: Use the parameter value for bootstrapVariableGroupName for the variable group name instead of relying on the branch name to derive the variable group
-  values:
-  - true
-  - false
-
-- name: bootstrapSettingsVariableGroupName
-  type: string
-  displayName: Variable Group Name with Bootstrap Settings (no Key Vault)
-  default: ado-sharing-dev-omop-bootstrap-settings-vg
-  values:
-  - ado-omop-bootstrap-settings-vg
-  - ado-sharing-prod-omop-bootstrap-settings-vg
-  - ado-sharing-stage-omop-bootstrap-settings-vg
-  - ado-sharing-qa-omop-bootstrap-settings-vg
-  - ado-sharing-dev-omop-bootstrap-settings-vg
-- name: overrideBranchBootstrapSettingsVariableGroupName
-  type: boolean
-  default: false
-  displayName: Use the parameter value for bootstrapSettingsVariableGroupName for the variable group name instead of relying on the branch name to derive the variable group
-  values:
-  - true
-  - false
-
 variables:
-- ${{ if eq(parameters['overrideBranchBootstrapVariableGroupName'], true) }}:
-  - group: ${{ parameters.bootstrapVariableGroupName }}
-- ${{ elseif eq(variables['Build.SourceBranchName'], 'master') }}:
-  - group: ado-sharing-prod-omop-bootstrap-vg
-- ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
-  - group: ado-sharing-stage-omop-bootstrap-vg
-- ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
-  - group: ado-sharing-qa-omop-bootstrap-vg
-- ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
-  - group: ado-sharing-dev-omop-bootstrap-vg
-- ${{ else }}:
-  - group: ado-sharing-dev-omop-bootstrap-vg
+# Variables are included through Variable Groups through bootstrap TF
+- name: adoVMSSAgentPoolName
+  value: $(adoVMSSBuildAgentPoolName) # For example, this can be <prefix>-<environment>-ado-build-linux-vmss-agent-pool
 
-- ${{ if eq(parameters['overrideBranchBootstrapSettingsVariableGroupName'], true) }}:
-  - group: ${{ parameters.bootstrapSettingsVariableGroupName }}
-- ${{ elseif eq(variables['Build.SourceBranchName'], 'master') }}:
-  - group: ado-sharing-prod-omop-bootstrap-settings-vg
-- ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
-  - group: ado-sharing-stage-omop-bootstrap-settings-vg
-- ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
-  - group: ado-sharing-qa-omop-bootstrap-settings-vg
-- ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
-  - group: ado-sharing-dev-omop-bootstrap-settings-vg
-- ${{ else }}:
-  - group: ado-sharing-dev-omop-bootstrap-settings-vg
 - name: tf_directory
   value: 'infra/terraform/omop'
 - name: terraform_version
   value: '1.1.4'
-- name: pool
-  value: $(adoVMSSBuildAgentPoolName) # re-enable when VMSS is ready and you have granted access to the agent pool
-# - name: pool
-#   value: 'sharing-dev-ado-build-linux-vmss-agent-pool' # this should match the name of your azure devops VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
-# - name: pool
-#   value: 'Azure Pipelines'
 
 # Environment settings should come from bootstrap VG setup through bootstrap TF
 - name: tf_command_variables
@@ -98,12 +32,17 @@ stages:
   jobs:
   - deployment: Terraform_Plan
     displayName: Terraform Plan
-    pool: $(pool)
+    pool: $(adoVMSSAgentPoolName) # Use the VMSS Agent Pool
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml#capabilities-and-limitations
+    # You can use the default Azure DevOps agent pool provided you have not run into time limits
+    # pool:
+    #   name: 'Azure Pipelines'
+
     workspace:
       clean: all
     continueOnError: 'false'
     # Azure DevOps environment should be setup through bootstrap TF and come from your bootstrap-settings-vg
-    environment: $(tf_plan_environment)
+    environment: $(tf_plan_environment) # workaround to ensure that you will prompt for the permissions on first time run
     strategy:
       runOnce:
         deploy:
@@ -143,7 +82,12 @@ stages:
   jobs:
   - deployment: Approved_Terraform
     displayName: Approved Terraform
-    pool: $(pool)
+    pool: $(adoVMSSAgentPoolName) # Use the VMSS Agent Pool
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml#capabilities-and-limitations
+    # You can use the default Azure DevOps agent pool provided you have not run into time limits
+    # pool:
+    #   name: 'Azure Pipelines'
+
     workspace:
       clean: all
     continueOnError: 'false'

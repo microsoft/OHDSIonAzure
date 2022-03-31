@@ -10,11 +10,11 @@ Here's some troubleshooting notes for working with the [Azure VMSS Agent Pool](/
 
 ## Connect from your Jumpbox to your Azure VMSS Instance
 
-If you are using an Azure Windows VM, you will want to make sure you have an SSH client installed.  For example, you can use [OpenSSH](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse?msclkid=cd10026da94511ec9ca88f3c45bc432f) with Windows.
+If you are using an Azure Windows VM, you will want to make sure you have an SSH client installed.  For example, you can use [OpenSSH](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse) with Windows.
 
 1. Connect to your Jumpbox
   * For Linux you can use [SSH](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/mac-create-ssh-keys#ssh-into-your-vm)
-  * For Windows you can use [RDP](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/connect-logon#:~:text=%20Connect%20to%20the%20virtual%20machine%20%201,address%20and%20Port%20number.%20In%20most...%20More%20?msclkid=07369b43a94711ecba4891e8a9b234bc)
+  * For Windows you can use [RDP](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/connect-logon)
 
 2. In the Azure Portal, navigate to your Azure Virtual Network to check the connected devices.
   ![Get Azure VMSS Instance IP](/docs/media/connect_to_azure_vmss_instance_1.png)

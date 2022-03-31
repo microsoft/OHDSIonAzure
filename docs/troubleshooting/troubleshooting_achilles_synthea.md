@@ -65,7 +65,7 @@ The following settings should be covered through the [administrative steps](/inf
 connection_string <- stringr::str_interp("jdbc:sqlserver://${sql_server_name}.database.windows.net:1433;database=${sql_database_name};encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;Authentication=ActiveDirectoryMsi;")
 ```
 
-2. Confirm your [variable groups](/docs/update_your_variable_groups.md) reflect your environment settings., see [Setup Achilles & ETL-Synthea](/docs/setup/setup_achilles_synthea.md/#step-2-run-the-broadsea-methods-pipeline) for more details.
+2. Confirm your [variable groups](/docs/update_your_variables.md) reflect your environment settings., see [Setup Achilles & ETL-Synthea](/docs/setup/setup_achilles_synthea.md/#step-2-run-the-broadsea-methods-pipeline) for more details.
 
 3. Rerun the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) using your branch
 
@@ -79,7 +79,7 @@ The following settings should be covered through TF.
 connectionString <- stringr::str_interp("jdbc:sqlserver://${sql_server_name}.database.windows.net:1433;database=${sql_database_name};encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;Authentication=ActiveDirectoryMsi;")
 ```
 
-2. Confirm your [variable groups](/docs/update_your_variable_groups.md) reflect your environment settings, see [Setup Achilles & ETL-Synthea](/docs/setup/setup_achilles_synthea.md/#step-2-run-the-broadsea-methods-pipeline) for more details.
+2. Confirm your [variable groups](/docs/update_your_variablegroups.md) reflect your environment settings, see [Setup Achilles & ETL-Synthea](/docs/setup/setup_achilles_synthea.md/#step-2-run-the-broadsea-methods-pipeline) for more details.
 
 3. Rerun the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) using your branch.
 
@@ -119,9 +119,9 @@ Caught an error!
 All done, quitting.
 ```
 
-2. If you are seeing this error, you can either use a [different container build for ETL-Synthea](#modifying-the-container-build-to-use-a-different-version), or you can ensure that the environment variable for [CDM_VERSION](/docs/update_your_variable_groups.md/#cdmversion) is passed in through your [broadsea release pipeline](/pipelines/broadsea_release_pipeline.yaml) as a simplified version (e.g. `5.3` instead of `5.3.1`).  For this project, the second option is included, although you may run into additional scenarios where you need to use a different container build for ETL-Synthea.
+2. If you are seeing this error, you can either use a [different container build for ETL-Synthea](#modifying-the-container-build-to-use-a-different-version), or you can ensure that the environment variable for [CDM_VERSION](/docs/update_your_variables.md/#cdmversion) is passed in through your [broadsea release pipeline](/pipelines/broadsea_release_pipeline.yaml) as a simplified version (e.g. `5.3` instead of `5.3.1`).  For this project, the second option is included, although you may run into additional scenarios where you need to use a different container build for ETL-Synthea.
 
-In the pipeline you can simplify your `$CDM_VERSION` (assuming it's set as `5.3.1` through your [variable groups](/docs/update_your_variable_groups.md#cdmversion) using `bash`:
+In the pipeline you can simplify your `$CDM_VERSION` (assuming it's set as `5.3.1` through your [variable groups](/docs/update_your_variables.md#cdmversion) using `bash`:
 
 ```bash
 # Simplify the cdmVersion (e.g it may come in as 5.3.1, but Synthea expects just 5.3)

@@ -6,7 +6,7 @@ Below are steps to setup [Achilles](https://github.com/OHDSI/Achilles) and [ETL-
   
 1. You've successfully setup [Atlas](/docs/setup/setup_atlas_webapi.md)
 
-2. Confirm your [variable groups](/docs/update_your_variable_groups.md) reflect your environment settings.
+2. Confirm your [variable groups](/docs/update_your_variables.md#3-omop-environment-settings-vg) reflect your environment settings.
 
 ## Steps
 
@@ -19,7 +19,7 @@ Below are steps to setup [Achilles](https://github.com/OHDSI/Achilles) and [ETL-
 
 2. Create a feature branch (e.g. [your_alias)]/[new_feature_name]). An example would be `jane_doe/new_feature`
 
-3. Confirm your [variable groups](/docs/update_your_variable_groups.md) reflect your environment settings.
+3. Confirm your [variable groups](/docs/update_your_variables.md) reflect your environment settings.
  
 > These settings will be used with the application pipelines (for more information, you can review how to run the [vocabulary pipelines](/pipelines/README.md/#vocabulary-pipelines) and the [broadsea pipelines](/pipelines/README.md/#broadsea-pipelines))
 

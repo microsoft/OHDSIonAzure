@@ -83,16 +83,6 @@ steps:
       environmentServiceName: ${{ parameters.service_connection }}
       commandOptions: ${{ parameters.tf_apply_command_options }}
 
-  - ${{ if eq(parameters.enable_cleanup, 'true') }}:
-    - task: DeleteFiles@1
-      displayName: 'Clean up working dir'
-      # Run directory cleanup always
-      condition: |
-        and
-          (
-            always(),
-            ne(variables['Agent.OS'], 'Windows_NT')
-          )
-      inputs:
-        SourceFolder: '$(Agent.BuildDirectory)'
-        Contents: '*'
+  - template: ../cleanup_working_directory.yml
+    parameters:
+      enableCleanup: ${{ parameters.enable_cleanup }}

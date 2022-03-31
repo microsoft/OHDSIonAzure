@@ -1,23 +1,5 @@
 # Pipeline to populate vocabulary to an OMOP CDM database.
 parameters:
-# this should come from /infra/terraform/bootstrap
-- name: envVariableGroupName
-  type: string
-  displayName: Variable Group Name with Environment Settings
-  default: sharing-dev-omop-env-vg
-  values:
-  - sharing-prod-omop-env-vg
-  - sharing-stage-omop-env-vg
-  - sharing-qa-omop-env-vg
-  - sharing-dev-omop-env-vg
-- name: overrideBranchEnvVariableGroupName
-  type: boolean
-  default: false
-  displayName: Use the parameter value for envVariableGroupName for the variable group name instead of relying on the branch name to derive the variable group
-  values:
-  - true
-  - false
-
 - name: publishPostTFDeploy
   type: boolean
   default: true
@@ -32,10 +14,11 @@ parameters:
   displayName: Run the Vocabulary Indexes and Constraints Dacpac
 
   # For artifact retrieval
+  # TODO: Add to variable group
 - name: sourcePipelineArtifactProjectName
   displayName: Project Name which has the Source Pipeline with the built the pipeline artifacts (e.g. use myproject for https://dev.azure.com/myorg/<myproject>/)
   type: string
-  default: OHDSIonAzure
+  default: $(projectName)
 - name: sourcePipelineArtifactPipelineName
   displayName: Pipeline Name which has built the pipeline artifacts (E.g Vocabulary Build)
   type: string
@@ -78,18 +61,9 @@ parameters:
   displayName: OMOP CDM Vocabulary Indexes and Constraints Dacpac file name (e.g. my_omop_vocabulary_indexes_constraints.dacpac)
 
 variables:
-  - ${{ if eq(parameters['overrideBranchEnvVariableGroupName'], true) }}:
-    - group: ${{ parameters.envVariableGroupName }}
-  - ${{ elseif eq(variables['Build.SourceBranchName'], 'master') }}:
-    - group: sharing-prod-omop-env-vg
-  - ${{ elseif eq(variables['Build.SourceBranchName'], 'stage') }}:
-    - group: sharing-stage-omop-env-vg
-  - ${{ elseif eq(variables['Build.SourceBranchName'], 'qa') }}:
-    - group: sharing-qa-omop-env-vg
-  - ${{ elseif eq(variables['Build.SourceBranchName'], 'develop') }}:
-    - group: sharing-dev-omop-env-vg
-  - ${{ else }}:
-    - group: sharing-dev-omop-env-vg
+  # Variables are included through Variable Groups through bootstrap TF
+  - name: adoVMSSAgentPoolName
+    value: '$(adoVMSSBuildAgentPoolName)'  # For example, this can be <prefix>-<environment>-ado-build-linux-vmss-agent-pool
 
   - name: "PublishPostTFDeploy"
     value: ${{ parameters.publishPostTFDeploy }}
@@ -98,23 +72,22 @@ variables:
   - name: "PublishVocabularyIndexesConstraints"
     value: ${{ parameters.publishVocabularyIndexesConstraints }}
 
-# build completion trigger
-resources:
-  pipelines:
-  - pipeline: Vocabulary Build Pipeline  # Internal name of the source pipeline, used elsewhere within app-ci YAML
-                            # e.g. to reference published artifacts
-    source: "\\OHDSIOnAzure\\Vocabulary\\Vocabulary Build Pipeline" # Azure Pipelines name of the source pipeline referenced
-    # project: FabrikamProject # Required only if the source pipeline is in another project
-    trigger: true # Run app-ci pipeline when any run of Vocabulary Build completes
+# You can re-enable the build completion trigger by uncommenting this section
+# and matching the `source` to the path for your Vocabulary Build Pipeline in the Azure DevOps Pipelines
+# e.g. it may be located at `\\OHDSIOnAzure\\some-dev\\Vocabulary\Vocabulary Build Pipeline`
+# assuming you set `prefix` to `some` and `environment` to `dev` for your bootstrap Terraform project, for more details see the [readme](/infra/terraform/bootstrap/README.md)
+# # build completion trigger
+# resources:
+#   pipelines:
+#   - pipeline: Vocabulary Build Pipeline  # Internal name of the source pipeline, used elsewhere within app-ci YAML
+#                             # e.g. to reference published artifacts
+#     # You uncomment the line below and replace prefix-environment to match where you have imported your build pipeline
+#     source: "\\OHDSIOnAzure\\prefix-environment\\Vocabulary\\Vocabulary Build Pipeline" # Azure Pipelines name of the source pipeline referenced
+#     # project: FabrikamProject # Required only if the source pipeline is in another project
+#     trigger: true # Run app-ci pipeline when any run of Vocabulary Build completes
 
 # Disable CI Triggers - can re-enable later.
 trigger: none
-
-# https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?msclkid=8f192dd7aeda11eca460e7d8bc1031b3&view=azure-devops&tabs=yaml#capabilities-and-limitations
-# pool: 'Azure Pipelines' # You can use the default Azure DevOps agent pool provided you are still within time limits
-pool: $(adoVMSSBuildAgentPoolName) # re-enable when VMSS is ready and you have granted access to the agent pool
-# pool: 'sharing-dev-ado-build-linux-vmss-agent-pool' # this should match the name of your azure devops VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
-
 
 # Release instructions
 stages:
@@ -129,63 +102,78 @@ stages:
 # This stage should be run on the initial configuration of the OMOP CDM Database
 - stage: Add_Vocab_CDR
   jobs:
-  - job: Retrieve_Vocab_Files
+  - deployment: Retrieve_Vocab_Files
     displayName: Retrieve_Vocab_Files
     workspace:
       clean: all
     continueOnError: 'false'
-    steps:
+    pool: $(adoVMSSAgentPoolName) # Use the VMSS Agent Pool
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml#capabilities-and-limitations
+    # You can use the default Azure DevOps agent pool provided you have not run into time limits
+    # pool:
+    #   name: 'Azure Pipelines'
 
-    # Install sqlcmd
-    - ${{ if eq(variables.PublishPostTFDeploy, 'true') }}:
-      - template: templates/install_sqlcmd.yml
+    # Azure DevOps environment should be setup through bootstrap TF and come from your environment-settings-vg
+    environment: $(vocabulary_release_environment) # workaround to ensure that you will prompt for the permissions on first time run
+    strategy:
+      runOnce:
+        deploy:
+          steps:
 
-    # Install sqlpackage PublishVocabularyDDL
-    - ${{ if or(eq(variables.PublishVocabularyDDL, 'true'), eq(variables.PublishVocabularyIndexesConstraints, 'true')) }}:
-      - template: templates/install_sqlpackage.yml
+          # Install sqlcmd
+          - ${{ if eq(variables.PublishPostTFDeploy, 'true') }}:
+            - template: templates/install_sqlcmd.yml
 
-    - task: DownloadPipelineArtifact@2
-      inputs:
-        source: 'specific'
-        project: '${{ parameters.sourcePipelineArtifactProjectName }}'
-        pipeline: '${{ parameters.sourcePipelineArtifactPipelineName }}'
-        runVersion: 'latestFromBranch'
-        runBranch: 'refs/heads/$(Build.SourceBranchName)'
-        path: $(Build.SourcesDirectory)/artifacts
+          # Install sqlpackage PublishVocabularyDDL
+          - ${{ if or(eq(variables.PublishVocabularyDDL, 'true'), eq(variables.PublishVocabularyIndexesConstraints, 'true')) }}:
+            - template: templates/install_sqlpackage.yml
 
-    - ${{ if eq(variables.PublishPostTFDeploy, 'true') }}:
-      - template: templates/run_sqlcmd_script.yml
-        parameters:
-          serviceConnection: '$(serviceConnection)'
-          sqlServerName: '$(sqlServerName)'
-          sqlServerDbName: '$(sqlServerDbName)'
-          sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNamePostTFDeploy }}'
-          scriptFileName: ${{ parameters.scriptFileNamePostTFDeploy }}
-          sqlcmdCommandLineParameters: '-v StorageAccountName="$(storageAccount)" -v BroadseaAppServiceName="$(appSvcName)" -v ADOAgentPoolVMSSName="$(adoAgentPoolVMSSName)"'
-      
-    - ${{ if eq(variables.PublishVocabularyDDL, 'true') }}:
-      # Run Smoke test for vocabulary files
-      - template: templates/smoke_test/smoke_test_vocabulary_files.yaml
-        parameters:
-          serviceConnection: '$(serviceConnection)'
-          vocabulariesContainerPath: '$(vocabulariesContainerPath)'
-          storageAccount: '$(storageAccount)'
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              source: 'specific'
+              project: '${{ parameters.sourcePipelineArtifactProjectName }}'
+              pipeline: '${{ parameters.sourcePipelineArtifactPipelineName }}'
+              runVersion: 'latestFromBranch'
+              runBranch: '$(Build.SourceBranch)'
+              path: $(Build.SourcesDirectory)/artifacts
 
-      - template: templates/run_sqlpackage_script.yml
-        parameters:
-          serviceConnection: '$(serviceConnection)'
-          sqlServerName: '$(sqlServerName)'
-          sqlServerDbName: '$(sqlServerDbName)'
-          sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNameVocabularyDDL }}'
-          scriptFileName: ${{ parameters.dacpacFileNameVocabularyDDL }}
-          sqlPackageCommandLineParameters: '/v:VocabulariesContainerPath="$(vocabulariesContainerPath)" /v:DSVocabularyBlobStorageName="$(dSVocabularyBlobStorageName)"'
+          - ${{ if eq(variables.PublishPostTFDeploy, 'true') }}:
+            - template: templates/run_sqlcmd_script.yml
+              parameters:
+                serviceConnection: '$(serviceConnection)'
+                sqlServerName: '$(sqlServerName)'
+                sqlServerDbName: '$(sqlServerDbName)'
+                sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNamePostTFDeploy }}'
+                scriptFileName: ${{ parameters.scriptFileNamePostTFDeploy }}
+                sqlcmdCommandLineParameters: '-v StorageAccountName="$(storageAccount)" -v BroadseaAppServiceName="$(appSvcName)" -v ADOAgentPoolVMSSName="$(adoAgentPoolVMSSName)"'
+            
+          - ${{ if eq(variables.PublishVocabularyDDL, 'true') }}:
+            # Run Smoke test for vocabulary files
+            - template: templates/smoke_test/smoke_test_vocabulary_files.yaml
+              parameters:
+                serviceConnection: '$(serviceConnection)'
+                vocabulariesContainerPath: '$(vocabulariesContainerPath)'
+                storageAccount: '$(storageAccount)'
 
-    - ${{ if eq(variables.PublishVocabularyIndexesConstraints, 'true') }}:
-      - template: templates/run_sqlpackage_script.yml
-        parameters:
-          serviceConnection: '$(serviceConnection)'
-          sqlServerName: '$(sqlServerName)'
-          sqlServerDbName: '$(sqlServerDbName)'
-          sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNameVocabularyIndexesConstraints }}'
-          scriptFileName: ${{ parameters.dacpacFileNameVocabularyIndexesConstraints }}
-          sqlPackageCommandLineParameters: ''
+            - template: templates/run_sqlpackage_script.yml
+              parameters:
+                serviceConnection: '$(serviceConnection)'
+                sqlServerName: '$(sqlServerName)'
+                sqlServerDbName: '$(sqlServerDbName)'
+                sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNameVocabularyDDL }}'
+                scriptFileName: ${{ parameters.dacpacFileNameVocabularyDDL }}
+                sqlPackageCommandLineParameters: '/v:VocabulariesContainerPath="$(vocabulariesContainerPath)" /v:DSVocabularyBlobStorageName="$(dSVocabularyBlobStorageName)"'
+
+          - ${{ if eq(variables.PublishVocabularyIndexesConstraints, 'true') }}:
+            - template: templates/run_sqlpackage_script.yml
+              parameters:
+                serviceConnection: '$(serviceConnection)'
+                sqlServerName: '$(sqlServerName)'
+                sqlServerDbName: '$(sqlServerDbName)'
+                sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNameVocabularyIndexesConstraints }}'
+                scriptFileName: ${{ parameters.dacpacFileNameVocabularyIndexesConstraints }}
+                sqlPackageCommandLineParameters: ''
+          
+          - template: templates/cleanup_working_directory.yml
+            parameters:
+              enableCleanup: '$(enableCleanup)'

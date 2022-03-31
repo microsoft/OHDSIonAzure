@@ -7,7 +7,7 @@ The following steps walkthrough setting up infra for OHDSI on Azure.
 1. You are able to work through the [infra setup notes](/infra/README.md/#setup), including working with your administrator to go through the [administrative steps](/infra/README.md/#administrative-steps) and pushing the [backend state to Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli).
     * For convenience, administrative steps are included in the [bootstrap Terraform Project](/infra/terraform/bootstrap/README.md/#bootstrap-terraform).
 
-2. You have an Azure DevOps project and have [imported this repository](https://docs.microsoft.com/en-us/azure/devops/repos/git/import-git-repository?msclkid=94de3857aa3a11ecaf02a55e0c750c5b&view=azure-devops).
+2. You have an Azure DevOps project and have [imported this repository](https://docs.microsoft.com/en-us/azure/devops/repos/git/import-git-repository?view=azure-devops).
 
 3. Confirm you (or your Administrator) have configured Azure DevOps, including the following:
     * You have [imported the Azure DevOps pipelines](https://docs.microsoft.com/en-us/azure/devops/pipelines/get-started/clone-import-pipeline?view=azure-devops&tabs=yaml#export-and-import-a-pipeline) from [this repository](/pipelines/)
@@ -31,7 +31,7 @@ Assuming you can complete the [prerequisites](#prerequisites), you can work thro
 1. In your local git cloned repo create a feature branch (e.g. [your_alias)]/[new_feature_name]). An example would be `jane_doe/new_feature`
 
 2. You can update your [terraform.tfvars](/infra/terraform/omop/terraform.tfvars) with the following values, which you can confirm with your administrator after they have completed the [administrative steps](/infra/README.md/#administrative-steps).
-> You can update your Terraform tfvars locally for testing, but you should also review your [Variable Group](/docs/update_your_variable_groups.md/#2-bootstrap-settings-vg) before running your changes through the [Environment Pipeline](/pipelines/README.md#environment-pipeline).
+> You can update your Terraform tfvars locally for testing, but you should also review your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) before running your changes through the [Environment Pipeline](/pipelines/README.md#environment-pipeline).
 
 ```
 omop_password   = "" # this should be filled in through the pipeline via Azure DevOps Variable Group
@@ -52,13 +52,13 @@ You can also review the following table which describes some OMOP Terraform vari
 
 | Setting Name | Setting Type | Sample Value | Notes |
 |--|--|--|--|
-| omop_password | string | `replaceThisP@SSW0RD` | While you can fill in this value for local testing, since this is a sensitive value, you should be using the [Azure DevOps Variable Group linked to Azure KeyVault](/docs/update_your_variable_groups.md#1-bootstrap-vg) as part of your [TF environment pipeline](/pipelines/README.md/#environment-pipeline).  You can review the approach for [working with sensitive values](#working-with-sensitive-values) for more details. |
+| omop_password | string | `replaceThisP@SSW0RD` | While you can fill in this value for local testing, since this is a sensitive value, you should be using the [Azure DevOps Variable Group linked to Azure KeyVault](/docs/update_your_variables.md#1-bootstrap-vg) as part of your [TF environment pipeline](/pipelines/README.md/#environment-pipeline).  You can review the approach for [working with sensitive values](#working-with-sensitive-values) for more details. |
 | prefix | string | `sharing` | This is a prefix used for your TF environment. |
-| environment | string | `dev` | Use this to designate your TF environment.  This should be populated from your [Variable Group](/docs/update_your_variable_groups.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md). |
-| aad_admin_login_name | string | `my-sharing-DBAdmins-group` | This is the Azure AD Group name that will be added as an [Azure SQL Server AD Administrator](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?msclkid=79f8d6b2a97811ec80227a313d713490&tabs=azure-powershell).  This should be populated from your [Variable Group](/docs/update_your_variable_groups.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) |
-| aad_admin_object_id | string | `some-guid` | This is the Azure AD Group Object Id that will be added as an [Azure SQL Server AD Administrator](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?msclkid=79f8d6b2a97811ec80227a313d713490&tabs=azure-powershell).  This should be populated from your [Variable Group](/docs/update_your_variable_groups.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) |
-| aad_directory_readers_login_name | string | `my-omop-sql-server-directory-readers` | This is the Azure AD Group name that will be assigned [Directory Reader for your Azure SQL Server Managed Identity](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial#add-azure-sql-managed-identity-to-the-group).  This should be populated from your [Variable Group](/docs/update_your_variable_groups.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) |
-| aad_directory_readers_object_id | string | `some-guid` | This is the Azure AD Group Object Id that will be assigned [Directory Reader for your Azure SQL Server Managed Identity](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial#add-azure-sql-managed-identity-to-the-group).  This should be populated from your [Variable Group](/docs/update_your_variable_groups.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) |
+| environment | string | `dev` | Use this to designate your TF environment.  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md). |
+| aad_admin_login_name | string | `my-sharing-DBAdmins-group` | This is the Azure AD Group name that will be added as an [Azure SQL Server AD Administrator](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?tabs=azure-powershell).  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) |
+| aad_admin_object_id | string | `some-guid` | This is the Azure AD Group Object Id that will be added as an [Azure SQL Server AD Administrator](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?tabs=azure-powershell).  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) |
+| aad_directory_readers_login_name | string | `my-omop-sql-server-directory-readers` | This is the Azure AD Group name that will be assigned [Directory Reader for your Azure SQL Server Managed Identity](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial#add-azure-sql-managed-identity-to-the-group).  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) |
+| aad_directory_readers_object_id | string | `some-guid` | This is the Azure AD Group Object Id that will be assigned [Directory Reader for your Azure SQL Server Managed Identity](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial#add-azure-sql-managed-identity-to-the-group).  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) |
 
 #### Working with Sensitive Values
 
@@ -81,7 +81,7 @@ You can review some of the OMOP variables in the following table.  For the full 
 | tf_directory | string | `infra/terraform/omop` | Terraform directory within the repository.  Default is `infra/terraform/omop`. |
 | terraform_version | string | `1.1.4` | Terraform Version to use within the pipeline in your environment.  Default is `1.1.4`. |
 | pool | string | `Azure Pipelines` | Specify which [Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/pools-queues?view=azure-devops&tabs=yaml%2Cbrowser) to use, defaults to `Azure Pipelines` which is [Microsoft Hosted](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops) |
-| enable_cleanup | string | `false` | Specify whether you should clean up the [Azure DevOps VMSS Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops) working directory after running your terraform task, defaults to `false`. |
+| enable_cleanup | string | `'0'` | Specify whether you should clean up the [Azure DevOps VMSS Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops) working directory after running your terraform task, defaults to `'0'`.  Set to `'1'` to enable clean up, set to `'0'` to skip clean up. |
 | **azure_service_connection** | string | `sp-service-connection` | This is your SP Service Connection name which has access to your Azure Subscription. |
 | **tf_storage_resource_group** | string | `ado-bootstrap-rg` | This is the resource group for your Azure Storage Account with your [TF backend](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli) state file. |
 | **tf_storage_region** | string | `westus2` | This is the region for your Azure Storage Account with your [TF backend](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli) state file. |
@@ -103,7 +103,7 @@ You can review some of the OMOP variables in the following table.  For the full 
 
 ![Run Environment Pipeline](/docs/media/run_environment_pipeline_1.png)
 
-2. Run the pipeline and ensure you have selected your [bootstrap variable group](/docs/update_your_variable_groups.md/#1-bootstrap-vg) and [bootstrap settings variable group](/docs/update_your_variable_groups.md/#2-bootstrap-settings-vg) for your environment
+2. Run the pipeline and ensure you are pointing to your branch for your environment
 
 ![Run Environment Pipeline](/docs/media/run_environment_pipeline_2.png)
 

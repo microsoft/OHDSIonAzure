@@ -94,7 +94,7 @@ If you notice that loading the data from the Azure Storage Account to Azure SQL 
 You may even notice that Azure SQL will have errors relating to insufficient space, in which case you may consider scaling storage.
 
 You can control these settings through different methods including:
-1. [Terraform](/infra/terraform/omop) including updating your [variable group](/docs/update_your_variable_groups.md/#2-bootstrap-settings-vg)
+1. [Terraform](/infra/terraform/omop) including updating your [variable group](/docs/update_your_variables.md/#2-bootstrap-settings-vg)
 2. Manually updating the settings in the Portal for your [Azure SQL Server](https://docs.microsoft.com/en-us/azure/azure-sql/database/single-database-scale#change-storage-size)
 
 ![Scale Azure SQL Server in the Portal](/docs/media/vocabulary_azure_sql_scale.png)

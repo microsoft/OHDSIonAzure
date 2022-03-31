@@ -16,7 +16,7 @@ The pipelines are intended to be run after working through the [infra setup](/in
 
 ### Azure DevOps Agent Pool Usage
 
-The pipelines can use the [Microsoft Hosted Azure DevOps Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/agents), but you may run into [limitations](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?msclkid=8f192dd7aeda11eca460e7d8bc1031b3&view=azure-devops&tabs=yaml#capabilities-and-limitations) such as running into a time usage limit.
+The pipelines can use the [Microsoft Hosted Azure DevOps Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/agents), but you may run into [limitations](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml#capabilities-and-limitations) such as running into a time usage limit.
 
 To address this limitation, the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#bootstrap-terraform) provisions an Azure VMSS which you can [connect to your Azure DevOps Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops).
 
@@ -44,7 +44,9 @@ The [Vocabulary Build Pipeline](#vocabulary-build-pipeline) can use your Azure W
 ...
 ```
 
-You should also ensure that you have [authorized your agent pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/pools-queues?view=azure-devops&tabs=yaml%2Cbrowser) for use with your pipeline.
+You should also ensure that you have [authorized your agent pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/pools-queues?view=azure-devops&tabs=yaml%2Cbrowser) for use with your pipeline.  You will also need to [authorize your environments](https://docs.microsoft.com/en-us/azure/devops/pipelines/policies/permissions?view=azure-devops#set-environment-permissions) for your pipelines too.
+
+You can also review how to use the [variables](/docs/update_your_variables.md) with your pipelines.
 
 ## Environment Pipeline
 
@@ -54,7 +56,7 @@ The environment pipeline can help run your changes in [Terraform](/infra/terrafo
 
 You can work through the details in the [setup notes](/docs/setup/setup_infra.md) for your environment, which includes more details around using the [example environment pipeline](/pipelines/environments/TF-OMOP.yaml) which will run [Terraform](/infra/terraform/omop) for your environment.
 
-This pipeline relies on the [bootstrap Variable Group](/docs/update_your_variable_groups.md/#1-bootstrap-vg) and the [bootstrap settings Variable Group](/docs/update_your_variable_groups.md/#2-bootstrap-settings-vg) which should be initially populated by your administrator using the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#bootstrap-terraform).
+This pipeline relies on the [bootstrap Variable Group](/docs/update_your_variables.md/#1-bootstrap-vg) and the [bootstrap settings Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) which should be initially populated by your administrator using the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#bootstrap-terraform).
 
 ## Vocabulary Pipelines
 
@@ -66,7 +68,7 @@ The vocabulary pipelines consist of the [Vocabulary Build Pipeline](#vocabulary-
 
 The [vocabulary build pipeline](/pipelines/vocabulary_build_pipeline.yaml) will create pipeline artifacts for [dacpacs](https://docs.microsoft.com/en-us/sql/relational-databases/data-tier-applications/data-tier-applications?view=sql-server-ver15) and [sql scripts](/sql/scripts/Post_TF_Deploy.sql) used for setting up the vocabulary in your Azure SQL CDM.
 
-This pipeline uses your [variable groups](/docs/update_your_variable_groups.md) for your environment settings.  You can review the [notes on updating your variable groups](/docs/update_your_variable_groups.md) for more guidance.
+This pipeline uses your [variable groups](/docs/update_your_variables.md) for your environment settings.  You can review the [notes on updating your variable groups](/docs/update_your_variables.md) for more guidance.
 
 This pipeline assumes that the [TF environment pipeline](#environment-pipeline) and [infra setup](/infra/README.md) have been completed successfully in your environment.  You can also refer to the [vocabulary setup](/docs/setup/setup_vocabulary.md) for additional guidance.
 
@@ -105,7 +107,7 @@ Here's an overview of the pipeline parameters used:
 
 The [vocabulary release pipeline](/pipelines/vocabulary_release_pipeline.yaml) will consume the pipeline artifacts built by the [vocabulary build pipeline](#vocabulary-build-pipeline), including the [dacpacs](https://docs.microsoft.com/en-us/sql/relational-databases/data-tier-applications/data-tier-applications?view=sql-server-ver15) and [sql scripts](/sql/scripts/Post_TF_Deploy.sql) to deploy the vocabulary in your Azure SQL CDM.
 
-This pipeline uses your [variable groups](/docs/update_your_variable_groups.md) for your environment settings.
+This pipeline uses your [variable groups](/docs/update_your_variables.md) for your environment settings.
 
 This pipeline assumes that the [TF environment pipeline](#environment-pipeline), [infra setup](/infra/README.md), and the [vocabulary build pipeline](#vocabulary-build-pipeline) have been completed successfully in your environment.  You can also refer to the [vocabulary setup](/docs/setup/setup_vocabulary.md) for additional guidance.
 
@@ -145,7 +147,7 @@ The broadsea pipelines consist of the [Broadsea Build Pipeline (CI)](#broadsea-b
 
 The [broadsea build pipeline](/pipelines/broadsea_build_pipeline.yaml) will create pipeline artifact for the [Web API Script](/sql/scripts/Web_Api_Refresh.sql) and push the [broadsea-webtools](/apps/broadsea-webtools/README.md) and [broadsea-methods](/apps/broadsea-methods/README.md) images to ACR in your environment.
 
-This pipeline uses your [variable groups](/docs/update_your_variable_groups.md) for your environment settings.
+This pipeline uses your [variable groups](/docs/update_your_variables.md) for your environment settings.
 
 This pipeline assumes that the [TF environment pipeline](#environment-pipeline) and [infra setup](/infra/README.md) have been completed successfully in your environment.  You can also refer to the [setup Atlas/Webapi notes](/docs/setup/setup_atlas_webapi.md) and [setup Achilles/Synthea notes](/docs/setup/setup_achilles_synthea.md) for additional guidance.
 
@@ -183,7 +185,7 @@ Here's an overview of the pipeline parameters used:
 
 The [broadsea release pipeline](/pipelines/broadsea_release_pipeline.yaml) will consume artifacts built by the [broadsea build pipeline](#broadsea-build-pipeline), including the ACR images for [broadsea-webtools](/apps/broadsea-webtools/Dockerfile) and [broadsea-methods](/apps/broadsea-methods/Dockerfile), and [sql scripts](/sql/scripts/Web_Api_Refresh.sql) to deploy the `broadsea-webtools` and `broadsea-methods` in your Azure environment.
 
-This pipeline uses your [variable groups](/docs/update_your_variable_groups.md) for your environment settings.
+This pipeline uses your [variable groups](/docs/update_your_variables.md) for your environment settings.
 
 This pipeline assumes that the [TF environment pipeline](#environment-pipeline), [infra setup](/infra/README.md), [vocabulary setup](/docs/setup/setup_vocabulary.md), and the [broadsea build pipeline](#broadsea-build-pipeline) have been completed successfully in your environment.
 
