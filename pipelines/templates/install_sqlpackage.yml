@@ -13,7 +13,9 @@ steps:
     sudo mkdir /sqlpackage
     sudo unzip sqlpackage.zip -d /sqlpackage
 
+    # update path
     export PATH="$PATH:/sqlpackage"
+    echo "##vso[task.setvariable variable=PATH]${PATH}:/sqlpackage"
     sudo chmod a+x /sqlpackage/sqlpackage
 
     sudo ls -al /sqlpackage

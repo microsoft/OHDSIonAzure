@@ -119,6 +119,7 @@ You can use the following steps to confirm your Azure Windows VMSS instance has 
     ```
 
     > Alternatively you can use `test-path`, which help in cases where the installation path or versions are different:
+    
     ```powershell
     test-path "C:\Program Files\Microsoft Visual Studio\2022\*\MSBuild\Microsoft\VisualStudio\*\SSDT"
     ```

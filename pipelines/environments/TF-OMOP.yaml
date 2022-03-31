@@ -124,6 +124,7 @@ stages:
                 tf_storage_account_name: '$(tf_storage_account_name)'
                 tf_storage_container_name: '$(tf_storage_container_name)'
                 tf_state_filename: '$(tf_state_filename)'
+                enable_cleanup: '$(enable_cleanup)'
 
 - stage: Approved_Terraform
   dependsOn:
@@ -169,3 +170,4 @@ stages:
                 tf_storage_account_name: '$(tf_storage_account_name)'
                 tf_storage_container_name: '$(tf_storage_container_name)'
                 tf_state_filename: '$(tf_state_filename)'
+                enable_cleanup: '$(enable_cleanup)'

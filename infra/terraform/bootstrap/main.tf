@@ -459,6 +459,11 @@ resource "azuredevops_variable_group" "adobootstrapsettingsvg" {
   }
 
   variable {
+    name  = "enable_cleanup"
+    value = "false"
+  }
+
+  variable {
     name  = "tf_plan_environment"
     value = module.azure_devops_environment_tf_plan.azure_devops_environment_name
   }

@@ -26,7 +26,7 @@ Prior to working with the [Environment Terraform](/infra/README.md/#running-terr
 
 ![bootstrap setup](/infra/media/bootstrap_deployment.png)
 
-You can work with your administrator to setup the bootstrap resource group and to setup Azure Devops which are depicted on the left side.
+You can work with your administrator to setup your [bootstrap resource group](/infra/terraform/bootstrap/README.md#setup-azure-bootstrap-resource-group), your [Azure AD Groups](/infra/terraform/bootstrap/README.md#setup-azure-ad-group), and your [Azure Devops](/infra/terraform/bootstrap/README.md#setup-azure-devops) which are depicted on the left side.
 
 For convenience, your administrator can use the [bootstrap terraform project](/infra/terraform/bootstrap/README.md) to setup Azure DevOps along with your bootstrap resource group.
 

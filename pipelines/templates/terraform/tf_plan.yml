@@ -40,6 +40,9 @@ parameters:
   default: ''
   displayName: Azure Storage Blob File name for your Backend TF State File
 
+- name: enable_cleanup # enable clean up task
+  default: 'false'
+  displayName: Enable clean up for the working directory
 
 steps:
   - checkout: self
@@ -86,15 +89,16 @@ steps:
       environmentServiceName: ${{ parameters.service_connection }}
       commandOptions: ${{ parameters.tf_plan_command_options }}
 
-  - task: DeleteFiles@1
-    displayName: 'Clean up working dir'
-    # Run directory cleanup always
-    condition: |
-      and
-        (
-          always(),
-          ne(variables['Agent.OS'], 'Windows_NT')
-        )
-    inputs:
-      SourceFolder: '$(Agent.BuildDirectory)'
-      Contents: '*'
+  - ${{ if eq(parameters.enable_cleanup, 'true') }}:
+    - task: DeleteFiles@1
+      displayName: 'Clean up working dir'
+      # Run directory cleanup always
+      condition: |
+        and
+          (
+            always(),
+            ne(variables['Agent.OS'], 'Windows_NT')
+          )
+      inputs:
+        SourceFolder: '$(Agent.BuildDirectory)'
+        Contents: '*'

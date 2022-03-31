@@ -59,7 +59,7 @@ You will need to ensure you have completed the following steps before running th
 
 3. You have setup an [Azure DevOps PAT](/infra/terraform/bootstrap/README.md/#ado-pat-notes)
 
-4. Ensure you have appropriate [permissions](#azure-ad-permissions) setup
+4. Ensure you have appropriate [Azure AD permissions](#azure-ad-permissions) setup
 
 5. You have [installed terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/azure-get-started) locally
     > Ensure you have also setup the Azure DevOps provider for Terraform.  Until the next release for the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/541) is available, you will need to ensure that you can run [two different versions](/infra/terraform/modules/azure_devops_environment/README.md/#local-version-usage) of the Azure DevOps provider.
@@ -74,7 +74,7 @@ git clone https://github.com/microsoft/OHDSIonAzure
 
 ### Azure AD Permissions
 
-The [bootstrap Terraform project](/infra/terraform/bootstrap/main.tf) includes setting up Azure AD groups.
+The [bootstrap Terraform project](/infra/terraform/bootstrap/main.tf) includes setting up [Azure AD groups](#setup-azure-ad-group).
 
 Your administrator should have the appropriate [permissions](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/resources/group#api-permissions) including one of the following directory roles:
 
@@ -86,7 +86,7 @@ Your administrator should have the appropriate [permissions](https://registry.te
 
 Follow the instructions to create your [Azure DevOps PAT](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?msclkid=b2967a6ca93f11ecb1013bcd61172bae&view=azure-devops&tabs=Windows#create-a-pat).
 
-Your Azure DevOps PAT should include the [following scopes](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?msclkid=b2967a6ca93f11ecb1013bcd61172bae&view=azure-devops&tabs=Windows#modify-a-pat):
+Your Azure DevOps PAT should include the [following scopes](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?msclkid=b2967a6ca93f11ecb1013bcd61172bae&view=azure-devops&tabs=Windows#modify-a-pat) as part of your [Azure DevOps setup](#setup-azure-devops):
 
 * Agent Pools - Read & Manage
 * Build - Read & Execute
@@ -206,6 +206,7 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
     * Your Azure SQL Managed Identity should have [Directory Reader assigned](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) to grant access for your Managed Identities in Azure SQL.  You will need to ensure you have [AAD premium activated](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept#license-requirements) so you can assign your [Azure AD Group](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept) the Directory Readers role.  If you cannot assign the Directory Readers role to your Azure SQL Server Managed Identity, you can follow a [workaround](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps).
 
       Uncomment the argument for `assignable_to_role` if you have AAD premium, which will allow you to assign the Azure AD Group to a role:
+
       ```hcl
       resource "azuread_group" "dbadminsaadgroup" {
         ...        
@@ -214,8 +215,14 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
         # assignable_to_role = true
       ```
 
-      Uncomment the `azuread_directory_role_member` resource block to assign the Azure AD group to a role:
+      Uncomment the `azuread_directory_role` and `azuread_directory_role_member` resource block to assign the Azure AD group to a role:
+
       ```hcl
+      # Uncomment the following section to get the Directory Readers role
+      # resource "azuread_directory_role" "directoryreaders" {
+      #   display_name = "Directory Readers"
+      # }
+
       # Uncomment the following section if you have AAD premium enabled in your Azure subscription
       # resource "azuread_directory_role_member" "directoryreadersmember" {
       #   role_object_id   = azuread_directory_role.directoryreaders.object_id
