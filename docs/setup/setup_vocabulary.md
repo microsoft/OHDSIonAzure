@@ -45,10 +45,12 @@ git clone https://github.com/microsoft/OHDSIonAzure
 ![Locate Vocabulary Pipelines](/docs/media/run_vocabulary_pipeline_0.png)
 
 2. Run the [Vocabulary Build Pipeline](/pipelines//vocabulary_build_pipeline.yaml) using your feature branch to build the artifacts for the SQL projects
+
 ![Run Vocabulary Build](/docs/media/vocabulary_build_pipeline.png)
 
 3. Run the [Vocabulary Release pipeline](/pipelines/vocabulary_release_pipeline.yaml) to deploy the data model and the populate the vocabulary using your feature branch.  Ensure the options for **Run the Post TF Deploy script**, **Run the Vocabulary Load Data Dacpac**, and **Run the Indices and Constraints Dacpac** are checked.
 > Note the Post TF deploy script is a one-time run to add access for Azure SQL.
+
 ![Run Vocabulary Release](/docs/media/vocabulary_release_pipeline.png)
 
 ### Step 3. Validate the Results

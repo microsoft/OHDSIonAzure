@@ -39,10 +39,10 @@ parameters:
   displayName: Source Pipeline Artifact Project Name (e.g. use myproject for https://dev.azure.com/<myorg>/<myproject>/)
   type: string
   default: $(projectName)
-- name: sourcePipelineArtifactPipelineName
-  displayName: Source Pipeline Artifact Pipeline Name (E.g Broadsea Build Pipeline)
+- name: sourcePipelineArtifactPipelineId
+  displayName: Source Pipeline Artifact Pipeline Id (E.g. your Broadsea Build Pipeline may have a pipeline id of `3`).  The variable $(vocabularyBuildPipelineId) is populated through the bootstrap TF project.
   type: string
-  default: $(broadseaBuildPipelineName)
+  default: $(broadseaBuildPipelineId)
 
 # web Api Parameters
 - name: buildArtifactNameWebApi
@@ -164,7 +164,7 @@ stages:
                   inputs:
                     source: 'specific'
                     project: '${{ parameters.sourcePipelineArtifactProjectName }}'
-                    pipeline: '${{ parameters.sourcePipelineArtifactPipelineName }}'
+                    pipeline: '${{ parameters.sourcePipelineArtifactPipelineId }}'
                     runVersion: 'latestFromBranch'
                     runBranch: '$(Build.SourceBranch)'
                     path: $(Build.SourcesDirectory)/artifacts

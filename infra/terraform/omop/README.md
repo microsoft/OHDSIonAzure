@@ -87,7 +87,7 @@ You can also review the following table which describes other OMOP Terraform var
 | prefix | string | `sharing` | This is a prefix used for your TF environment.  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) |
 | tags | string | <code>{<br>&nbsp;&nbsp;"Deployment"  = "OHDSI on Azure"<br>&nbsp;&nbsp;"Environment" = "dev"<br>}</code> | These are the [tags](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/tag-resources?tabs=json) for your OMOP Azure resource group, and you can use the default specified for your environment. |
 
-### Step 2. Run your Terraform OMOP Project
+### Step 2. Push your Terraform OMOP Project TF State to your remote backend
 
 Assuming you have updated your [variables](/infra/terraform/omop/README.md/#step-1-update-your-variables) for your environment, you can work next on running Terraform locally.
 
@@ -99,6 +99,28 @@ Assuming you have updated your [variables](/infra/terraform/omop/README.md/#step
     ```
 
 2. Review the [main.tf resources](/infra/terraform/omop/main.tf) before you run your project
+  * The [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) will deploy an Azure Storage Account which you can use for your [backend state](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli#3-configure-terraform-backend-state)
+
+  1. Save your Azure Storage Account Key to an environment variable
+
+  ```bash
+  ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query '[0].value' -o tsv)
+  export ARM_ACCESS_KEY=$ACCOUNT_KEY
+  ```
+
+  2. Add in your Storage Account Settings into your terraform provider in your [omop main.tf](/infra/terraform/omop/main.tf):
+
+  ```diff
+  terraform {
+  +  # backend "azurerm" {}
+    # Uncomment to include your backend state for first time run
+  + backend "azurerm" {
+  +   resource_group_name  = "some-ado-bootstrap-omop-rg"
+  +   storage_account_name = "sometfstatesa"
+  +   container_name       = "some-statefile-container"
+  +   key                  = "terraform.tfstate"
+  + }
+  ```
 
 3. Run Terraform for your project:
     * Initialize Terraform:
@@ -106,26 +128,16 @@ Assuming you have updated your [variables](/infra/terraform/omop/README.md/#step
       ```hcl
       terraform init
       ```
+    
+    * Validate that your Terraform state is pushed into your Azure Storage Account
 
-    * Check the Terraform Plan:
-      
-      ```hcl
-      terraform plan
-      ```
-
-    * Run Terraform Apply:
-      
-      ```hcl
-      terraform apply
-      ```
+    ![Confirm Backend State File in Azure Storage](/docs/media/confirm_backend_state_file.png)
 
 ### Step 3. Use your TF Environment Pipeline
 
 While you can run Terraform locally, you should use the [TF environment pipeline](/pipelines/environments/TF-OMOP.yaml) to manage your environment.
 
-1. Ensure you have pushed your [backend state to Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli) which should be made available through the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md#setup-azure-bootstrap-resource-group)
-
-2. Run the [TF environment pipeline](/pipelines/environments/TF-OMOP.yaml) with your branch, and validate the Azure Resources appear in your environment resource group in the Azure Portal
+1. Run the [TF environment pipeline](/pipelines/environments/TF-OMOP.yaml) with your branch, and validate the Azure Resources appear in your environment resource group in the Azure Portal
 
 ![Validate Azure OMOP Resource Group](/docs/media/azure_omop_resource_group.png)
 

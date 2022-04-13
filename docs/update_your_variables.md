@@ -54,8 +54,8 @@ This variable group (ending in `bootstrap-settings-vg`) is **not** linked to Azu
 | omop_db_size | string | `100` | This is the size in Gb for your [Azure SQL Server](https://docs.microsoft.com/en-us/azure/azure-sql/database/resource-limits-vcore-single-databases) in your [Environment](/infra/terraform/omop/README.md). |
 | omop_db_sku | string | `GP_Gen5_2` | This is the SKU for your [Azure SQL Server](https://docs.microsoft.com/en-us/azure/azure-sql/database/resource-limits-vcore-single-databases) in your [Environment](/infra/terraform/omop/README.md). |
 | prefix | string | `sharing` | This is the prefix for your environment (from your [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#step-1-update-terraformtfvars)), see the notes for [more details](#prefix). |
-| tf_approval_environment | string | `omop-tf-apply-environment` | This is the name of your `terraform apply` [Azure DevOps Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) for your Azure DevOps project. |
-| tf_plan_environment | string | `omop-tf-apply-environment` | This is the name of your `terraform plan` [Azure DevOps Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) for your Azure DevOps project. |
+| tf_approval_environment | string | `omop-tf-apply-environment` | This is the name of your `terraform apply` [Azure DevOps Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) for your Azure DevOps project,  see [where to find it](#tfapprovalenvironment). |
+| tf_plan_environment | string | `omop-tf-apply-environment` | This is the name of your `terraform plan` [Azure DevOps Environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) for your Azure DevOps project,  see [where to find it](#tfplanenvironment).  |
 | tf_state_filename | string | `terraform.tfstate` | This is the name of your [Terraform State file in Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli). |
 | tf_storage_account_name | string | `sometfstatesa` | This is the name of your Azure Storage account which has your [Terraform State file](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli). |
 | tf_storage_container_name | string | `some-statefile-container` | This is the container name in your Azure Storage account which has your [Terraform State file](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli). |
@@ -74,6 +74,8 @@ The following variables are included through the [bootstrap Terraform project](/
 | adoWindowsVMSSBuildAgentPoolName | string | `some-ado-build-agent-windows-vmss-pool` | This is the name of the Azure Windows Virtual Machine Scale Set used for the Azure DevOps Agent Pool, see [where to find it](#adowindowsvmssbuildagentpoolname). |
 | appSvcName | string | `my-app-service` | This is the name of the Azure App Service for Broadsea, see [where to find it](#appsvcname). |
 | appSvcRg | string | `my-rg-CI` | This is the Resource Group name which hosts the Azure App Service, see [where to find it](#appsvcrg). |
+| broadsea_build_environment | string | `some-omop-broadsea-build-environment` | This is the name of the [Azure DevOps environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) used for your [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) after you import the pipeline with the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-devops),  see [where to find it](#broadseabuildenvironment). |
+| broadsea_release_environment | string | `some-omop-broadsea-release-environment` | This is the name of the [Azure DevOps environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) used for your [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) after you import the pipeline with the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-devops),  see [where to find it](#broadseareleaseenvironment). |
 | broadseaBuildPipelineName | string | `Broadsea Build Pipeline` | This is the default name for the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) after you import the pipeline with the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-devops). |
 | broadseaReleasePipelineName | string | `Broadsea Release Pipeline` | This is the default name for the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) after you import the pipeline with the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-devops). |
 | cdmSchema | string | `dbo` | This is the CDM schema used.  For more details you can [check the notes](#cdmschema). |
@@ -93,6 +95,8 @@ The following variables are included through the [bootstrap Terraform project](/
 | syntheaVersion | string | `2.7.0` | This is the synthea version used.  For more details you can [check the notes](#syntheaversion). |
 | vocabSchema | string | `dbo` | This is the vocab schema used.  For more details you can [check the notes](#vocabschema). |
 | vocabulariesContainerPath | string | `vocabularies/19-AUG-2021` | This is path in the Azure Storage account where the vocabularies to load can be found, see [where to find it](#vocabulariescontainerpath).  For example, if the vocabulary file `CONCEPT.csv` is stored under `vocabularies/19-AUG-2021/CONCEPT.csv` then you would want to use `vocabularies/19-AUG-2021` as the value.  Further note that the file names and file paths are case sensitive. |
+| vocabulary_build_environment | string | `some-omop-vocabulary-build-environment` | This is the name of the [Azure DevOps environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) used for your [Vocabulary Build Pipeline](/pipelines/README.md/#vocabulary-build-pipeline) after you import the pipeline with the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-devops),  see [where to find it](#vocabularybuildenvironment). |
+| vocabulary_release_environment | string | `some-omop-vocabulary-release-environment` | This is the name of the [Azure DevOps environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) used for your [Vocabulary Release Pipeline](/pipelines/README.md/#vocabulary-release-pipeline) after you import the pipeline with the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-devops),  see [where to find it](#vocabularyreleaseenvironment). |
 | vocabularyBuildPipelineName | string | `Vocabulary Build Pipeline` | This is the Azure DevOps Build Pipeline name for your [vocabulary build pipeline](/pipelines/README.md/#vocabulary-build-pipeline) after it is imported through the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-devops).  The default is `Vocabulary Build Pipeline` |
 | vocabularyReleasePipelineName | string | `Vocabulary Release Pipeline` | This is the Azure DevOps Build Pipeline name for your [vocabulary release pipeline](/pipelines/README.md/#vocabulary-release-pipeline) after it is imported through the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-devops).  The default is `Vocabulary Release Pipeline` |
 | vocabularyVersion | string | `19-AUG-2021` | This is the vocabulary version path in the Azure Storage account container where the vocabularies to load can be found, see [where to find it](#vocabularyversion).  For example, if the vocabulary file `CONCEPT.csv` is stored under `vocabularies/19-AUG-2021/CONCEPT.csv` then you would want to use `19-AUG-2021` as the value.  Further note that the file names and file paths are case sensitive. |
@@ -140,6 +144,32 @@ These are notes on where to find the values to supply to your variable groups to
 1. You can check your Resource Group which contains your Azure App Service for your environment.
 
 ![Azure App Service RG Name](/docs/media/azure_app_service_rg_name.png)
+
+### broadsea_build_environment
+
+1. You can check your environments at `https://dev.azure.com/<my-org>/<my-project>/_environments`, then find the name of your [Azure DevOps environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) used for your [Broadsea Build Pipeline](/pipelines/README.md#broadsea-build-pipeline).
+
+![Broadsea Build Azure DevOps Environment Name](/docs/media/azure_devops_environment_name_4.png)
+
+### broadsea_release_environment
+
+1. You can check your environments at `https://dev.azure.com/<my-org>/<my-project>/_environments`, then find the name of your [Azure DevOps environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) used for your [Broadsea Release Pipeline](/pipelines/README.md#broadsea-release-pipeline).
+
+![Broadsea Release Azure DevOps Environment Name](/docs/media/azure_devops_environment_name_5.png)
+
+### broadseaBuildPipelineId
+
+This is a variable included in your [Broadsea Release Pipeline](/pipelines/README.md#broadsea-release-pipeline) as part of your [bootstrap Terraform project](/infra/terraform/bootstrap/README.md).
+
+1. Navigate to your pipelines and click on your [Broadsea Build Pipeline](/pipelines/README.md#broadsea-build-pipeline)
+
+![Navigate to Broadsea Build Pipeline](/docs/media/azure_devops_pipeline_id_0.png)
+
+2. Your URL may look like this `https://dev.azure.com/<my-org>/<my-project>/_build?definitionId=5`, and you'll want the value of the `definitionId`, which in this case is `5`.
+
+3. You can also confirm the pipeline variable is set
+
+![Confirm Broadsea Release Pipeline Variable set](/docs/media/azure_devops_pipeline_id_set_0.png)
 
 ### cdmSchema
 
@@ -218,9 +248,47 @@ a.  This is also used as part of the [Broadsea Release Pipelines](/pipelines/REA
 
 1. `syntheaVersion` should be set to `2.7.0` as a default value.  See [Synthea documentation](https://github.com/OHDSI/ETL-Synthea#step-by-step-example).
 
+### tf_plan_environment
+
+1. You can check your environments at `https://dev.azure.com/<my-org>/<my-project>/_environments`, then find the name of your [Azure DevOps environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) used for your [Environment Pipeline](/pipelines/README.md#environment-pipeline).
+
+![TF Plan Azure DevOps Environment Name](/docs/media/azure_devops_environment_name_0.png)
+
+### tf_approval_environment
+
+1. You can check your environments at `https://dev.azure.com/<my-org>/<my-project>/_environments`, then find the name of your [Azure DevOps environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) used for your [Environment Pipeline](/pipelines/README.md#environment-pipeline).
+
+![TF Approval Azure DevOps Environment Name](/docs/media/azure_devops_environment_name_1.png)
+
 ### vocabSchema
 
 1. `vocabSchema` should be set to `dbo` as a default value.  If the vocabulary is populated in a different schema in Azure SQL you should update the value to the new schema name.
+
+### vocabulary_build_environment
+
+1. You can check your environments at `https://dev.azure.com/<my-org>/<my-project>/_environments`, then find the name of your [Azure DevOps environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) used for your [Vocabulary Build Pipeline](/pipelines/README.md#vocabulary-build-pipeline).
+
+![Vocabulary Build Azure DevOps Environment Name](/docs/media/azure_devops_environment_name_2.png)
+
+### vocabulary_release_environment
+
+1. You can check your environments at `https://dev.azure.com/<my-org>/<my-project>/_environments`, then find the name of your [Azure DevOps environment](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) used for your [Vocabulary Release Pipeline](/pipelines/README.md#vocabulary-release-pipeline).
+
+![Vocabulary Release Azure DevOps Environment Name](/docs/media/azure_devops_environment_name_3.png)
+
+### vocabularyBuildPipelineId
+
+This is a variable included in your [Vocabulary Release Pipeline](/pipelines/README.md#vocabulary-release-pipeline) as part of your [bootstrap Terraform project](/infra/terraform/bootstrap/README.md).
+
+1. Navigate to your pipelines and click on your [Vocabulary Build Pipeline](/pipelines/README.md#vocabulary-build-pipeline)
+
+![Navigate to Vocabulary Build Pipeline](/docs/media/azure_devops_pipeline_id_1.png)
+
+2. Your URL may look like this `https://dev.azure.com/<my-org>/<my-project>/_build?definitionId=5`, and you'll want the value of the `definitionId`, which in this case is `5`.
+
+3. You can also confirm the pipeline variable is set
+
+![Confirm Broadsea Release Pipeline Variable set](/docs/media/azure_devops_pipeline_id_set_1.png)
 
 ### vocabulariesContainerPath
 

@@ -1,9 +1,9 @@
 prefix                           = "sharing"
 environment                      = "dev"
-aad_admin_login_name             = "My-Sharing-DB-Admins"
-aad_admin_object_id              = "d5cde78b-9312-461b-bfa2-7e67e6c9f2d7"
-aad_directory_readers_login_name = "My-Sharing-DB-Directory-Readers"
-aad_directory_readers_object_id  = "some-guid"
+aad_admin_login_name             = "<filled-in-by-variable-group>"
+aad_admin_object_id              = "<filled-in-by-variable-group>"
+aad_directory_readers_login_name = "<filled-in-by-variable-group>"
+aad_directory_readers_object_id  = "<filled-in-by-variable-group>"
 
 #### Tags
 tags = {

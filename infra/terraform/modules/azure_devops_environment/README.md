@@ -20,11 +20,12 @@ If you are running mac, you can use these steps instead:
 
 ```console
 PLUGIN_PATH=/Library/Application Support/io.terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/darwin_amd64
-mkdir darwin_amd64
+sudo mkdir -p ${PLUGIN_PATH}
+sudo chmod 755 ${PLUGIN_PATH}
 curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_darwin_amd64.zip'
 unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
 rm _
-chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
+sudo chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
 ```
 
 With this setup, you can refer to your second provider:

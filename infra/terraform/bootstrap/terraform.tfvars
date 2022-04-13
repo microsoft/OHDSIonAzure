@@ -71,3 +71,11 @@ acr_sku_edition = "Premium" # Network_rule_set_set can only be specified for a P
 asp_kind_edition = "Linux"
 asp_sku_tier     = "PremiumV2" #In the dedicated compute tiers (Basic, Standard, Premium, PremiumV2)
 asp_sku_size     = "P2V2"      # TODO: Check P2V2
+
+#### Vocabulary Path
+
+# The name of the blob container in the CDR storage account that will be used for vocabulary file uploads
+cdr_vocab_container_name = "vocabularies"
+
+# The path in the vocabulary blob container in the CDR storage account that will be used for vocabulary file uploads.  E.g. if the vocabulries are stored under /vocabularies/19-AUG-2021 you should specify 19-AUG-2021."
+cdr_vocab_version = "19-AUG-2021"

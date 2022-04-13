@@ -6,6 +6,12 @@
 # You can also use terraform import azuredevops_project.project "OHDSIonAzure"
 resource "azuredevops_project" "project" {
   # name = "OHDSIonAzure"
+  name               = "${var.prefix}-${var.environment}-OHDSIonAzure"
+  description        = "AzDevOps OHDSI on Azure bootstrap project"
+  visibility         = "private"
+  version_control    = "Git"
+  work_item_template = "Agile"
+
   lifecycle {
     prevent_destroy = true # prevent destroying the project
     ignore_changes = [
@@ -16,30 +22,16 @@ resource "azuredevops_project" "project" {
       work_item_template,
     ]
   }
-  name               = "${var.prefix}-${var.environment}-OHDSIonAzure"
-  description        = "AzDevOps OHDSI on Azure bootstrap project"
-  visibility         = "private"
-  version_control    = "Git"
-  work_item_template = "Agile"
 }
-
-# resource "azuredevops_git_repository" "repo" {
-#   project_id = azuredevops_project.project.id
-#   name       = "Sample Empty Git Repository"
-
-#   initialization {
-#     init_type = "Clean"
-#   }
-# }
-
 
 # you can import the repo 
 # terraform import azuredevops_git_repository.repo projectName/repoName
 # e.g. terraform import azuredevops_git_repository.repo OHDSIonAzure/OHDSIonAzure
 resource "azuredevops_git_repository" "repo" {
   project_id = azuredevops_project.project.id
-  name       = "${var.prefix}-${var.environment}-OHDSIonAzure"
-  # name       = "OHDSIonAzure" # keep this if you are just importing an existing project according to the name
+  name       = "OHDSIonAzure" # keep this if you are just importing an existing repository according to the name
+  # name       = "${var.prefix}-${var.environment}-OHDSIonAzure" # you have an option to rename the repository
+  
   # Comment this out if you want to make a new repo
   initialization {
     init_type = "Uninitialized"
@@ -55,7 +47,6 @@ resource "azuredevops_git_repository" "repo" {
     ]
   }
 
-  # name = "${var.prefix}-${var.environment}-OHDSIonAzure"
   ## This section will let you import the contents of another git repo into this repo
   # initialization {
   #   init_type             = "Import"

@@ -60,6 +60,10 @@ You will need to ensure you have completed the following steps before running th
 
 1. You and your Administrator have access to your Azure Subscription
     * Make sure you have [installed Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) and you have [logged in](https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli) to your Azure Subscription to confirm access
+    * You can use the following steps to login to your subscription:
+      1. `az login`
+      2. `az account set -s <my-subscription-id>`
+      3. `az account show` to confirm you have logged in
 
 2. You have [imported this git repository](https://docs.microsoft.com/en-us/azure/devops/repos/git/import-git-repository?view=azure-devops) to Azure DevOps
 
@@ -68,9 +72,9 @@ You will need to ensure you have completed the following steps before running th
 4. Ensure you have appropriate [Azure AD permissions](#azure-ad-permissions) setup
 
 5. You have [installed terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/azure-get-started) locally
-    > Ensure you have also setup the Azure DevOps provider for Terraform.  Until the next release for the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/541) is available, you will need to ensure that you can run [two different versions](/infra/terraform/modules/azure_devops_environment/README.md/#local-version-usage) of the Azure DevOps provider.
+    * Ensure you have also setup the Azure DevOps provider for Terraform.  Until the next release for the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/541) is available, you will need to ensure that you can run [two different versions](/infra/terraform/modules/azure_devops_environment/README.md/#local-version-usage) of the Azure DevOps provider.
     
-    > This has been tested with `Terraform v1.0.10`, and you can confirm your terraform version with `terraform --version`
+    * This has been tested with `Terraform v1.0.10`, and you can confirm your terraform version with `terraform --version`
 
 6. You have `git clone` the repository
 
@@ -98,6 +102,7 @@ Your administrator will need one of the following directory roles to [Assign the
 Follow the instructions to create your [Azure DevOps PAT](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=Windows#create-a-pat).
 
 Your Azure DevOps PAT should include the [following scopes](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=Windows#modify-a-pat) as part of your [Azure DevOps setup](#setup-azure-devops):
+> Be sure to review all scopes for your [Azure DevOps PAT](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate)
 
 * Agent Pools - Read & Manage
 * Build - Read & Execute
@@ -113,11 +118,11 @@ Your Azure DevOps PAT should include the [following scopes](https://docs.microso
 
 Your Azure DevOps instance should also include permissions for the account which will be used to bootstrap.  Your administrator may be part of the [project collection administrators group](https://docs.microsoft.com/en-us/azure/devops/organizations/security/change-organization-collection-level-permissions?view=azure-devops&tabs=preview-page#add-members-to-the-project-collection-administrators-group) and can perform the following tasks to manage user access.
 
-For example, you may be mapped to the Contributors Group for your [project](https://docs.microsoft.com/en-us/azure/devops/organizations/security/permissions?view=azure-devops&tabs=preview-page#project-level-permissions):
+For example, you may be mapped to the Contributors Group for your [project](https://docs.microsoft.com/en-us/azure/devops/organizations/security/permissions?view=azure-devops&tabs=preview-page#project-level-permissions) and you need to manage your [repository level permissions](https://docs.microsoft.com/en-us/azure/devops/organizations/security/permissions?view=azure-devops&tabs=preview-page#git-repository-object-level):
 
 ![Azure DevOps Permissions Contributors](/docs/media/azure_devops_permissions_1.png)
 
-* You should ensure that you are allowed to create repository, and delete or disable a repository.
+* You should ensure that you are allowed to create a repository, and delete or disable a repository.
 
 Further, your [user should also have access](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/add-organization-users?view=azure-devops&tabs=preview-page#manage-users) to the Azure DevOps repository.  For example you can include users as Project Contributor.
 
@@ -141,6 +146,12 @@ ado_org_service_url = "https://dev.azure.com/my-organization" # This is your Azu
 ado_project_name    = "OHDSIonAzure" # This is your Azure DevOps project name
 ado_repo_name       = "OHDSIonAzure" # This is your Azure DevOps repository name
 ado_pat             = "my-ado-PAT" # This is your Azure DevOps PAT
+
+# The name of the blob container in the CDR storage account that will be used for vocabulary file uploads
+cdr_vocab_container_name = "vocabularies"
+
+# The path in the vocabulary blob container in the CDR storage account that will be used for vocabulary file uploads.  E.g. if the vocabulries are stored under /vocabularies/19-AUG-2021 you should specify 19-AUG-2021."
+cdr_vocab_version = "19-AUG-2021"
 ```
 
 You can also review the following table which describes the other bootstrap Terraform variables.
@@ -209,7 +220,32 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
     ```
 
 2. Review the [main.tf resources](/infra/terraform/bootstrap/main.tf) and [azure_ad.tf resources](/infra/terraform/bootstrap/azure_ad.tf) before you run the project
-    * You may need to import your existing Azure DevOps project and repository into your terraform state
+
+    * Importing an existing Azure DevOps project and repository into your terraform state
+
+      1. If desired, you can name your project `OHDSIonAzure`.  You will need to update your [azure_devops.tf](/infra/terraform/bootstrap/azure_devops.tf) accordingly:
+      
+      ```diff
+        resource "azuredevops_project" "project" {
+      +   name = "OHDSIonAzure" # If you have an existing project named OHDSIonAzure, you can set the name
+      +   # name             = "${var.prefix}-${var.environment}-OHDSIonAzure" # You would use this naming convention if you prefer to have a separate environment Azure DevOps project
+        ...
+        }
+      ```
+
+      2. The default name for your Azure DevOps repository is `OHDSIonAzure`, but if you'd like to rename it you can do so to avoid conflicts:
+
+      ```diff
+      resource "azuredevops_git_repository" "repo" {
+        project_id = azuredevops_project.project.id
+      + # name       = "OHDSIonAzure" # keep this if you are just importing an existing repository according to the name
+      + name       = "${var.prefix}-${var.environment}-OHDSIonAzure" # you have an option to rename the repository
+        ...
+      }
+
+      ```
+
+      3. You will need to import your Azure DevOps project and your Azure DevOps repository:
 
       ```bash
       terraform init # ensure you have initialized the project
@@ -218,36 +254,54 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
       terraform import azuredevops_git_repository.repo OHDSIonAzure/OHDSIonAzure # Import your existing azure devops repo assuming the project is named "OHDSIonAzure" and the repository is anmed "OHDSIonAzure"
       ```
 
-    * You can choose which Azure VM to use for your jumpbox.  For example, you may prefer to use an [Azure Linux VM](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview) for your jumpbox, so you can uncomment the resource in the Terraform script.
+    * You can choose which Azure VM to use for your jumpbox.  For example, you may prefer to use an [Azure Linux VM](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview) for your jumpbox, so you can uncomment the resource in the [main.tf](/infra/terraform/bootstrap/main.tf) script.
 
-      ```hcl
+      1. Using an [Azure Linux VM](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview) for your jumpbox, be sure to uncomment your `resource "azurerm_virtual_machine" "jumpbox"` and comment out your `resource "azurerm_windows_virtual_machine" "jumpbox-windows"` in the [main.tf](/infra/terraform/bootstrap/main.tf) script:
+
+      ```diff
       ## Uncomment if you prefer to use an Azure Linux VM for your jumpbox
-      # resource "azurerm_virtual_machine" "jumpbox" {
-      # ...
-      # }
+      + resource "azurerm_virtual_machine" "jumpbox" {
+      + ...
+      + }
+
+      ...
+
+      ## Uncomment if you prefer to use an Azure Windows VM for your jumpbox
+      + # resource "azurerm_windows_virtual_machine" "jumpbox-windows" {
+      + #  ...
+      + # }
       ```
 
-      Or you may prefer to use an [Azure Windows VM](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/overview) instead for your jumpbox
-      ```hcl
+      2. If you prefer to use an [Azure Windows VM](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/overview) instead for your jumpbox, be sure to comment out your `resource "azurerm_virtual_machine" "jumpbox"` and uncomment your `resource "azurerm_windows_virtual_machine" "jumpbox-windows"` in the [main.tf](/infra/terraform/bootstrap/main.tf) script:
+
+      ```diff
+      ## Uncomment if you prefer to use an Azure Linux VM for your jumpbox
+      + # resource "azurerm_virtual_machine" "jumpbox" {
+      + #  ...
+      + # }
+
+      ...
+
       ## Uncomment if you prefer to use an Azure Windows VM for your jumpbox
-      # resource "azurerm_windows_virtual_machine" "jumpbox-windows" {
-      #  ...
-      # }
+      + resource "azurerm_windows_virtual_machine" "jumpbox-windows" {
+      +  ...
+      + }
       ```
 
     * Your Azure SQL Managed Identity should have [Directory Reader assigned](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) to grant access for your Managed Identities in Azure SQL.  You will need to ensure you have [AAD premium activated](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept#license-requirements) so you can assign your [Azure AD Group](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept) the Directory Readers role.  If you cannot assign the Directory Readers role to your Azure SQL Server Managed Identity, you can follow a [workaround](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps).
 
-      Uncomment the argument for `assignable_to_role` if you have AAD premium, which will allow you to assign the Azure AD Group to a role:
+      1. Uncomment the argument for `assignable_to_role` in the [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) if you have AAD premium, which will allow you to assign the Azure AD Group to a role:
 
-      ```hcl
+      ```diff
       resource "azuread_group" "dbadminsaadgroup" {
         ...        
         # uncomment this if you have AAD premium enabled in your Azure       subscription
         # https://docs.microsoft.com/en-us/azure/active-directory/      roles/groups-concept
-        # assignable_to_role = true
+      + assignable_to_role = true
+      + # assignable_to_role = true
       ```
 
-      Uncomment the `azuread_directory_role` and `azuread_directory_role_member` resource block to assign the Azure AD group to a role:
+      Uncomment the `azuread_directory_role` and `azuread_directory_role_member` in the [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) resource block to assign the Azure AD group to a role:
 
       ```hcl
       # Uncomment the following section to get the Directory Readers role
@@ -295,12 +349,12 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
 
 1. Confirm Terraform deployed your Azure DevOps resources in [your Azure DevOps project](/infra/terraform/bootstrap/README.md/#setup-azure-devops)
 
-### Step 5. Setup your Azure DevOps Agent Pool
+### Step 5. Confirm your Azure DevOps Agent Pool Setup
 
-Assuming the prior steps have completed successfully, you can proceed with setting up your Azure DevOps agent pool:
+Assuming the prior steps have completed successfully, you can confirm that you have setup your [Azure Devops VMSS Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops):
 
-1. Use the existing [Azure VMSS in your bootstrap resource group](/infra/terraform/bootstrap/README.md/#setup-azure-bootstrap-resource-group) to create a new [Azure Devops VMSS Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops)
-> Be sure that your Azure DevOps Agent Pool name matches in your variable group ending in [omop-environment-settings-vg](/docs/update_your_variables.md/#3-omop-environment-settings-vg).
+1. Check that your Azure DevOps Agent Pool name matches in your variable group ending in [omop-environment-settings-vg](/docs/update_your_variables.md/#3-omop-environment-settings-vg).
+> Your Azure VMSS is setup from [your bootstrap resource group](/infra/terraform/bootstrap/README.md/#setup-azure-bootstrap-resource-group).
 
 ![Setup your Azure DevOps Agent Pool](/docs/media/azure_devops_agent_pool_vmss_1.png)
 

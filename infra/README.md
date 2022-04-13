@@ -28,7 +28,7 @@ Prior to working with the [Environment Terraform](/infra/README.md/#running-terr
 
 You can work with your administrator to setup your [bootstrap resource group](/infra/terraform/bootstrap/README.md#setup-azure-bootstrap-resource-group), your [Azure AD Groups](/infra/terraform/bootstrap/README.md#setup-azure-ad-group), and your [Azure Devops](/infra/terraform/bootstrap/README.md#setup-azure-devops) which are depicted on the left side.
 
-For convenience, your administrator can use the [bootstrap terraform project](/infra/terraform/bootstrap/README.md) to setup Azure DevOps along with your bootstrap resource group.
+<mark>For convenience, your administrator can use the [bootstrap terraform project](/infra/terraform/bootstrap/README.md) to setup Azure DevOps along with your bootstrap resource group.</mark>
 
 Working with your administrator in Azure DevOps, you can [import this repository](https://docs.microsoft.com/en-us/azure/devops/repos/git/import-git-repository?&view=azure-devops), [import the pipelines](https://docs.microsoft.com/en-us/azure/devops/pipelines/get-started/clone-import-pipeline?view=azure-devops&tabs=yaml#export-and-import-a-pipeline), set up [Azure DevOps Environments](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops), and set up your [Service Connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml).
 

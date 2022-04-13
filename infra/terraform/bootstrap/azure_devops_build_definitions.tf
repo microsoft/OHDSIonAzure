@@ -94,6 +94,15 @@ resource "azuredevops_build_definition" "vocabularyreleasepipeline" {
   variable_groups = [
     azuredevops_variable_group.adoenvvg.id
   ]
+
+  variable {
+    name = "vocabularyBuildPipelineId"
+    value = azuredevops_build_definition.vocabularybuildpipeline.id
+  }
+
+  depends_on = [
+    azuredevops_build_definition.vocabularybuildpipeline
+  ]
 }
 
 module "azure_devops_elastic_pool_for_vocabulary_release_pipeline_assignment" {
@@ -167,6 +176,15 @@ resource "azuredevops_build_definition" "broadseareleasepipeline" {
   # map variable groups to pipeline
   variable_groups = [
     azuredevops_variable_group.adoenvvg.id
+  ]
+
+  variable {
+    name = "broadseaBuildPipelineId"
+    value = azuredevops_build_definition.broadseabuildpipeline.id
+  }
+
+  depends_on = [
+    azuredevops_build_definition.broadseabuildpipeline
   ]
 }
 

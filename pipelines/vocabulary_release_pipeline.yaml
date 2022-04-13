@@ -19,10 +19,10 @@ parameters:
   displayName: Project Name which has the Source Pipeline with the built the pipeline artifacts (e.g. use myproject for https://dev.azure.com/myorg/<myproject>/)
   type: string
   default: $(projectName)
-- name: sourcePipelineArtifactPipelineName
-  displayName: Pipeline Name which has built the pipeline artifacts (E.g Vocabulary Build)
+- name: sourcePipelineArtifactPipelineId
+  displayName: Pipeline Id which has built the pipeline artifacts (E.g Vocabulary Build).  The variable $(vocabularyBuildPipelineId) is populated through the bootstrap TF project.
   type: string
-  default: ${{ variables.vocabBuildPipelineId }}
+  default: $(vocabularyBuildPipelineId)
 
   # Post TF Deploy Parameters
 - name: buildArtifactNamePostTFDeploy
@@ -131,8 +131,8 @@ stages:
           - task: DownloadPipelineArtifact@2
             inputs:
               source: 'specific'
-              project: ${{ parameters.sourcePipelineArtifactProjectName }}
-              pipeline: ${{ parameters.sourcePipelineArtifactPipelineName }}
+              project: '${{ parameters.sourcePipelineArtifactProjectName }}'
+              pipeline: '${{ parameters.sourcePipelineArtifactPipelineId }}'
               runVersion: 'latestFromBranch'
               runBranch: $(Build.SourceBranch)
               path: $(Build.SourcesDirectory)/artifacts

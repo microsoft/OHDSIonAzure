@@ -7,6 +7,8 @@ Here's some troubleshooting notes for working with the [Azure VMSS Agent Pool](/
 1. Connect from your [Jumpbox to your Azure VMSS Instance](#connect-from-your-jumpbox-to-your-azure-vmss-instance)
 2. Confirm your [Azure VMSS instance dependencies installed](#confirm-your-azure-vmss-instance-dependencies-installed)
     * Check your [cloud-init status](#check-your-cloud-init-status) in the Azure VMSS Instance
+    * Confirm your [Azure Windows VMSS Instance Dependencies Installed](#confirm-your-azure-windows-vmss-instance-dependencies-installed)
+3. Manually Connect Your [Azure DevOps VMSS Agent Pool to your Azure DevOps Pipeline](#manually-connect-your-azure-devops-vmss-agent-pool-to-your-azure-devops-pipeline)
 
 ## Connect from your Jumpbox to your Azure VMSS Instance
 
@@ -139,3 +141,59 @@ You can use the following steps to confirm your Azure Windows VMSS instance has 
   > You can also manually restart the VMSS instance in the Azure Portal.
 
   ![Restart Azure VMSS Instance](/docs/media/azure_windows_vmss_restart_instance.png)
+
+## Manually Connect Your Azure DevOps VMSS Agent Pool to your Azure DevOps Pipeline
+
+If you are facing issues with your Azure DevOps VMSS Agent Pool, you can also look to manually connect your [Azure DevOps Agent Pool to your Azure VMSS](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops) to investigate further.
+
+You can look to authorize your Azure DevOps pipelines with your Azure DevOps agent pool using the following steps:
+
+1. As a one-time step, you will need to ensure that you have a matching name for you Azure DevOps Agent Pool in your Azure DevOps pipeline before you run the pipeline, which will allow Azure DevOps to authorize your pipeline with your newly added Azure DevOps Agent Pool.
+
+2. Once you have authorized your pipeline, you can update the pipeline to instead pull the Azure DevOps Agent pool name from a variable in your [Variable Group](/docs/update_your_variables.md/#3-environment-vg).
+  * This approach is applicable to the [pipelines](/pipelines/README.md/) which can use the Variable Group to source the pool name.
+  
+3. The following example shows how you can enable your pipeline to authorize the pool.  This is for your [Broadsea Release Pipeline](/pipelines/README.md#broadsea-release-pipeline), but the same approach can be applied for your [Broadsea Build Pipeline](/pipelines/README.md#broadsea-build-pipeline), your [Vocabulary Release Pipeline](/pipelines/README.md#vocabulary-release-pipeline), and your [Environment Pipeline](/pipelines/README.md#environment-pipeline):
+
+  ```yaml
+  ...
+  # pool: $(adoVMSSBuildAgentPoolName) # re-enable when VMSS is ready and you have granted access to the agent pool
+  
+  pool: 'some-ado-build-linux-vmss-agent-pool' # this should match the name of your azure devops VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
+  ...
+  ```
+  
+  You should see a prompt similar to the following to authorize your pipeline:
+
+  ![Authorize Broadsea Release Pipeline](/docs/media/broadsea_release_pipeline_achilles_etl_synthea_0.png)
+
+  Once you have authorized the pipeline to use your Azure DevOps Agent Pool, you can update your [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) to use a variable from your [Variable Group](/docs/update_your_variables.md/#3-environment-vg) instead:
+
+  ```yaml
+  ...
+  pool: $(adoVMSSBuildAgentPoolName) # re-enable when VMSS is ready and you have granted access to the agent pool
+  
+  # pool: 'some-ado-build-linux-vmss-agent-pool' # this should match the name of your azure devops VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
+  ...
+  ```
+
+  For your [Vocabulary Build Pipeline](/pipelines/README.md#vocabulary-build-pipeline), you can also use a similar approach to authorize the pipeline to use the Agent Pool VMSS.
+
+  You can use the name of the Agent Pool
+  ```yaml
+  ...
+  # pool: $(adoWindowsVMSSBuildAgentPoolName) # re-enable when Azure Windows VMSS is ready and you have granted access to the agent pool
+  
+  pool: 'some-ado-build-windows-vmss-agent-pool' # this should match the name of your azure devops Windows VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
+  ...
+  ```
+
+  Once you have authorized the agent pool for your pipeline, you can update the pipeline to use your variable group instead:
+  
+  ```yaml
+  ...
+  pool: $(adoWindowsVMSSBuildAgentPoolName) # re-enable when Azure Windows VMSS is ready and you have granted access to the agent pool
+  
+  # pool: 'some-ado-build-windows-vmss-agent-pool' # this should match the name of your azure devops Windows VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
+  ...
+  ```
