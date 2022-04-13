@@ -132,19 +132,19 @@ stages:
           - task: DownloadPipelineArtifact@2
             inputs:
               source: 'specific'
-              project: '${{ parameters.sourcePipelineArtifactProjectName }}'
-              pipeline: '${{ parameters.sourcePipelineArtifactPipelineName }}'
+              project: ${{ parameters.sourcePipelineArtifactProjectName }}
+              pipeline: ${{ parameters.sourcePipelineArtifactPipelineName }}
               runVersion: 'latestFromBranch'
-              runBranch: '$(Build.SourceBranch)'
+              runBranch: $(Build.SourceBranch)
               path: $(Build.SourcesDirectory)/artifacts
 
           - ${{ if eq(variables.PublishPostTFDeploy, 'true') }}:
             - template: templates/run_sqlcmd_script.yml
               parameters:
-                serviceConnection: '$(serviceConnection)'
-                sqlServerName: '$(sqlServerName)'
-                sqlServerDbName: '$(sqlServerDbName)'
-                sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNamePostTFDeploy }}'
+                serviceConnection: $(serviceConnection)
+                sqlServerName: $(sqlServerName)
+                sqlServerDbName: $(sqlServerDbName)
+                sourceFolderPath: artifacts/${{ parameters.buildArtifactNamePostTFDeploy }}
                 scriptFileName: ${{ parameters.scriptFileNamePostTFDeploy }}
                 sqlcmdCommandLineParameters: '-v StorageAccountName="$(storageAccount)" -v BroadseaAppServiceName="$(appSvcName)" -v ADOAgentPoolVMSSName="$(adoAgentPoolVMSSName)"'
             
