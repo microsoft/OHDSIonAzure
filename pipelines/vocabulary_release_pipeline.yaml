@@ -22,7 +22,7 @@ parameters:
 - name: sourcePipelineArtifactPipelineName
   displayName: Pipeline Name which has built the pipeline artifacts (E.g Vocabulary Build)
   type: string
-  default: $(vocabularyBuildPipelineName)
+  default: $(vocabBuildPipelineId)
 
   # Post TF Deploy Parameters
 - name: buildArtifactNamePostTFDeploy
