@@ -22,7 +22,6 @@ parameters:
 - name: sourcePipelineArtifactPipelineName
   displayName: Pipeline Name which has built the pipeline artifacts (E.g Vocabulary Build)
   type: string
-  #default: $(vocabBuildPipelineId)
   default: ${{ variables.vocabBuildPipelineId }}
 
   # Post TF Deploy Parameters
@@ -133,8 +132,7 @@ stages:
             inputs:
               source: 'specific'
               project: ${{ parameters.sourcePipelineArtifactProjectName }}
-              #pipeline: ${{ parameters.sourcePipelineArtifactPipelineName }}
-              pipeline: 82
+              pipeline: ${{ parameters.sourcePipelineArtifactPipelineName }}
               runVersion: 'latestFromBranch'
               runBranch: $(Build.SourceBranch)
               path: $(Build.SourcesDirectory)/artifacts
