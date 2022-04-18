@@ -1,0 +1,88 @@
+parameters:
+
+- name: service_connection # Service Connection used to connect to your Azure Subscription
+  default: ''
+  displayName: Service Connection Used to connect to connect to your Azure Subscription
+
+- name: tf_directory # Terraform Directory to use
+  default: ''
+  displayName: Terraform Directory to use
+- name: tf_version # Terraform Version to use
+  default: ''
+  displayName: Terraform Version to use
+
+- name: tf_init_command_options # Terraform init command options
+  default: ''
+  displayName: Terraform init command options
+- name: tf_validate_command_options # Terraform validate command options
+  default: ''
+  displayName: Terraform validate command options
+- name: tf_refresh_command_options # Terraform refresh command options
+  default: ''
+  displayName: Terraform refresh command options
+- name: tf_apply_command_options # Terraform apply command options
+  default: ''
+  displayName: Terraform apply command options
+
+- name: tf_storage_resource_group # Azure Storage Account Resource Group which holds your Backend TF State File
+  default: ''
+  displayName: Azure Storage Account Resource Group which holds your Backend TF State File
+- name: tf_storage_region # Azure Storage Account Region which holds your Backend TF State File
+  default: ''
+  displayName: Azure Storage Account Region which holds your Backend TF State File
+- name: tf_storage_account_name # Azure Storage Account Name which holds your Backend TF State File
+  default: ''
+  displayName: Azure Storage Account Name which holds your Backend TF State File
+- name: tf_storage_container_name # Azure Storage Blob Storage Container Name which holds your Backend TF State File
+  default: ''
+  displayName: Azure Storage Blob Storage Container Name which holds your Backend TF State File
+- name: tf_state_filename # Azure Storage Blob File name for your Backend TF State File
+  default: ''
+  displayName: Azure Storage Blob File name for your Backend TF State File
+
+- name: enable_cleanup # enable clean up task
+  default: 'false'
+  displayName: Enable clean up for the working directory
+
+steps:
+  - checkout: self
+
+  - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+    displayName: 'Install Terraform'
+    inputs:
+      terraformVersion: ${{ parameters.tf_version }}
+
+  - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+    displayName: 'terraform init'
+    inputs:
+      command: init
+      workingDirectory: $(System.DefaultWorkingDirectory)/${{ parameters.tf_directory }}
+      commandOptions: ${{ parameters.tf_init_command_options }}
+      backendType: azurerm
+      backendServiceArm: ${{ parameters.service_connection }}
+      ensureBackend: true
+      backendAzureRmResourceGroupName: ${{ parameters.tf_storage_resource_group }}
+      backendAzureRmResourceGroupLocation: ${{ parameters.tf_storage_region }}
+      backendAzureRmStorageAccountName: ${{ parameters.tf_storage_account_name }}
+      backendAzureRmContainerName: ${{ parameters.tf_storage_container_name }}
+      backendAzureRmKey: ${{ parameters.tf_state_filename }}
+
+  - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+    displayName: 'terraform refresh'
+    inputs:
+      command: refresh
+      workingDirectory: $(System.DefaultWorkingDirectory)/${{ parameters.tf_directory }}
+      environmentServiceName: ${{ parameters.service_connection }}
+      commandOptions: ${{ parameters.tf_refresh_command_options }}
+
+  - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
+    displayName: 'terraform apply'
+    inputs:
+      command: apply
+      workingDirectory: $(System.DefaultWorkingDirectory)/${{ parameters.tf_directory }}
+      environmentServiceName: ${{ parameters.service_connection }}
+      commandOptions: ${{ parameters.tf_apply_command_options }}
+
+  - template: ../cleanup_working_directory.yml
+    parameters:
+      enableCleanup: ${{ parameters.enable_cleanup }}

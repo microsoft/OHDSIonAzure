@@ -1,0 +1,26 @@
+steps:
+- script: |
+    # https://docs.microsoft.com/en-us/sql/tools/sqlpackage/sqlpackage-download?view=sql-server-ver15#get-sqlpackage-net-core-for-linux
+    sudo apt-get install libunwind8
+    sudo apt-get install libicu66
+
+    sudo rm -rf sqlpackage.zip
+
+    wget -O sqlpackage.zip https://go.microsoft.com/fwlink/?linkid=2157202
+
+    # clean up existing files
+    sudo rm -rf /sqlpackage
+    sudo mkdir /sqlpackage
+    sudo unzip sqlpackage.zip -d /sqlpackage
+
+    # update path
+    export PATH="$PATH:/sqlpackage"
+    echo "##vso[task.setvariable variable=PATH]${PATH}:/sqlpackage"
+    sudo chmod a+x /sqlpackage/sqlpackage
+
+    sudo ls -al /sqlpackage
+
+    echo 'checking sqlpackage version:'
+    sqlpackage /version
+
+  displayName: 'Install sqlpackage'

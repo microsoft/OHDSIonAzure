@@ -1,0 +1,198 @@
+# Build and publish broadsea-webtools (Atlas / WebApi) and broadsea-methods (Achilles / ETL-Synthea) to ACR pipeline
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - apps/broadsea-methods
+    - apps/broadsea-webtools
+
+parameters:
+- name: publishBroadseaWebApiScript
+  type: boolean
+  default: true
+  displayName: Publish broadsea webapi script as a pipeline artifact
+- name: publishBroadseaWebtools
+  type: boolean
+  default: true
+  displayName: Build and publish broadsea-webtools (Atlas / WebApi) to ACR
+- name: publishBroadseaMethods
+  type: boolean
+  default: true
+  displayName: Build and publish broadsea-methods (Achilles / ETL-Synthea) to ACR
+
+- name: buildConfiguration
+  type: string
+  default: Dev
+  displayName: Build Configuration for scripts
+  values:
+  - Dev
+- name: sourceFolder
+  type: string
+  default: sql
+  displayName: Source folder for scripts (e.g. for sql/scripts use sql)
+
+# WebAPI Parameters
+- name: buildArtifactFolderPathWebApi
+  type: string
+  default: webApi
+  displayName: Build Artifact Folder Path for WebAPI Script
+  values:
+  - webApi
+- name: buildArtifactNameWebApi
+  type: string
+  default: webApiScript
+  displayName: Build Artifact for WebApi Script
+  values:
+  - webApiScript
+- name: scriptFileNameWebApi
+  type: string
+  default: Web_Api_Refresh.sql
+  displayName: Web API Script file name (e.g. Web_Api_Refresh.sql)
+
+# Broadsea Webtools (Atlas / WebApi) Docker to ACR Settings
+- name: dockerBuildSourceFolderBroadseaWebTools
+  type: string
+  default: apps/broadsea-webtools
+  displayName: Source Folder used for docker build for broadsea-webtools, e.g. if the folder 'my-folder' has the Dockerfile, specify 'my-folder'.  Defaults to apps/broadsea-webtools.
+- name: dockerBuildImageNameBroadseaWebTools
+  type: string
+  default: broadsea-webtools
+  displayName: Image Name for broadsea-webtools (e.g. broadsea-webtools) to push into ACR.  Defaults to broadsea-webtools.
+- name: dockerBuildImageTagBroadseaWebTools
+  type: string
+  default: latest
+  displayName: Image Tag for broadsea-webtools (e.g. latest) to push into ACR.  Defaults to latest.
+
+# Broadsea Methods (Achilles / ETL-Synthea) Docker to ACR Settings
+- name: dockerBuildSourceFolderBroadseaMethods
+  type: string
+  default: apps/broadsea-methods
+  displayName: Source Folder used for docker build for broadsea-methods, e.g. if the folder 'my-folder' has the Dockerfile, specify 'my-folder'.  Defaults to apps/broadsea-methods.
+# TODO: move to variables group
+- name: dockerBuildImageNameBroadseaMethods
+  type: string
+  default: broadsea-methods
+  displayName: Image Name for broadsea-methods (e.g. broadsea-methods) to push into ACR.  Defaults to broadsea-methods.
+- name: dockerBuildImageTagBroadseaMethods
+  type: string
+  default: latest
+  displayName: Image Tag for broadsea-methods (e.g. latest) to push into ACR.  Defaults to latest.
+
+variables:
+  # Variables are included through Variable Groups through bootstrap TF
+  - name: adoVMSSAgentPoolName
+    value: '$(adoVMSSBuildAgentPoolName)'  # For example, this can be <prefix>-<environment>-ado-build-linux-vmss-agent-pool
+
+  - name: "PublishBroadseaWebApiScript"
+    value: ${{ parameters.publishBroadseaWebApiScript }}
+  - name: "PublishBroadseaWebtools"
+    value: ${{ parameters.publishBroadseaWebtools }}
+  - name: "PublishBroadseaMethods"
+    value: ${{ parameters.publishBroadseaMethods }}
+
+stages:
+- stage: Build_and_push_broadsea_webtools
+  displayName: Build and Push Broadsea Webtools Artifacts
+  jobs:
+  - ${{ if eq(variables.PublishBroadseaWebApiScript, 'true') }}:
+    - deployment: Publish_Web_Api_Scripts
+      displayName: Publish Web Api Scripts to Pipeline Artifacts
+      pool: $(adoVMSSAgentPoolName) # Use the VMSS Agent Pool
+      # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml#capabilities-and-limitations
+      # You can use the default Azure DevOps agent pool provided you have not run into time limits
+      # pool:
+      #   name: 'Azure Pipelines'
+
+      workspace:
+        clean: all
+      continueOnError: 'false'
+
+      # TODO: Check conditions
+      # Azure DevOps environment should be setup through bootstrap TF and come from your environment-settings-vg
+      environment: $(broadsea_build_environment)  # workaround to ensure that you will prompt for the permissions on first time run
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self # when in environment you need to check out the files
+            # publish the webapi script
+            - template: templates/copy_and_publish_file.yml
+              parameters:
+                sourceFolder: '${{ parameters.sourceFolder }}/scripts/'
+                targetFolder: '${{ parameters.buildConfiguration }}'
+                fileName: ${{ parameters.scriptFileNameWebApi }}
+                buildArtifactFolderPath: ${{ parameters.buildArtifactFolderPathWebApi }}
+                buildArtifactName: ${{ parameters.buildArtifactNameWebApi }}
+        
+            - template: templates/cleanup_working_directory.yml
+              parameters:
+                enableCleanup: '$(enableCleanup)'
+
+  - ${{ if eq(variables.PublishBroadseaWebtools, 'true') }}:
+    - deployment: Build_and_Publish_broadsea_webtools
+      displayName: Build and Publish broadsea-webtools (Atlas / Web Api) Docker Image to Azure Container Registry
+      pool: $(adoVMSSAgentPoolName) # Use the VMSS Agent Pool
+      # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml#capabilities-and-limitations
+      # You can use the default Azure DevOps agent pool provided you have not run into time limits
+      # pool:
+      #   name: 'Azure Pipelines'
+
+      workspace:
+        clean: all
+      continueOnError: 'false'
+      
+      # Azure DevOps environment should be setup through bootstrap TF and come from your environment-settings-vg
+      environment: $(broadsea_build_environment)
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self # when in environment you need to check out the files
+            - template: templates/build_and_push_docker_to_acr.yml
+              parameters:
+                serviceConnection: '$(serviceConnection)'
+                containerRegistry: '$(containerRegistry)'
+                sourceFolder: ${{ parameters.dockerBuildSourceFolderBroadseaWebTools }}
+                imageName: ${{ parameters.dockerBuildImageNameBroadseaWebTools }}
+                imageTag: ${{ parameters.dockerBuildImageTagBroadseaWebTools }}
+            
+            - template: templates/cleanup_working_directory.yml
+              parameters:
+                enableCleanup: '$(enableCleanup)'
+
+- ${{ if eq(variables.PublishBroadseaMethods, 'true') }}:
+  - stage: Build_and_push_broadsea_methods
+    displayName: Build and Publish broadsea-methods (Achilles / ETL-Synthea) Docker image
+    jobs:
+    - deployment: Build_and_publish_broadsea_methods
+      displayName: Build and Publish broadsea-methods (Achilles / ETL-Synthea) Docker image
+      pool: $(adoVMSSAgentPoolName) # Use the VMSS Agent Pool
+      # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml#capabilities-and-limitations
+      # You can use the default Azure DevOps agent pool provided you have not run into time limits
+      # pool:
+      #   name: 'Azure Pipelines'
+
+      workspace:
+        clean: all
+      continueOnError: 'false'
+
+      # Azure DevOps environment should be setup through bootstrap TF and come from your environment-settings-vg
+      environment: $(broadsea_build_environment) # workaround to ensure that you will prompt for the permissions on first time run
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self # when in environment you need to check out the files
+            - template: templates/build_and_push_docker_to_acr.yml
+              parameters:
+                serviceConnection: '$(serviceConnection)'
+                containerRegistry: '$(containerRegistry)'
+                sourceFolder: ${{ parameters.dockerBuildSourceFolderBroadseaMethods }}
+                imageName: ${{ parameters.dockerBuildImageNameBroadseaMethods }}
+                imageTag: ${{ parameters.dockerBuildImageTagBroadseaMethods }}
+
+            - template: templates/cleanup_working_directory.yml
+              parameters:
+                enableCleanup: '$(enableCleanup)'

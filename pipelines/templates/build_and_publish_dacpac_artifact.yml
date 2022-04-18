@@ -1,0 +1,32 @@
+parameters:
+- name: sourceFolder # Source folder to find the sqlproj file, default to empty
+  default: ''
+- name: sourceProjectFolderName # Source Project Folder Name for the corresponding sqlproj file, default to empty
+  default: ''
+- name: targetFolder # Target folder for the file, default to empty
+  default: ''
+- name: sourceFileName # Source File Name e.g for a_sql_project.sqlproj use a_sql_project.sqlproj
+  default: ''
+- name: targetFileName # Dacpac File Name - name of generated dacpac file name
+  default: ''
+- name: buildConfiguration # Build configuration to use for the dacpac (E.g. Debug or Release)
+  default: ''
+- name: buildArtifactFolderPath # Build artifact path to publish (e.g. /targetFolder/buildArtifactFolderPath)
+  default: ''
+- name: buildArtifactName # Build artifact name, defaults to empty
+  default: ''
+
+steps:
+# build the dacpac
+- task: MSBuild@1
+  displayName: 'Build dacpac for ${{ parameters.sourceFileName }}'
+  inputs:
+    solution: '**/${{ parameters.sourceFileName }}'
+    configuration: '${{ parameters.buildConfiguration }}'
+- template: copy_and_publish_file.yml
+  parameters:
+    sourceFolder: '${{ parameters.sourceFolder }}/${{ parameters.sourceProjectFolderName }}/bin/${{ parameters.buildConfiguration }}/'
+    targetFolder: '${{ parameters.buildConfiguration }}'
+    fileName: ${{ parameters.targetFileName }}
+    buildArtifactFolderPath: ${{ parameters.buildArtifactFolderPath }}
+    buildArtifactName: ${{ parameters.buildArtifactName }}

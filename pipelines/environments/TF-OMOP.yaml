@@ -1,0 +1,117 @@
+# Terraform release pipeline for environment
+variables:
+# Variables are included through Variable Groups through bootstrap TF
+- name: adoVMSSAgentPoolName
+  value: $(adoVMSSBuildAgentPoolName) # For example, this can be <prefix>-<environment>-ado-build-linux-vmss-agent-pool
+
+- name: tf_directory
+  value: 'infra/terraform/omop'
+- name: terraform_version
+  value: '1.1.4'
+
+# Environment settings should come from bootstrap VG setup through bootstrap TF
+- name: tf_command_variables
+  value: '-var="prefix=$(prefix)" -var="environment=$(environment)" -var="omop_password=$(omopPassword)" -var="bootstrap_admin_object_id=$(bootstrapAdminObjectId)" -var="sp_service_connection_object_id=$(spServiceConnectionObjectId)" -var="vmss_managed_identity_object_id=$(vmssManagedIdentityObjectId)" -var="acr_sku_edition=$(acr_sku_edition)" -var="aad_admin_login_name=$(aad_admin_login_name)" -var="aad_admin_object_id=$(aad_admin_object_id)" -var="aad_directory_readers_login_name=$(aad_directory_readers_login_name)" -var="aad_directory_readers_object_id=$(aad_directory_readers_object_id)" -var="asp_kind_edition=$(asp_kind_edition)" -var="asp_sku_size=$(asp_sku_size)" -var="asp_sku_tier=$(asp_sku_tier)" -var="cdr_vocab_container_name=$(cdr_vocab_container_name)" -var="location=$(location)" -var="omop_db_size=$(omop_db_size)" -var="omop_db_sku=$(omop_db_sku)" -var="ado_agent_pool_vmss_name=$(ado_agent_pool_vmss_name)"'
+- name: tf_init_command_options
+  value: '-input=false'
+- name: tf_validate_command_options
+  value: ''
+- name: tf_refresh_command_options
+  value: '-input=false -lock=false ${{ variables.tf_command_variables }}'
+- name: tf_plan_command_options
+  value: '-input=false -lock=false -refresh=false -out plan.out ${{ variables.tf_command_variables }}'
+- name: tf_apply_command_options
+  value: '-input=false -refresh=false ${{ variables.tf_command_variables }}'
+
+# Disable CI Triggers
+trigger: none
+
+# Release instructions
+stages:
+- stage: Terraform_Plan
+  jobs:
+  - deployment: Terraform_Plan
+    displayName: Terraform Plan
+    pool: $(adoVMSSAgentPoolName) # Use the VMSS Agent Pool
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml#capabilities-and-limitations
+    # You can use the default Azure DevOps agent pool provided you have not run into time limits
+    # pool:
+    #   name: 'Azure Pipelines'
+
+    workspace:
+      clean: all
+    continueOnError: 'false'
+    # Azure DevOps environment should be setup through bootstrap TF and come from your bootstrap-settings-vg
+    environment: $(tf_plan_environment) # workaround to ensure that you will prompt for the permissions on first time run
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - template: ../templates/terraform/tf_plan.yml
+              parameters:
+                # The service connection should be setup as part for your bootstrap terraform and come from your bootstrap-settings-vg
+                service_connection: '$(azure_service_connection_name)'
+                tf_directory: ${{ variables.tf_directory }}
+                tf_version: ${{ variables.terraform_version }}
+                tf_init_command_options: ${{ variables.tf_init_command_options }}
+                tf_validate_command_options: ${{ variables.tf_validate_command_options }}
+                tf_refresh_command_options: ${{ variables.tf_refresh_command_options }}
+                tf_plan_command_options: ${{ variables.tf_plan_command_options }}
+                # TF backend container settings should be available through your bootstrap terraform and come from your bootstrap-settings-vg
+                tf_storage_resource_group: '$(tf_storage_resource_group)'
+                tf_storage_region: '$(tf_storage_region)'
+                tf_storage_account_name: '$(tf_storage_account_name)'
+                tf_storage_container_name: '$(tf_storage_container_name)'
+                tf_state_filename: '$(tf_state_filename)'
+                enable_cleanup: '$(enable_cleanup)'
+
+- stage: Approved_Terraform
+  dependsOn:
+    - Terraform_Plan # Explicitly set dependency graph
+
+  # Conditions
+  # 1. If TF Plan succeeded
+  # 2. If build reason isn't a pull request
+
+  condition: |
+    and(
+      succeeded(),
+      ne(variables['Build.Reason'], 'PullRequest')
+    )
+
+  jobs:
+  - deployment: Approved_Terraform
+    displayName: Approved Terraform
+    pool: $(adoVMSSAgentPoolName) # Use the VMSS Agent Pool
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml#capabilities-and-limitations
+    # You can use the default Azure DevOps agent pool provided you have not run into time limits
+    # pool:
+    #   name: 'Azure Pipelines'
+
+    workspace:
+      clean: all
+    continueOnError: 'false'
+    # Azure DevOps environment should be setup through bootstrap TF and come from your bootstrap-settings-vg
+    environment: $(tf_approval_environment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # TODO point to higher environment path for higher environments
+            - template: ../templates/terraform/tf_apply.yml
+              parameters:
+                # The service connection should be setup as part for your bootstrap terraform and come from your bootstrap-settings-vg
+                service_connection: '$(azure_service_connection_name)'
+                tf_directory: ${{ variables.tf_directory }}
+                tf_version: ${{ variables.terraform_version }}
+                tf_init_command_options: ${{ variables.tf_init_command_options }}
+                tf_validate_command_options: ${{ variables.tf_validate_command_options }}
+                tf_refresh_command_options: ${{ variables.tf_refresh_command_options }}
+                tf_apply_command_options: ${{ variables.tf_apply_command_options }}
+                # TF backend container settings should be available through your bootstrap terraform and come from your bootstrap-settings-vg
+                tf_storage_resource_group: '$(tf_storage_resource_group)'
+                tf_storage_region: '$(tf_storage_region)'
+                tf_storage_account_name: '$(tf_storage_account_name)'
+                tf_storage_container_name: '$(tf_storage_container_name)'
+                tf_state_filename: '$(tf_state_filename)'
+                enable_cleanup: '$(enable_cleanup)'
