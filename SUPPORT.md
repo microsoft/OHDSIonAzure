@@ -12,4 +12,4 @@ Support for this project is limited to the resources listed above.
 
 ## Third (3rd) Party Support
 
-Microsoft does not provide support for [Terraform](https://github.com/hashicorp/terraform), [OHDSI](https://github.com/OHDSI/), or [OHDSI Synthea](https://github.com/OHDSI/ETL-Synthea) code. We encourages you to visit their support channels.
+Microsoft does not provide support for [Terraform](https://github.com/hashicorp/terraform), [OHDSI](https://github.com/OHDSI/), or [OHDSI Synthea](https://github.com/OHDSI/ETL-Synthea) code. We encourage you to visit their support channels.
