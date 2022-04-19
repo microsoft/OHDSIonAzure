@@ -47,17 +47,20 @@ resource "azuredevops_git_repository" "repo" {
     ]
   }
 
-  ## This section will let you import the contents of another git repo into this repo
+  ## Uncomment this section to import the contents of another git repo into this repo
   # initialization {
   #   init_type             = "Import"
   #   source_type           = "Git"
-  #   # comes from public repo
-  #   source_url            = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}"
-  #   service_connection_id = azuredevops_serviceendpoint_generic_git.serviceendpoint.id
+  #   # you can import from an existing ADO repository
+  #   # source_url            = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}" # you can import from an existing ADO repository
+  #   # service_connection_id = azuredevops_serviceendpoint_generic_git.serviceendpoint.id
+
+  #   # You can import from a public repository
+  #   source_url            = "https://github.com/microsoft/OHDSIonAzure.git"
   # }
 }
 
-# Include if you want to import from an existing repository
+# Include if you want to import from an existing repository using a service endpoint to authenticate to the repo
 resource "azuredevops_serviceendpoint_generic_git" "serviceendpoint" {
   project_id            = azuredevops_project.project.id
   repository_url        = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}"

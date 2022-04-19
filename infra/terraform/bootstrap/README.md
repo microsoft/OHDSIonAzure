@@ -221,10 +221,65 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
 
 2. Review the [main.tf resources](/infra/terraform/bootstrap/main.tf), [azure_ad.tf resources](/infra/terraform/bootstrap/azure_ad.tf), and [azure_devops.tf resouorces](/infra/terraform/bootstrap/azure_devops.tf) before you run the project
 
+    * Creating an Azure DevOps project and a repository, and importing a public git repository
+
+      1. If desired, you can name your project `OHDSIonAzure`.  You will need to update your [azure_devops.tf](/infra/terraform/bootstrap/azure_devops.tf) accordingly:
+
+      ```diff
+        resource "azuredevops_project" "project" {
+      +   name = "OHDSIonAzure" # If you have an existing project named OHDSIonAzure, you can set the name
+      +   # name             = "${var.prefix}-${var.environment}-OHDSIonAzure" # You would use this naming convention if you prefer to have a separate environment Azure DevOps project
+        ...
+        }
+      ```
+
+      2. The default name for your Azure DevOps repository is `OHDSIonAzure`, and you can import from the public git repository:
+
+      ```diff
+      resource "azuredevops_git_repository" "repo" {
+        project_id = azuredevops_project.project.id
+      + name       = "OHDSIonAzure" # keep this if you are just importing an existing repository according to the name
+      + # name       = "${var.prefix}-${var.environment}-OHDSIonAzure" # you have an option to rename the repository
+
+      + # Comment this out if you want to make a new repo
+      + # initialization {
+      + #   init_type = "Uninitialized"
+      + # }
+
+      + # Use Terraform import instead, otherwise this resource will destroy the existing repository.
+      + lifecycle {
+      +   prevent_destroy = true # prevent destroying the repo
+      + # ignore_changes = [
+      + #   # Ignore changes to initialization to support importing existing repositories
+      + #   # Given that a repo now exists, either imported into terraform state or created by terraform,
+      + #   # we don't care for the configuration of initialization against the existing resource
+      + #   initialization, # comment this out if you are making a new repo (and want to import from an existing repository)
+      + # ]
+      }
+
+      + ## Uncomment this section to import the contents of another git repo into this repo
+      + initialization {
+      +   init_type             = "Import"
+      +   source_type           = "Git"
+      +   # you can import from an existing ADO repository
+      +   # source_url            = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}" # you can import from an existing ADO repository
+      +   # service_connection_id = azuredevops_serviceendpoint_generic_git.serviceendpoint.id
+
+      +   # You can import from a public repository
+      +  source_url            = "https://github.com/microsoft/OHDSIonAzure.git"
+      }
+
+      ...
+      }
+
+      ```
+
+      3. For more details and other examples, you can review the [Azure DevOps TF provider docs](https://registry.terraform.io/providers/microsoft/azuredevops/latest/docs/resources/git_repository)
+
     * Importing an existing Azure DevOps project and repository into your terraform state
 
       1. If desired, you can name your project `OHDSIonAzure`.  You will need to update your [azure_devops.tf](/infra/terraform/bootstrap/azure_devops.tf) accordingly:
-      
+
       ```diff
         resource "azuredevops_project" "project" {
       +   name = "OHDSIonAzure" # If you have an existing project named OHDSIonAzure, you can set the name
@@ -251,7 +306,7 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
       terraform init # ensure you have initialized the project
       terraform import azuredevops_project.project "OHDSIonAzure" # Import your existing project assuming your project in ADO is named "OHDSIonAzure"
 
-      terraform import azuredevops_git_repository.repo OHDSIonAzure/OHDSIonAzure # Import your existing azure devops repo assuming the project is named "OHDSIonAzure" and the repository is anmed "OHDSIonAzure"
+      terraform import azuredevops_git_repository.repo OHDSIonAzure/OHDSIonAzure # Import your existing azure devops repo assuming the project is named "OHDSIonAzure" and the repository is named "OHDSIonAzure"
       ```
 
     * You can choose which Azure VM to use for your jumpbox.  For example, you may prefer to use an [Azure Linux VM](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview) for your jumpbox, so you can uncomment the resource in the [main.tf](/infra/terraform/bootstrap/main.tf) script.
@@ -408,3 +463,29 @@ GroupsClient.BaseClient.Post(): unexpected status 403 with OData error: Authoriz
 1. You should work with your administrator to ensure you have permissions to create [Azure AD Groups](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-groups-create-azure-portal).
 
 2. Once you have permissions granted, be sure to use `az login` to refresh your credentials before retrying to run `terraform init`, `terraform plan`, and `terraform apply`.
+
+### The data source received an unexpected error while attempting to execute the program.
+
+If you are running [WSL](https://docs.microsoft.com/en-us/windows/wsl/install), you may run into a similar error message:
+
+```bash
+│ The data source received an unexpected error while attempting to execute the program.
+│
+│ Program: /usr/bin/bash
+│ Error Message: ../modules/azure_devops_elastic_pool/v0/VMSSAgentPoolCreate.sh: line 2: $'\r':
+│ command not found
+```
+
+To address this issue, you will need to run the following steps from your cloned repository root directory:
+
+1. Ensure you have installed `dos2unix`
+
+```bash
+sudo apt install dos2unix # Install dos2unix
+```
+
+2. Convert scripts to use proper endings with `dos2unix`:
+
+```bash
+find infra -name '*.sh' -exec dos2unix {} + # convert scripts
+```
