@@ -18,6 +18,8 @@ If you are using an Azure Windows VM, you will want to make sure you have an SSH
   * For Linux you can use [SSH](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/mac-create-ssh-keys#ssh-into-your-vm)
   * For Windows you can use [RDP](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/connect-logon)
 
+  > Your jumpbox credentials should be setup through your [bootstrap Terraform project](/infra/terraform/bootstrap/README.md#step-1-update-your-variables)
+
 2. In the Azure Portal, navigate to your Azure Virtual Network to check the connected devices.
   ![Get Azure VMSS Instance IP](/docs/media/connect_to_azure_vmss_instance_1.png)
 
@@ -26,6 +28,8 @@ If you are using an Azure Windows VM, you will want to make sure you have an SSH
     ```bash
     ssh azureuser@<azure.vmss.instance.ip>
     ```
+
+    > Your credentials should be setup through your [bootstrap Terraform project](/infra/terraform/bootstrap/README.md#step-1-update-your-variables)
 
 ## Confirm your Azure VMSS Instance Dependencies Installed
 
@@ -104,6 +108,8 @@ You can use the following steps to confirm your Azure VMSS instance has its [clo
 You can use the following steps to confirm your Azure Windows VMSS instance has its dependencies installed:
 
 1. Connect to your [Azure Windows VMSS Instance using your Jumpbox](#connect-from-your-jumpbox-to-your-azure-vmss-instance)
+
+  > Your credentials should be setup through your [bootstrap Terraform project](/infra/terraform/bootstrap/README.md#step-1-update-your-variables)
 
 2. Within a shell, you can confirm the following dependencies are available:
   * .NET 4.8
