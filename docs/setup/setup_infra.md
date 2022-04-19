@@ -5,7 +5,7 @@ The following steps walkthrough setting up infra for OHDSI on Azure.
 ## Prerequisites
 
 1. You are able to work through the [infra setup notes](/infra/README.md/#setup), including working with your administrator to go through the [bootstrap administrative steps](/infra/README.md/#administrative-steps) and pushing the [backend state to Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli).
-    * <mark>For convenience, administrative steps are included in the [bootstrap Terraform Project](/infra/terraform/bootstrap/README.md/#bootstrap-terraform).</mark>
+    > <mark>For convenience, administrative steps are included in the [bootstrap Terraform Project](/infra/terraform/bootstrap/README.md/#bootstrap-terraform). </mark>
 
 2. You have an Azure DevOps project and have [imported this repository](https://docs.microsoft.com/en-us/azure/devops/repos/git/import-git-repository?view=azure-devops).
 

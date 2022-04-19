@@ -165,6 +165,8 @@ WHERE type NOT IN ('A', 'G', 'R', 'X')
 ORDER BY username;
 ```
 
+If you have recently added the Broadsea Azure App Service Managed Identity to Azure SQL as part of the [Post TF deployment steps](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps), you can restart your Broadsea [Azure App Service](https://docs.microsoft.com/en-us/azure/app-service/overview) to enable your [Broadsea-webtools container](/apps/broadsea-webtools/README.md) to pick up the MI.
+
 #### Check Data With a Query
 
 You can check for person data in Azure SQL using the following queries:

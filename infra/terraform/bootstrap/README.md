@@ -219,7 +219,7 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
     cd infra/terraform/bootstrap
     ```
 
-2. Review the [main.tf resources](/infra/terraform/bootstrap/main.tf) and [azure_ad.tf resources](/infra/terraform/bootstrap/azure_ad.tf) before you run the project
+2. Review the [main.tf resources](/infra/terraform/bootstrap/main.tf), [azure_ad.tf resources](/infra/terraform/bootstrap/azure_ad.tf), and [azure_devops.tf resouorces](/infra/terraform/bootstrap/azure_devops.tf) before you run the project
 
     * Importing an existing Azure DevOps project and repository into your terraform state
 
