@@ -1,4 +1,4 @@
-## Separate Environments
+# Separate Environments
 
 * Environments are separated through an Azure DevOps project and repository (e.g. `prefix-environment-OHDSIonAzure` for your project and `prefix-environment-OHDSIonAzure` for your repository) per environment as a scale unit to ease security and permissioning for future teams.
   * E.g. your dev team can have access to `<prefix>-dev-OHDSIonAzure` inside of Azure DevOps, but only your QA team can access `<prefix>-qa-OHDSIonAzure`.  Users can be [mapped](https://docs.microsoft.com/en-us/azure/devops/organizations/security/add-users-team-project?view=azure-devops&tabs=preview-page) by your [Azure DevOps administrator](https://docs.microsoft.com/en-us/azure/devops/organizations/security/add-remove-manage-user-group-security-group?view=azure-devops&tabs=preview-page#prerequisites).
@@ -22,9 +22,11 @@
 
     * Your application pipelines (e.g. [broadsea pipelines](/pipelines/README.md/#broadsea-pipelines) and [vocabulary pipelines](/pipelines//README.md/#vocabulary-pipelines)) will use One (1) variable group ending with [omop-environment-settings-vg](/docs/update_your_variables.md#3-omop-environment-settings-vg)
 
-  * The variable groups should be authorized according to usage (E.g. [bootstrap-vg](/docs/update_your_variables.md#1-bootstrap-vg) will be authorized for your [Environment pipeline](/pipelines/README.md#environment-pipeline) but not your [Vocabulary Build pipeline](/pipelines/README.md#)).  This will prevent your [Vocabulary Build Pipline](/pipelines/README.md#vocabulary-build-pipeline) from reading Key Vault linked secrets in your [bootstrap-vg](/docs/update_your_variables.md#1-bootstrap-vg).
+  * The variable groups should be authorized according to usage (E.g. [bootstrap-vg](/docs/update_your_variables.md#1-bootstrap-vg) will be authorized for your [Environment pipeline](/pipelines/README.md#environment-pipeline) but not your [Vocabulary Build pipeline](/pipelines/README.md#)).
+    > This will prevent your [Vocabulary Build Pipline](/pipelines/README.md#vocabulary-build-pipeline) from reading Key Vault linked secrets in your [bootstrap-vg](/docs/update_your_variables.md#1-bootstrap-vg).
 
-  * Given that the `prefix` and `environment` will be coming into the pipeline from the authorized [variable groups](/docs/update_your_variables.md), some features like [build completion triggers](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/pipeline-triggers?tabs=yaml&view=azure-devops#configure-pipeline-resource-triggers) will need to be re-enabled later by directly mapping the values into the pipeline yaml.  See the [Vocabulary Release Pipeline](/pipelines/vocabulary_release_pipeline.yaml) for an example.
+  * Given that the `prefix` and `environment` will be coming into the pipeline from the authorized [variable groups](/docs/update_your_variables.md), some features like [build completion triggers](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/pipeline-triggers?tabs=yaml&view=azure-devops#configure-pipeline-resource-triggers) will need to be re-enabled later by directly mapping the values into the pipeline yaml.
+    > See the [Vocabulary Release Pipeline](/pipelines/vocabulary_release_pipeline.yaml) for an example.
 
 ### Setting up Agent Pools
 

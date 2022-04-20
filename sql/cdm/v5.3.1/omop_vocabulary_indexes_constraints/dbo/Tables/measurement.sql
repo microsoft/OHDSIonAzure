@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[measurement] (
+CREATE TABLE [dbo].[measurement] (
     [measurement_id]                INT           NOT NULL,
     [person_id]                     INT           NOT NULL,
     [measurement_concept_id]        INT           NOT NULL,
@@ -45,4 +45,3 @@ CREATE NONCLUSTERED INDEX [idx_measurement_concept_id]
 GO
 CREATE CLUSTERED INDEX [idx_measurement_person_id]
     ON [dbo].[measurement]([person_id] ASC);
-

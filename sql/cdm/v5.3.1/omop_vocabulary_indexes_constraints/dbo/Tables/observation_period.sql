@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[observation_period] (
+CREATE TABLE [dbo].[observation_period] (
     [observation_period_id]         INT  NOT NULL,
     [person_id]                     INT  NOT NULL,
     [observation_period_start_date] DATE NOT NULL,
@@ -13,4 +13,3 @@
 GO
 CREATE CLUSTERED INDEX [idx_observation_period_id]
     ON [dbo].[observation_period]([person_id] ASC);
-

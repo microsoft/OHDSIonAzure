@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[observation] (
+CREATE TABLE [dbo].[observation] (
     [observation_id]                INT           NOT NULL,
     [person_id]                     INT           NOT NULL,
     [observation_concept_id]        INT           NOT NULL,
@@ -43,4 +43,3 @@ CREATE NONCLUSTERED INDEX [idx_observation_concept_id]
 GO
 CREATE CLUSTERED INDEX [idx_observation_person_id]
     ON [dbo].[observation]([person_id] ASC);
-

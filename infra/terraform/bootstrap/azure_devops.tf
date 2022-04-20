@@ -31,7 +31,7 @@ resource "azuredevops_git_repository" "repo" {
   project_id = azuredevops_project.project.id
   name       = "OHDSIonAzure" # keep this if you are just importing an existing repository according to the name
   # name       = "${var.prefix}-${var.environment}-OHDSIonAzure" # you have an option to rename the repository
-  
+
   # Comment this out if you want to make a new repo
   initialization {
     init_type = "Uninitialized"

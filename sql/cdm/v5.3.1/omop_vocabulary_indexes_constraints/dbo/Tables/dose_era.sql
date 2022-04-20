@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[dose_era] (
+CREATE TABLE [dbo].[dose_era] (
     [dose_era_id]         INT        NOT NULL,
     [person_id]           INT        NOT NULL,
     [drug_concept_id]     INT        NOT NULL,
@@ -21,4 +21,3 @@ CREATE NONCLUSTERED INDEX [idx_dose_era_concept_id]
 GO
 CREATE CLUSTERED INDEX [idx_dose_era_person_id]
     ON [dbo].[dose_era]([person_id] ASC);
-

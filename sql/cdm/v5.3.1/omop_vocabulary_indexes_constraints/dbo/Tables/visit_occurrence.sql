@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[visit_occurrence] (
+CREATE TABLE [dbo].[visit_occurrence] (
     [visit_occurrence_id]           INT           NOT NULL,
     [person_id]                     INT           NOT NULL,
     [visit_concept_id]              INT           NOT NULL,
@@ -36,4 +36,3 @@ CREATE NONCLUSTERED INDEX [idx_visit_concept_id]
 GO
 CREATE CLUSTERED INDEX [idx_visit_person_id]
     ON [dbo].[visit_occurrence]([person_id] ASC);
-

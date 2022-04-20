@@ -1,5 +1,7 @@
+# hadolint ignore=DL3006
 FROM rocker/tidyverse
 
+# hadolint ignore=DL3008,DL3009,DL3015
 RUN apt-get update && apt-get install -y python-dev openjdk-8-jdk liblzma-dev libbz2-dev \
 && R CMD javareconf
 

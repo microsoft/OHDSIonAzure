@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[drug_exposure] (
+CREATE TABLE [dbo].[drug_exposure] (
     [drug_exposure_id]             INT           NOT NULL,
     [person_id]                    INT           NOT NULL,
     [drug_concept_id]              INT           NOT NULL,
@@ -23,4 +23,3 @@
     [route_source_value]           VARCHAR (50)  NULL,
     [dose_unit_source_value]       VARCHAR (50)  NULL
 );
-

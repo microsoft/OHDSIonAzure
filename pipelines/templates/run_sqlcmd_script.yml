@@ -27,7 +27,7 @@ steps:
     azureSubscription: ${{ parameters.serviceConnection }}
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
-    addSpnToEnvironment: True
+    addSpnToEnvironment: true
     inlineScript: |
       echo '******************Copy Script******************'
       sudo cp '${{ parameters.sourceFolderPath }}/${{ parameters.scriptFileName }}' '${{ parameters.scriptFileName }}'
@@ -39,7 +39,7 @@ steps:
       az account show
 
       # save access token to file for use with -P and -G flag
-      # https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/connecting-with-sqlcmd?view=sql-server-ver15  
+      # https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/connecting-with-sqlcmd?view=sql-server-ver15
       az account get-access-token --resource https://database.windows.net --output tsv | cut -f 1 | tr -d '\n' | iconv -f ascii -t UTF-16LE > /tmp/tokenFile
 
       sudo apt-get update

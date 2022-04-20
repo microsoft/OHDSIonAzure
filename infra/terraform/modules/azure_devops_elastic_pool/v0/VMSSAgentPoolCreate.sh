@@ -34,5 +34,5 @@ createVMSSJson=$(curl -X POST "$ADO_ORG_SERVICE_URL/_apis/distributedtask/elasti
 --data "$(generate_request_body)" | jq )
 
 # extract values for use later
-echo $createVMSSJson | \
+echo "$createVMSSJson" | \
    jq '(.agentQueue.id|tostring) as $agentQueueId | (.agentPool.id|tostring) as $agentPoolId |(.elasticPool.poolId|tostring) as $elasticPoolId | { "elastic_pool_id": $elasticPoolId, "agent_queue_id": $agentQueueId, "agent_pool_id": $agentPoolId }'

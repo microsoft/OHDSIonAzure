@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[drug_strength] (
+CREATE TABLE [dbo].[drug_strength] (
     [drug_concept_id]             INT         NOT NULL,
     [ingredient_concept_id]       INT         NOT NULL,
     [amount_value]                FLOAT (53)  NULL,
@@ -12,4 +12,3 @@
     [valid_end_date]              VARCHAR (8) NOT NULL,
     [invalid_reason]              VARCHAR (1) NULL
 );
-

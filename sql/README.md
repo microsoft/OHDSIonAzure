@@ -12,7 +12,9 @@ There's also a [vocabulary loading script](/sql/cdm/v5.3.1/omop_vocabulary_ddl/S
 
 ### Deployment Notes
 
-You can use the [Vocabulary Build Pipeline](/pipelines/README.md/#vocabulary-build-pipeline) to build the artifacts ([script](#post-tf-deploy-script-notes) and [dacpacs](#cdm-notes)) for the vocabulary, and you can use the [Vocabulary Release Pipeline](/pipelines/README.md/#vocabulary-release-pipeline) to publish the artifacts to your Azure SQL CDM.  The dacpacs are built using [.NET 4.8](https://docs.microsoft.com/en-us/dotnet/framework/install/guide-for-developers), so for local development purposes, you need to ensure you have the associated developer pack installed.
+You can use the [Vocabulary Build Pipeline](/pipelines/README.md/#vocabulary-build-pipeline) to build the artifacts ([script](#post-tf-deploy-script-notes) and [dacpacs](#cdm-notes)) for the vocabulary, and you can use the [Vocabulary Release Pipeline](/pipelines/README.md/#vocabulary-release-pipeline) to publish the artifacts to your Azure SQL CDM.
+
+The dacpacs are built using [.NET 4.8](https://docs.microsoft.com/en-us/dotnet/framework/install/guide-for-developers), so for local development purposes, you need to ensure you have the associated developer pack installed.
 
 Similarly, you can use the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) to build the [web api script](#web-api-notes) and the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) to publish the script to your Azure SQL CDM.
 
@@ -48,7 +50,8 @@ This script also relies on the following [SQLCMD variables](https://docs.microso
 
 The [Post TF Deploy script](/sql/scripts/Post_TF_Deploy.sql) will setup access for Azure SQL and Azure Storage, as well as access for Azure App Service MI and the Azure VMSS MI to access Azure SQL.
 
-> You will need to ensure that you have [Directory Reader enabled](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal) for your Azure SQL Managed Identity.  If you don't have this enabled you can manually grant access to your Azure Managed Identities (for Azure App Service and Azure VMSS) with your [Azure SQL Azure AD Administrator](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?tabs=azure-powershell), see the [workaround](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps) for more details.
+> You will need to ensure that you have [Directory Reader enabled](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal) for your Azure SQL Managed Identity.
+If you don't have this enabled you can manually grant access to your Azure Managed Identities (for Azure App Service and Azure VMSS) with your [Azure SQL Azure AD Administrator](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?tabs=azure-powershell), see the [workaround](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps) for more details.
 
 This script also relies on the following [SQLCMD variables](https://docs.microsoft.com/en-us/sql/ssms/scripting/sqlcmd-use-with-scripting-variables?view=sql-server-ver15):
 

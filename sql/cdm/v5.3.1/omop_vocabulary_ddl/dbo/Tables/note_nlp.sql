@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[note_nlp] (
+CREATE TABLE [dbo].[note_nlp] (
     [note_nlp_id]                INT            NOT NULL,
     [note_id]                    INT            NOT NULL,
     [section_concept_id]         INT            NULL,
@@ -14,4 +14,3 @@
     [term_temporal]              VARCHAR (50)   NULL,
     [term_modifiers]             VARCHAR (2000) NULL
 );
-

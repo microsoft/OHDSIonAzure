@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[cost] (
+CREATE TABLE [dbo].[cost] (
     [cost_id]                  INT          NOT NULL,
     [cost_event_id]            INT          NOT NULL,
     [cost_domain_id]           VARCHAR (20) NOT NULL,
@@ -22,4 +22,3 @@
     [drg_concept_id]           INT          NULL,
     [drg_source_value]         VARCHAR (3)  NULL
 );
-

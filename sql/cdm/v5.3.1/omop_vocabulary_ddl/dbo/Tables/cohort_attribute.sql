@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[cohort_attribute] (
+CREATE TABLE [dbo].[cohort_attribute] (
     [cohort_definition_id]    INT        NOT NULL,
     [subject_id]              INT        NOT NULL,
     [cohort_start_date]       DATE       NOT NULL,
@@ -7,4 +7,3 @@
     [value_as_number]         FLOAT (53) NULL,
     [value_as_concept_id]     INT        NULL
 );
-

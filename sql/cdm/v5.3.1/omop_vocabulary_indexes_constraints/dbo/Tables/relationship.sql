@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[relationship] (
+CREATE TABLE [dbo].[relationship] (
     [relationship_id]         VARCHAR (20)  NOT NULL,
     [relationship_name]       VARCHAR (255) NOT NULL,
     [is_hierarchical]         VARCHAR (1)   NOT NULL,
@@ -14,4 +14,3 @@
 GO
 CREATE UNIQUE CLUSTERED INDEX [idx_relationship_rel_id]
     ON [dbo].[relationship]([relationship_id] ASC);
-

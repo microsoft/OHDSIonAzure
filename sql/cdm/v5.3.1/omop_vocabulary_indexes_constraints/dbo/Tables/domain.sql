@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[domain] (
+CREATE TABLE [dbo].[domain] (
     [domain_id]         VARCHAR (20)  NOT NULL,
     [domain_name]       VARCHAR (255) NOT NULL,
     [domain_concept_id] INT           NOT NULL,
@@ -10,4 +10,3 @@
 GO
 CREATE UNIQUE CLUSTERED INDEX [idx_domain_domain_id]
     ON [dbo].[domain]([domain_id] ASC);
-

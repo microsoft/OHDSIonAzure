@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[provider] (
+CREATE TABLE [dbo].[provider] (
     [provider_id]                 INT           NOT NULL,
     [provider_name]               VARCHAR (255) NULL,
     [NPI]                         VARCHAR (20)  NULL,
@@ -13,4 +13,3 @@
     [gender_source_value]         VARCHAR (50)  NULL,
     [gender_source_concept_id]    INT           NULL
 );
-

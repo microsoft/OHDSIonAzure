@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[attribute_definition] (
+CREATE TABLE [dbo].[attribute_definition] (
     [attribute_definition_id]   INT           NOT NULL,
     [attribute_name]            VARCHAR (255) NOT NULL,
     [attribute_description]     VARCHAR (MAX) NULL,
@@ -12,4 +12,3 @@
 GO
 CREATE CLUSTERED INDEX [idx_attribute_definition_id]
     ON [dbo].[attribute_definition]([attribute_definition_id] ASC);
-

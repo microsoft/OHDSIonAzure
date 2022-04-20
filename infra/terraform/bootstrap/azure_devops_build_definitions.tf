@@ -96,7 +96,7 @@ resource "azuredevops_build_definition" "vocabularyreleasepipeline" {
   ]
 
   variable {
-    name = "vocabularyBuildPipelineId"
+    name  = "vocabularyBuildPipelineId"
     value = azuredevops_build_definition.vocabularybuildpipeline.id
   }
 
@@ -179,7 +179,7 @@ resource "azuredevops_build_definition" "broadseareleasepipeline" {
   ]
 
   variable {
-    name = "broadseaBuildPipelineId"
+    name  = "broadseaBuildPipelineId"
     value = azuredevops_build_definition.broadseabuildpipeline.id
   }
 

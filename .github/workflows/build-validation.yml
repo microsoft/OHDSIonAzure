@@ -1,0 +1,118 @@
+---
+#################################
+#################################
+## Super Linter GitHub Actions ##
+#################################
+#################################
+name: Lint Code Base
+
+#
+# Documentation:
+# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions
+#
+
+#############################
+# Start the job on all push #
+#############################
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches-ignore: [main]
+    # Remove the line above to run when pushing to main
+  pull_request:
+    branches: [main]
+
+# for each ref (branch/pr) run just the most recent,
+# cancel other pending/running ones
+concurrency:
+  group: "${{ github.workflow }}-${{ github.head_ref }}"
+  cancel-in-progress: true
+
+###############
+# Set the Job #
+###############
+jobs:
+  build:
+    # Name the Job
+    name: Lint Code Base
+    # Set the agent to run on
+    runs-on: ubuntu-latest
+
+    ##################
+    # Load all steps #
+    ##################
+    steps:
+      ##########################
+      # Checkout the code base #
+      ##########################
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            terraform:
+              # our Terraform uses more than just *.tf files, so need to check changes in the folder
+              - '**/terraform/**/*'
+
+      - name: Terraform format check
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: terraform fmt -check -recursive
+
+      # find all terraform folders and run validate to catch
+      # configuration errors
+      - name: Terraform validation
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: |
+          echo "***** Mirroring plugin for TF provider *****"
+          PLUGIN_PATH=/usr/share/terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/linux_amd64
+          mkdir -p $PLUGIN_PATH
+          curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_linux_amd64.zip'
+          unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
+          rm _
+          chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
+
+          echo "***** Checking plan for infra/terraform/omop *****"
+
+          echo "***** Validating: infra/terraform/bootstrap *****"
+          terraform -chdir=infra/terraform/bootstrap init -backend=false
+          terraform -chdir=infra/terraform/bootstrap validate
+
+          # TODO: Revisit after setting az login context
+          # echo "***** Checking plan for infra/terraform/bootstrap *****"
+          # terraform -chdir=infra/terraform/bootstrap plan
+
+          echo "***** Validating: infra/terraform/omop *****"
+          terraform -chdir=infra/terraform/omop init -backend=false
+          terraform -chdir=infra/terraform/omop validate
+
+          # TODO: Revisit after setting az login context
+          # echo "***** Checking plan for infra/terraform/omop *****"
+          # terraform -chdir=infra/terraform/omop plan
+
+      ################################
+      # Run Linter against code base #
+      ################################
+      - name: Lint Code Base
+        # the slim image is 2GB smaller and we don't use the extra stuff
+        # Moved this after the Terraform checks above due something similar to this issue: https://github.com/github/super-linter/issues/2433
+        uses: github/super-linter/slim@v4
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MARKDOWN_CONFIG_FILE: .markdownlint.json
+          SQLFLUFF_CONFIG_FILE: .sqlfluff
+          YAML_CONFIG_FILE: .yaml-lint.yml
+          VALIDATE_MARKDOWN: true
+          VALIDATE_YAML: true
+          VALIDATE_TERRAFORM_TFLINT: true
+          VALIDATE_BASH: true
+          VALIDATE_POWERSHELL: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
+          VALIDATE_SQLFLUFF: true # validate_sql does not support tsql
+          VALIDATE_GITHUB_ACTIONS: true
