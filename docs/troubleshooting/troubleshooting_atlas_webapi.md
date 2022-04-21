@@ -15,7 +15,6 @@ Here's some notes for troubleshooting around Atlas and WebAPI.  Be sure to work 
     6. Confirm [Web API Schema Exists](#confirm-web-api-schema-exists)
         * Manually [Setup Second WebAPI schema for object comparison](#manually-setup-second-webapi-schema-for-object-comparison)
 
-
 ## Connecting Azure App Service To Azure Container Registry
 
 1. Terraform should incorporate access for the Azure App Service MI to access Azure Container registry.  You can confirm these changes in the Azure Portal after having run Terraform for your [environment](/pipelines/README.md/#environment-pipeline).
@@ -107,9 +106,11 @@ The Azure App service should have open networking through TF.  You can confirm w
 ### Manually Check the Azure App Service is up
 
 1. If WebAPI and Atlas are set up correctly, you should see the following by checking https://my-app-service.azurewebsites.net/atlas:
+
 ![Confirm Atlas](/docs/media/confirm_acr_broadsea_webtools_1.png)
 
 2. You can also check the WebAPI refresh by checking https://my-app-service.azurewebsites.net/WebAPI/source/sources:
+
 ![Confirm WebApi](/docs/media/confirm_webapi_1.png)
 
 #### Web API responds with a 404
@@ -142,6 +143,7 @@ Assuming that the Azure App Service can [pull an image from ACR](#connecting-azu
 ```bash
 tail -f -n 500 /var/log/supervisor/deploy-script-stdout*
 ```
+
 ### Application Logs in Azure Monitoring
 
 ## TODO: Verify this is available
@@ -220,7 +222,7 @@ You can also update your Broadsea App Service Configuration to point to a test s
 
 1. Update your Broadsea App Service Configuration
 
-| Setting Name | Sample Value | 
+| Setting Name | Sample Value |
 |--|--|
 | datasource.ohdis.schema | `webapi2` |
 | flyway.placeholders.ohdsiSchema | `webapi2` |
@@ -233,6 +235,7 @@ You can also update your Broadsea App Service Configuration to point to a test s
 2. Once the values are saved, click the Save button.
 
 3. Restart your App Service.
+
   > This step should allow WebAPI to create objects in the new schema
 
 ![Restart App Service](/docs/media/azure_app_service_restart.png)
@@ -242,6 +245,7 @@ You can also update your Broadsea App Service Configuration to point to a test s
 You can now compare the objects that are created with the original `webapi` schema and `webapi2` schema in Azure SQL.
 
 1. Check Views
+
 ```sql
 SELECT OBJECT_SCHEMA_NAME(v.object_id) + '.' + v.name AS [Name]
 FROM sys.views v
@@ -249,6 +253,7 @@ WHERE OBJECT_SCHEMA_NAME(v.object_id) IN ('webapi', 'webapi2')
 ```
 
 2. Check Tables
+
 ```sql
 SELECT TABLE_SCHEMA + '.' + TABLE_NAME AS [Name]
 FROM INFORMATION_SCHEMA.TABLES
@@ -257,6 +262,7 @@ ORDER BY TABLE_NAME
 ```
 
 3. Check Sequences
+
 ```sql
 SELECT OBJECT_SCHEMA_NAME(s.object_id) + '.' + s.Name
 FROM sys.sequences s
@@ -265,6 +271,7 @@ ORDER BY s.name
 ```
 
 ##### Step 3. Drop SQL Objects in new schema
+
 You can use the following queries to run in Azure SQL.
 
 1. Drop Tables - This will generate a list of Drop Table SQL statements, which you can check before copying and pasting the queries to actually run:
@@ -307,6 +314,7 @@ PRINT @SqlStatement
 ```
 
 4. Drop Schema
+
 > Once the dependent objects from the new schema are dropped, you can drop the new schema:
 
 ```sql

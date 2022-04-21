@@ -24,6 +24,7 @@ The following settings should be covered through TF and the [administrative step
 1. Connect to ACR in the Azure Portal
 
 2. Confirm SP service connection is added to ACR with at least `ACRPush`.
+
   ![Azure Container Registry ACRPush for SP Service Connection](/docs/media/acr_sp_service_connection_mi.png)
   > In this case the Service Connection has `Contributor` which should be sufficient access
 
@@ -37,6 +38,7 @@ This assumes that the [Build Agent has access to ACR](#confirm-build-agent-acces
   ![image.png](/docs/media/confirm_acr_broadsea_methods_1.png)
 
 3. You can re-run the [Broadsea Build Pipeline](/pipelines/README.md#broadsea-build-pipeline) using your branch and include the option **build and publish broadsea-methods (Achilles / ETL-Synthea)** to push a new image to ACR
+
 ![Build and push Achilles / ETL-Synthea using the pipeline](/docs/media/broadsea_build_pipeline_achilles_etl_synthea.png)
   > Note that you will want to run the [Broadsea Build Pipeline](/pipelines/README.md#broadsea-build-pipeline) using your branch and include the option **build and publish broadsea-methods (Achilles / ETL-Synthea)** to ensure an image is in ACR **before** running the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) using your branch.
 

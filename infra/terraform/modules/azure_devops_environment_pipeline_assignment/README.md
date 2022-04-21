@@ -33,7 +33,7 @@ You will need to ensure that you can successfully `terraform init` from the root
 1. Make sure you have [setup your Azure DevOps provider](https://registry.terraform.io/providers/microsoft/azuredevops/latest/docs/guides/authenticating_using_the_personal_access_token#configure-environment-variables)
     * Ensure that your Azure DevOps PAT also has the following permissions:
         * Agent Pools: Read & Manage
-        * Environment: Read & Manage 
+        * Environment: Read & Manage
 
 2. Ensure that you have the following variables for use with the module:
 

@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[payer_plan_period] (
+CREATE TABLE [dbo].[payer_plan_period] (
     [payer_plan_period_id]          INT          NOT NULL,
     [person_id]                     INT          NOT NULL,
     [payer_plan_period_start_date]  DATE         NOT NULL,
@@ -24,4 +24,3 @@
 GO
 CREATE CLUSTERED INDEX [idx_period_person_id]
     ON [dbo].[payer_plan_period]([person_id] ASC);
-

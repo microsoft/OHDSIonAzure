@@ -1,17 +1,17 @@
 /*
-Post-Deployment Script Template							
+Post-Deployment Script Template
 --------------------------------------------------------------------------------------
- This file contains SQL statements that will be appended to the build script.		
- Use SQLCMD syntax to include a file in the post-deployment script.			
- Example:      :r .\myfile.sql								
- Use SQLCMD syntax to reference a variable in the post-deployment script.		
- Example:      :setvar TableName MyTable							
-               SELECT * FROM [$(TableName)]					
+ This file contains SQL statements that will be appended to the build script
+ Use SQLCMD syntax to include a file in the post-deployment script.
+ Example:      :r .\myfile.sql
+ Use SQLCMD syntax to reference a variable in the post-deployment script.
+ Example:      :setvar TableName MyTable
+               SELECT * FROM [$(TableName)]
 --------------------------------------------------------------------------------------
 */
 
 -- remove any previously added database connection configuration data
-DELETE webapi.source_daimon;
+DELETE webapi.source_daimon; -- noqa: PRS
 DELETE webapi.source;
 
 -- TODO: Should this exist in the webapi instead? For now, allowing null based on insert
@@ -20,7 +20,12 @@ ALTER COLUMN [krb_auth_method] [varchar](10) NULL -- NOT NULL in existing setup,
 
 -- SET webapi CDM source
 INSERT INTO webapi.source( source_id, source_name, source_key, source_connection, source_dialect)
-VALUES (1, 'webapi CDM V5 Database', 'webapi-CDMV5','jdbc:sqlserver://$(SQL_SERVER_NAME).database.windows.net:1433;database=$(SQL_DATABASE_NAME);encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;Authentication=ActiveDirectoryMsi', 'sql server');
+VALUES (
+    1,
+    'webapi CDM V5 Database',
+    'webapi-CDMV5',
+    'jdbc:sqlserver://$(SQL_SERVER_NAME).database.windows.net:1433;database=$(SQL_DATABASE_NAME);encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;Authentication=ActiveDirectoryMsi',
+    'sql server');
 
 -- CDM daimon
 INSERT INTO webapi.source_daimon( source_daimon_id, source_id, daimon_type, table_qualifier, priority) VALUES (1, 1, 0, 'dbo', 2);

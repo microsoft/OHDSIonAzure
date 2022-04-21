@@ -125,7 +125,7 @@ stages:
                 fileName: ${{ parameters.scriptFileNameWebApi }}
                 buildArtifactFolderPath: ${{ parameters.buildArtifactFolderPathWebApi }}
                 buildArtifactName: ${{ parameters.buildArtifactNameWebApi }}
-        
+
             - template: templates/cleanup_working_directory.yml
               parameters:
                 enableCleanup: '$(enableCleanup)'
@@ -142,7 +142,7 @@ stages:
       workspace:
         clean: all
       continueOnError: 'false'
-      
+
       # Azure DevOps environment should be setup through bootstrap TF and come from your environment-settings-vg
       environment: $(broadsea_build_environment)
       strategy:
@@ -157,7 +157,7 @@ stages:
                 sourceFolder: ${{ parameters.dockerBuildSourceFolderBroadseaWebTools }}
                 imageName: ${{ parameters.dockerBuildImageNameBroadseaWebTools }}
                 imageTag: ${{ parameters.dockerBuildImageTagBroadseaWebTools }}
-            
+
             - template: templates/cleanup_working_directory.yml
               parameters:
                 enableCleanup: '$(enableCleanup)'

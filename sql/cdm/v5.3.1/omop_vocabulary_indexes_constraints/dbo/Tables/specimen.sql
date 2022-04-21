@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[specimen] (
+CREATE TABLE [dbo].[specimen] (
     [specimen_id]                 INT           NOT NULL,
     [person_id]                   INT           NOT NULL,
     [specimen_concept_id]         INT           NOT NULL,
@@ -32,4 +32,3 @@ CREATE NONCLUSTERED INDEX [idx_specimen_concept_id]
 GO
 CREATE CLUSTERED INDEX [idx_specimen_person_id]
     ON [dbo].[specimen]([person_id] ASC);
-

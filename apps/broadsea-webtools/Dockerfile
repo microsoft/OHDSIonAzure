@@ -1,3 +1,4 @@
+# hadolint ignore=DL3006
 FROM tomcat:9.0.46-jdk8-openjdk-buster
 
 # OHDSI WebAPI and ATLAS web application running in Tomcat
@@ -15,6 +16,7 @@ ENV ATLAS_RELEASE=2.10.1
 ARG WEBAPI_WAR=WebAPI-2.9.0.war
 
 # install linux utilities and supervisor daemon
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     unzip \
@@ -27,14 +29,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # install mysql client
+# hadolint ignore=DL4006
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+# hadolint ignore=DL4006
 RUN curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list | tee /etc/apt/sources.list.d/msprod.list
+# hadolint ignore=DL3008,DL3009,DL3015
 RUN apt-get update && ACCEPT_EULA=Y apt-get -y install mssql-tools unixodbc-dev
+# hadolint ignore=SC2016
 RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile
+# hadolint ignore=DL4006,DL3059,SC2016
 RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+# hadolint ignore=DL3059
 RUN /bin/bash -c "source ~/.bashrc"
 
 # Install OpenSSH and set the password for root to "Docker!". In this example, "apk add" is the install instruction for an Alpine Linux-based image.
+# hadolint ignore=DL4006,DL3008,DL3009
 RUN export DEBIAN_FRONTEND=noninteractive \
 && apt-get update \
 && apt-get -y install --no-install-recommends openssh-server \
@@ -47,16 +56,25 @@ COPY config/sshd_config /etc/ssh/
 EXPOSE 80 2222
 
 # install npm and upgrade it to the latest version
+# hadolint ignore=DL3000
 WORKDIR ~
+# hadolint ignore=DL3027
 RUN curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh \
     && chmod +x nodesource_setup.sh \
     && bash nodesource_setup.sh
+# hadolint ignore=DL3059,DL3027
 RUN apt -y install nodejs
+# hadolint ignore=DL3059
 RUN node -v
+# hadolint ignore=DL3009
 RUN apt-get update && apt-get install -y --no-install-recommends
+# hadolint ignore=DL3059,DL3016
 RUN rm -rf /var/lib/apt/lists/*
+# hadolint ignore=DL3059,DL3016
 RUN npm install -g npm
+# hadolint ignore=DL3059,DL3042,DL3013
 RUN pip install setuptools
+# hadolint ignore=DL3042,DL3059,DL3013
 RUN pip install supervisor-stdout
 
 # deploy the OHDSI WEBAPI and OHDSI ATLAS web application to the Tomcat server
@@ -79,13 +97,15 @@ WORKDIR /WebAPI/
 RUN git checkout master
 RUN mkdir WebAPIConfig && mv sample_settings.xml WebAPIConfig/settings.xml
 RUN mvn clean package -DskipUnitTests -DskipITtests -s WebAPIConfig/settings.xml -P webapi-mssql
+# hadolint ignore=DL3059
 RUN mv /WebAPI/target/WebAPI.war /usr/local/tomcat/webapps/WebAPI.war
 
 # set working directory to the Tomcat server webapps directory
 WORKDIR /usr/local/tomcat/webapps
 
 # deploy the released OHDSI Atlas web application
-RUN wget https://github.com/OHDSI/Atlas/archive/v$ATLAS_RELEASE.zip \
+# hadolint ignore=DL4001
+RUN wget --progress=dot:giga https://github.com/OHDSI/Atlas/archive/v$ATLAS_RELEASE.zip \
     && unzip /usr/local/tomcat/webapps/v$ATLAS_RELEASE.zip \
     && mv /usr/local/tomcat/webapps/Atlas-$ATLAS_RELEASE /usr/local/tomcat/webapps/atlas \
     && rm -f v$ATLAS_RELEASE.zip
@@ -95,6 +115,7 @@ WORKDIR /usr/local/tomcat/webapps/atlas
 RUN npm run build
 
 # create directories for optional jdbc drivers and the log files
+# hadolint ignore=DL3059
 RUN mkdir -p /tmp/drivers /var/log/supervisor
 
 # install supervisord configuration file

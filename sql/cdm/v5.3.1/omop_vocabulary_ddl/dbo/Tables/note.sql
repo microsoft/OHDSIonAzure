@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[note] (
+CREATE TABLE [dbo].[note] (
     [note_id]               INT           NOT NULL,
     [person_id]             INT           NOT NULL,
     [note_date]             DATE          NOT NULL,
@@ -14,4 +14,3 @@
     [visit_detail_id]       INT           NULL,
     [note_source_value]     VARCHAR (50)  NULL
 );
-

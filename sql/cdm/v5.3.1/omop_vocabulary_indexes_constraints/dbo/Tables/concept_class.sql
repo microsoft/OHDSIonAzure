@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[concept_class] (
+CREATE TABLE [dbo].[concept_class] (
     [concept_class_id]         VARCHAR (20)  NOT NULL,
     [concept_class_name]       VARCHAR (255) NOT NULL,
     [concept_class_concept_id] INT           NOT NULL,
@@ -10,4 +10,3 @@
 GO
 CREATE UNIQUE CLUSTERED INDEX [idx_concept_class_class_id]
     ON [dbo].[concept_class]([concept_class_id] ASC);
-

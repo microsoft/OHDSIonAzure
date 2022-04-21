@@ -11,9 +11,9 @@ Here's some notes around troubleshooting vocabulary.
 
 ## Verify the appropriate SQL settings
 
-1.  Verify the storage account is configured as a data source
+1. Verify the storage account is configured as a data source
 
-    ```
+    ```sql
     SELECT
         eds.[name],
         eds.[location],
@@ -21,9 +21,10 @@ Here's some notes around troubleshooting vocabulary.
     FROM sys.external_data_sources eds
     WHERE eds.name = 'DSVocabularyBlobStorage'
     ```
+
 1. Verify the MI Service connection is configured for access:
 
-   ```
+   ```sql
    SELECT NAME AS username,
          create_date,
          modify_date,
@@ -71,6 +72,7 @@ You may run into additional issues with loading the data after **indexes** or **
 ![source_to_concept_map.csv in storage account](/docs/media/vocabulary_storage_account_source_to_concept_mapping.png)
 
 3. Download the **tab-delimited** file and confirm the file contents contains **only a row header**:
+
 ```csv
 source_code	source_concept_id	source_vocabulary_id	source_code_description	target_concept_id	target_vocabulary_id	valid_start_date	valid_end_date	invalid_reason
 ```
@@ -94,7 +96,9 @@ If you notice that loading the data from the Azure Storage Account to Azure SQL 
 You may even notice that Azure SQL will have errors relating to insufficient space, in which case you may consider scaling storage.
 
 You can control these settings through different methods including:
+
 1. [Terraform](/infra/terraform/omop) including updating your [variable group](/docs/update_your_variables.md/#2-bootstrap-settings-vg)
+
 2. Manually updating the settings in the Portal for your [Azure SQL Server](https://docs.microsoft.com/en-us/azure/azure-sql/database/single-database-scale#change-storage-size)
 
 ![Scale Azure SQL Server in the Portal](/docs/media/vocabulary_azure_sql_scale.png)

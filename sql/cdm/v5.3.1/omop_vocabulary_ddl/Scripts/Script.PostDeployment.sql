@@ -1,12 +1,12 @@
-﻿/*
-Post-Deployment Script Template							
+/*
+Post-Deployment Script Template
 --------------------------------------------------------------------------------------
- This file contains SQL statements that will be appended to the build script.		
- Use SQLCMD syntax to include a file in the post-deployment script.			
- Example:      :r .\myfile.sql								
- Use SQLCMD syntax to reference a variable in the post-deployment script.		
- Example:      :setvar TableName MyTable							
-               SELECT * FROM [$(TableName)]					
+ This file contains SQL statements that will be appended to the build script.
+ Use SQLCMD syntax to include a file in the post-deployment script.
+ Example:      :r .\myfile.sql
+ Use SQLCMD syntax to reference a variable in the post-deployment script.
+ Example:      :setvar TableName MyTable
+               SELECT * FROM [$(TableName)]
 --------------------------------------------------------------------------------------
 */
 
@@ -31,8 +31,8 @@ BEGIN
 END
 
 
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
-           WHERE TABLE_NAME = N'concept')
+IF EXISTS (SELECT table_name FROM INFORMATION_SCHEMA.TABLES
+           WHERE table_name = N'concept')
 BEGIN
   PRINT('Concept table exists')
   TRUNCATE TABLE concept
@@ -43,8 +43,8 @@ BEGIN
 END
 
 
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
-           WHERE TABLE_NAME = N'concept_ancestor')
+IF EXISTS (SELECT table_name FROM INFORMATION_SCHEMA.TABLES
+           WHERE table_name = N'concept_ancestor')
 BEGIN
   PRINT('concept_ancestor table exists')
   TRUNCATE TABLE concept_ancestor
@@ -55,8 +55,8 @@ BEGIN
 END
 
 
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
-           WHERE TABLE_NAME = N'concept_class')
+IF EXISTS (SELECT table_name FROM INFORMATION_SCHEMA.TABLES
+           WHERE table_name = N'concept_class')
 BEGIN
   PRINT('concept_class table exists')
   TRUNCATE TABLE concept_class
@@ -67,8 +67,8 @@ BEGIN
 END
 
 
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
-           WHERE TABLE_NAME = N'concept_relationship')
+IF EXISTS (SELECT table_name FROM INFORMATION_SCHEMA.TABLES
+           WHERE table_name = N'concept_relationship')
 BEGIN
   PRINT('concept_relationship table exists')
   TRUNCATE TABLE concept_relationship
@@ -79,8 +79,8 @@ BEGIN
 END
 
 
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
-           WHERE TABLE_NAME = N'concept_synonym')
+IF EXISTS (SELECT table_name FROM INFORMATION_SCHEMA.TABLES
+           WHERE table_name = N'concept_synonym')
 BEGIN
   PRINT('concept_synonym table exists')
   TRUNCATE TABLE concept_synonym
@@ -91,8 +91,8 @@ BEGIN
 END
 
 
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
-           WHERE TABLE_NAME = N'domain')
+IF EXISTS (SELECT table_name FROM INFORMATION_SCHEMA.TABLES
+           WHERE table_name = N'domain')
 BEGIN
   PRINT('domain table exists')
   TRUNCATE TABLE domain
@@ -103,8 +103,8 @@ BEGIN
 END
 
 
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
-           WHERE TABLE_NAME = N'drug_strength')
+IF EXISTS (SELECT table_name FROM INFORMATION_SCHEMA.TABLES
+           WHERE table_name = N'drug_strength')
 BEGIN
   PRINT('drug_strength table exists')
   TRUNCATE TABLE drug_strength
@@ -115,8 +115,8 @@ BEGIN
 END
 
 
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
-           WHERE TABLE_NAME = N'relationship')
+IF EXISTS (SELECT table_name FROM INFORMATION_SCHEMA.TABLES
+           WHERE table_name = N'relationship')
 BEGIN
   PRINT('relationship table exists')
   TRUNCATE TABLE relationship
@@ -127,8 +127,8 @@ BEGIN
 END
 
 
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
-           WHERE TABLE_NAME = N'source_to_concept_map')
+IF EXISTS (SELECT table_name FROM INFORMATION_SCHEMA.TABLES
+           WHERE table_name = N'source_to_concept_map')
 BEGIN
   PRINT('source_to_concept_map table exists')
   TRUNCATE TABLE source_to_concept_map
@@ -139,8 +139,8 @@ BEGIN
 END
 
 
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
-           WHERE TABLE_NAME = N'vocabulary')
+IF EXISTS (SELECT table_name FROM INFORMATION_SCHEMA.TABLES
+           WHERE table_name = N'vocabulary')
 BEGIN
   PRINT('vocabulary table exists')
   TRUNCATE TABLE vocabulary
@@ -154,12 +154,12 @@ END
 DECLARE @row_count int
 
 -- concept
-SELECT @row_count = COUNT(*) from concept
+SELECT @row_count = COUNT(*) FROM concept
 
-PRINT('Before Bulk Insert concept Table has ' + CONVERT(varchar(20), @row_count) + ' rows')
+PRINT('Before Bulk Insert concept Table has ' + CONVERT(varchar(20), @row_count) + ' rows')  -- noqa: PRS
 
 
-BULK INSERT concept
+BULK INSERT concept -- noqa: PRS
 FROM '$(VocabulariesContainerPath)/CONCEPT.csv'
 WITH (DATA_SOURCE = '$(DSVocabularyBlobStorageName)',
 	FIRSTROW = 2,

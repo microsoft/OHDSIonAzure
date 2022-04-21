@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[condition_occurrence] (
+CREATE TABLE [dbo].[condition_occurrence] (
     [condition_occurrence_id]       INT           NOT NULL,
     [person_id]                     INT           NOT NULL,
     [condition_concept_id]          INT           NOT NULL,
@@ -16,4 +16,3 @@
     [condition_status_source_value] VARCHAR (50)  NULL,
     [condition_status_concept_id]   INT           NULL
 );
-

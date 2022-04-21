@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[payer_plan_period] (
+CREATE TABLE [dbo].[payer_plan_period] (
     [payer_plan_period_id]          INT          NOT NULL,
     [person_id]                     INT          NOT NULL,
     [payer_plan_period_start_date]  DATE         NOT NULL,
@@ -17,4 +17,3 @@
     [stop_reason_source_value]      VARCHAR (50) NULL,
     [stop_reason_source_concept_id] INT          NULL
 );
-

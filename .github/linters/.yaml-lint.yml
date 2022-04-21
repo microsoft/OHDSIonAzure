@@ -1,0 +1,15 @@
+extends: default
+
+rules:
+  # 260 chars should be enough, but don't fail if a line is longer
+  line-length:
+    max: 260
+    level: warning
+
+  comments:
+    min-spaces-from-content: 1
+
+  # Disable rules
+  indentation: disable
+  new-lines: disable
+  document-start: disable

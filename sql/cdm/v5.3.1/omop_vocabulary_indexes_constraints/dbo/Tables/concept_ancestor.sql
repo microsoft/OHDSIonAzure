@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[concept_ancestor] (
+CREATE TABLE [dbo].[concept_ancestor] (
     [ancestor_concept_id]      INT NOT NULL,
     [descendant_concept_id]    INT NOT NULL,
     [min_levels_of_separation] INT NOT NULL,
@@ -17,4 +17,3 @@ CREATE NONCLUSTERED INDEX [idx_concept_ancestor_id_2]
 GO
 CREATE CLUSTERED INDEX [idx_concept_ancestor_id_1]
     ON [dbo].[concept_ancestor]([ancestor_concept_id] ASC);
-

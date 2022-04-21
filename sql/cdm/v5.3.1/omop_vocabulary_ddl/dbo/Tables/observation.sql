@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[observation] (
+CREATE TABLE [dbo].[observation] (
     [observation_id]                INT           NOT NULL,
     [person_id]                     INT           NOT NULL,
     [observation_concept_id]        INT           NOT NULL,
@@ -18,4 +18,3 @@
     [unit_source_value]             VARCHAR (50)  NULL,
     [qualifier_source_value]        VARCHAR (50)  NULL
 );
-

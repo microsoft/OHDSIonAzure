@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[death] (
+CREATE TABLE [dbo].[death] (
     [person_id]               INT           NOT NULL,
     [death_date]              DATE          NOT NULL,
     [death_datetime]          DATETIME2 (7) NULL,
@@ -17,4 +17,3 @@
 GO
 CREATE CLUSTERED INDEX [idx_death_person_id]
     ON [dbo].[death]([person_id] ASC);
-

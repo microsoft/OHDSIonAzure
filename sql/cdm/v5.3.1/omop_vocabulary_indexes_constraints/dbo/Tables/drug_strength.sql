@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[drug_strength] (
+CREATE TABLE [dbo].[drug_strength] (
     [drug_concept_id]             INT         NOT NULL,
     [ingredient_concept_id]       INT         NOT NULL,
     [amount_value]                FLOAT (53)  NULL,
@@ -28,4 +28,3 @@ CREATE NONCLUSTERED INDEX [idx_drug_strength_id_2]
 GO
 CREATE CLUSTERED INDEX [idx_drug_strength_id_1]
     ON [dbo].[drug_strength]([drug_concept_id] ASC);
-

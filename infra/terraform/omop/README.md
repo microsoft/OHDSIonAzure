@@ -6,13 +6,13 @@ This Terraform project will setup your OMOP environment for OHDSI on Azure.
 
 This project will cover the resources in the `OMOP Resource Group`, which is depicted in the right side of the diagram.  This includes the following:
 
-- [Azure SQL Server](https://docs.microsoft.com/en-us/azure/azure-sql/database/logical-servers)
-- [Azure SQL Database](https://docs.microsoft.com/en-us/azure/azure-sql/database/sql-database-paas-overview)
-- [Azure Blob Storage Account](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview)
+* [Azure SQL Server](https://docs.microsoft.com/en-us/azure/azure-sql/database/logical-servers)
+* [Azure SQL Database](https://docs.microsoft.com/en-us/azure/azure-sql/database/sql-database-paas-overview)
+* [Azure Blob Storage Account](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview)
   * This will host your [Vocabulary Files](/docs/setup/setup_vocabulary.md)
-- [Azure App Service](https://docs.microsoft.com/en-us/azure/app-service/overview)
+* [Azure App Service](https://docs.microsoft.com/en-us/azure/app-service/overview)
   * This will host your [Broadsea-webtools](/apps/broadsea-webtools/README.md/#broadsea-webtools-notes) container
-- [Azure Container Registry](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-intro)
+* [Azure Container Registry](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-intro)
   * This will hold container images for [Broadsea-webtools](/apps/broadsea-webtools/README.md) and for [Broadsea-methods](/apps/broadsea-methods/README.md)
 
 ## Prerequisites
@@ -46,7 +46,7 @@ You can update your Terraform tfvars locally for testing, but you should also up
 
 2. You can update your [terraform.tfvars](/infra/terraform/omop/terraform.tfvars) with the following values:
 
-```
+```hcl
 prefix              = "sharing" # set to a given prefix for your environment
 
 environment         = "dev" # this should match the naming convention for your environment from your bootstrap Terraform project
@@ -77,7 +77,7 @@ You can also review the following table which describes other OMOP Terraform var
 | asp_kind_edition | string | `Linux` | This is the Operating System for your [Azure App Service Plan](https://docs.microsoft.com/en-us/azure/app-service/overview-hosting-plans), and the default is `Linux` to host the [broadsea-webtools container](/apps/broadsea-webtools/README.md).  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) |
 | asp_sku_size | string | `P2V2` | This is the size for your [Azure App Service Plan](https://docs.microsoft.com/en-us/azure/app-service/overview-hosting-plans), and the default is `P2V2`.  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) |
 | asp_sku_tier | string | `PremiumV2` | This is the tier for your [Azure App Service Plan](https://docs.microsoft.com/en-us/azure/app-service/overview-hosting-plans), and the default is `PremiumV2`.  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) |
-| azure_service_connection_name | string | `sp-omop-service-connection` | This is the name of your [Azure DevOps Service Connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml) for your Azure DevOps project.  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg).  Note that this will be used to connect to Azure from your environment pipeline but will not be used to deploy an Azure DevOps service connection as this is handled through the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-devops) |
+| azure_service_connection_name | string | `sp-omop-service-connection` | This is the name of your [Azure DevOps Service Connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml) for your Azure DevOps project.  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg).  This will be used to connect to Azure from your environment pipeline but will not be used to deploy an Azure DevOps service connection as this is handled through the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-devops) |
 | cdr_vocab_container_name | string | `vocabularies` | The name of the blob container in the CDR storage account that will be used for vocabulary file uploads for your [Environment](/infra/terraform/omop/README.md).  The default is `vocabularies`.  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md). |
 | environment | string | `dev` | Use this to designate your TF environment.  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md). |
 | location | string | `westus3` | This is the location for the bootstrap resource group for your TF environment and will be used for your [Environment](/infra/terraform/omop/README.md).  The default is `westus3`.  This should be populated from your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) by the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md). |
@@ -99,7 +99,8 @@ Assuming you have updated your [variables](/infra/terraform/omop/README.md/#step
     ```
 
 2. Review the [main.tf resources](/infra/terraform/omop/main.tf) before you run your project
-  * The [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) will deploy an Azure Storage Account which you can use for your [backend state](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli#3-configure-terraform-backend-state)
+
+  > The [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) will deploy an Azure Storage Account which you can use for your [backend state](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli#3-configure-terraform-backend-state)
 
   1. Save your Azure Storage Account Key to an environment variable
 
@@ -128,7 +129,11 @@ Assuming you have updated your [variables](/infra/terraform/omop/README.md/#step
       ```hcl
       terraform init
       ```
-    
+
+    > You may encounter an error like `A change in the backend configuration has been detected, which may require migrating existing state.`
+    If you have different state stored in your `/infra/terraform/omop/.terraform/terraform.tfstate` file, you may look to relocate the terraform statefile to a different location to avoid conflicts, or, you can also use `terraform init -reconfigure` to utilize your new state instead.
+    You also have an option to attempt automatic migration of the state using `terraform init -migrate-state`.
+
     * Validate that your Terraform state is pushed into your Azure Storage Account
 
     ![Confirm Backend State File in Azure Storage](/docs/media/confirm_backend_state_file.png)
@@ -149,7 +154,8 @@ Assuming your [environment pipeline](#step-3-use-your-tf-environment-pipeline) r
 
 ![Add Azure App Service to Azure SQL AD Group](/docs/media/environment_pipeline_2.png)
 
-2. Share the command with your administrator and ensure they are able to successfully run the Azure CLI command.  This command will add your [Azure App Service Managed Identity](https://docs.microsoft.com/en-us/azure/app-service/overview-managed-identity) and your [Azure SQL Server Managed Identity](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial#add-azure-sql-managed-identity-to-the-group) to your Azure AD group which is an [Azure AD Administrator for your Azure SQL](/infra/terraform/bootstrap/README.md/#setup-azure-ad-group).  You will also need to add in your [Azure SQL Server Managed Identity to your Directory Readers Azure AD Group](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial#add-azure-sql-managed-identity-to-the-group), and the Azure AD Group should be setup by your administrator through the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md#setup-azure-ad-group).
+2. Share the command with your administrator and ensure they are able to successfully run the Azure CLI command.  This command will add your [Azure App Service Managed Identity](https://docs.microsoft.com/en-us/azure/app-service/overview-managed-identity) and your [Azure SQL Server Managed Identity](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial#add-azure-sql-managed-identity-to-the-group) to your Azure AD group which is an [Azure AD Administrator for your Azure SQL](/infra/terraform/bootstrap/README.md/#setup-azure-ad-group).
+You will also need to add in your [Azure SQL Server Managed Identity to your Directory Readers Azure AD Group](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial#add-azure-sql-managed-identity-to-the-group), and the Azure AD Group should be setup by your administrator through the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md#setup-azure-ad-group).
 
 Your administrator should modify this [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) command and run it for your environment:
 
@@ -162,6 +168,7 @@ az ad group member add -g $myAzureADGroupDirectoryReadersObjectId --member-id $m
 ```
 
 3. You will also need to run the query with your [Azure SQL Azure AD Administrator](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?tabs=azure-powershell) in Azure SQL to ensure that your Managed Identities can access Azure SQL.  For convenience, you can also check the outputs in the terraform apply task in your Azure DevOps [Environment pipeline](/pipelines/README.md/#environment-pipeline).
+
     > This step is a workaround in case you have not assigned the [Directory Readers](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) role for your Azure SQL Managed Identity (directly or through Azure AD Group membership).  See [step 2](/infra/terraform/omop/README.md#step-2-run-your-terraform-omop-project) for more details.  If your Azure SQL Managed Identity has Directory Readers assigned, then the [Post TF Deploy script](/sql/README.md/#post-tf-deploy-script-notes) should be able to grant access for Azure SQL.
 
 ![Add Azure App Service and Azure VMSS access to Azure SQL](/docs/media/environment_pipeline_3.png)
@@ -215,6 +222,7 @@ ALTER ROLE db_owner ADD MEMBER [MyADOAgentPoolVMSSName]
   For your [Vocabulary Build Pipeline](/pipelines/README.md#vocabulary-build-pipeline), you can also use a similar approach to authorize the pipeline to use the Agent Pool VMSS.
 
   You can use the name of the Agent Pool
+
   ```yaml
   ...
   # pool: $(adoWindowsVMSSBuildAgentPoolName) # re-enable when Azure Windows VMSS is ready and you have granted access to the agent pool

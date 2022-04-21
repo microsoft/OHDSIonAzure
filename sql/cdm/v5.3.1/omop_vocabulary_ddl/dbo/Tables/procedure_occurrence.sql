@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[procedure_occurrence] (
+CREATE TABLE [dbo].[procedure_occurrence] (
     [procedure_occurrence_id]     INT           NOT NULL,
     [person_id]                   INT           NOT NULL,
     [procedure_concept_id]        INT           NOT NULL,
@@ -14,4 +14,3 @@
     [procedure_source_concept_id] INT           NULL,
     [modifier_source_value]       VARCHAR (50)  NULL
 );
-

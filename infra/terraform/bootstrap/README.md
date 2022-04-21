@@ -32,10 +32,10 @@ The bootstrap Terraform project will also look to setup your Azure DevOps projec
 
 * Setup [Azure DevOps Environments](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops) for use with the [Environment Pipeline](/pipelines/environments/TF-OMOP.yaml) for `terraform plan` and `terraform apply`.
 * Setup [Azure DevOps Variable Groups](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml):
-    * Two (2) variable groups for environment setup:
-      1. A variable group ending with [bootstrap-vg](/docs/update_your_variables.md#1-bootstrap-vg) which is linked to [Azure Key Vault secrets](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault) to run with your Environment Pipeline
-      2. A variable group ending with [bootstrap-settings-vg](/docs/update_your_variables.md#2-bootstrap-settings-vg) which is **not** linked to Azure Key Vault to configure running your Environment pipeline
-    * One (1) variable group ending with [omop-environment-settings-vg](/docs/update_your_variables.md#3-omop-environment-settings-vg) for application pipelines (e.g. [broadsea pipelines](/pipelines/README.md/#broadsea-pipelines) and [vocabulary pipelines](/pipelines//README.md/#vocabulary-pipelines)) per environment
+  * Two (2) variable groups for environment setup:
+    1. A variable group ending with [bootstrap-vg](/docs/update_your_variables.md#1-bootstrap-vg) which is linked to [Azure Key Vault secrets](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault) to run with your Environment Pipeline
+    2. A variable group ending with [bootstrap-settings-vg](/docs/update_your_variables.md#2-bootstrap-settings-vg) which is **not** linked to Azure Key Vault to configure running your Environment pipeline
+  * One (1) variable group ending with [omop-environment-settings-vg](/docs/update_your_variables.md#3-omop-environment-settings-vg) for application pipelines (e.g. [broadsea pipelines](/pipelines/README.md/#broadsea-pipelines) and [vocabulary pipelines](/pipelines//README.md/#vocabulary-pipelines)) per environment
 * Setup [Azure DevOps Service Connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml) to connect the Azure DevOps pipelines to Azure
 * Setup and Import Azure DevOps Pipelines into your Azure DevOps Project:
   1. [Environment Pipeline](/pipelines/environments/TF-OMOP.yaml)
@@ -73,7 +73,7 @@ You will need to ensure you have completed the following steps before running th
 
 5. You have [installed terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/azure-get-started) locally
     * Ensure you have also setup the Azure DevOps provider for Terraform.  Until the next release for the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/541) is available, you will need to ensure that you can run [two different versions](/infra/terraform/modules/azure_devops_environment/README.md/#local-version-usage) of the Azure DevOps provider.
-    
+
     * This has been tested with `Terraform v1.0.10`, and you can confirm your terraform version with `terraform --version`
 
 6. You have `git clone` the repository
@@ -138,7 +138,7 @@ Assuming you can complete the [prerequisites](#prerequisites), you can work thro
 
 2. You can update your [terraform.tfvars](/infra/terraform/bootstrap/terraform.tfvars) with the following values
 
-```
+```hcl
 prefix              = "sharing" # set to a given prefix for your environment
 environment         = "dev" # This is your environment
 
@@ -343,7 +343,8 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
       + }
       ```
 
-    * Your Azure SQL Managed Identity should have [Directory Reader assigned](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) to grant access for your Managed Identities in Azure SQL.  You will need to ensure you have [AAD premium activated](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept#license-requirements) so you can assign your [Azure AD Group](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept) the Directory Readers role.  If you cannot assign the Directory Readers role to your Azure SQL Server Managed Identity, you can follow a [workaround](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps).
+    * Your Azure SQL Managed Identity should have [Directory Reader assigned](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) to grant access for your Managed Identities in Azure SQL.  You will need to ensure you have [AAD premium activated](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept#license-requirements) so you can assign your [Azure AD Group](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept) the Directory Readers role.
+    If you cannot assign the Directory Readers role to your Azure SQL Server Managed Identity, you can follow a [workaround](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps).
 
       1. Uncomment the argument for `assignable_to_role` in the [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) if you have AAD premium, which will allow you to assign the Azure AD Group to a role:
 
@@ -381,17 +382,17 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
       ```
 
     * Check the Terraform Plan:
-      
+
       ```hcl
       terraform plan
       ```
 
     * Run Terraform Apply:
-      
+
       ```hcl
       terraform apply
       ```
-      
+
       > You may need to ensure that your administrator has logged to Azure (e.g. `azure login`) using [elevated access](https://docs.microsoft.com/en-us/azure/role-based-access-control/elevate-access-global-admin).  Your administrator should also lower their elevated access when finished with the deployment.
 
 ### Step 3. Confirm Bootstrap Resource Group Setup from Terraform
@@ -409,6 +410,7 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
 Assuming the prior steps have completed successfully, you can confirm that you have setup your [Azure Devops VMSS Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops):
 
 1. Check that your Azure DevOps Agent Pool name matches in your variable group ending in [omop-environment-settings-vg](/docs/update_your_variables.md/#3-omop-environment-settings-vg).
+
 > Your Azure VMSS is setup from [your bootstrap resource group](/infra/terraform/bootstrap/README.md/#setup-azure-bootstrap-resource-group).
 
 ![Setup your Azure DevOps Agent Pool](/docs/media/azure_devops_agent_pool_vmss_1.png)
@@ -437,7 +439,7 @@ a provider named registry.terraform.io/microsoft/azuredevops2
 
 2. You should be able to `terraform init` to pull in the second version of the Azure DevOps provider.
 
-### The user '' is not authorized to access this resource.
+### The user '' is not authorized to access this resource
 
 You may come across an issue when trying to run `terraform plan` or `terraform apply` indicating your Azure DevOps provider isn't authorized:
 
@@ -464,7 +466,7 @@ GroupsClient.BaseClient.Post(): unexpected status 403 with OData error: Authoriz
 
 2. Once you have permissions granted, be sure to use `az login` to refresh your credentials before retrying to run `terraform init`, `terraform plan`, and `terraform apply`.
 
-### The data source received an unexpected error while attempting to execute the program.
+### The data source received an unexpected error while attempting to execute the program
 
 If you are running [WSL](https://docs.microsoft.com/en-us/windows/wsl/install), you may run into a similar error message:
 
@@ -488,4 +490,93 @@ sudo apt install dos2unix # Install dos2unix
 
 ```bash
 find infra -name '*.sh' -exec dos2unix {} + # convert scripts
+```
+
+### On first run for your pipelines, you notice prompts to authorize Azure DevOps Resources
+
+You can manuallly authorize an Azure DevOps pipeline to enable access to your [Azure DevOps Environments](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops)
+ or [Azure DevOps VMSS Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops).
+
+The bootstrap Terraform project will attempt to authorize the pipelines, and you can try to force a re-apply through the following steps:
+
+1. Check your Terraform State to see if your `agent_pool_id`, `agent_queue_id`, and `elastic_pool_id` are not null:
+
+```bash
+# Check your Azure DevOps Linux Azure VMSS Pool
+terraform show -json | jq -c '.values.root_module.child_modules[] | select(.address == "module.azure_devops_elastic_pool_linux_vmss_pool").resources[0].values.result' | jq
+
+# Check your Azure DevOps Windows Azure VMSS Pool
+terraform show -json | jq -c '.values.root_module.child_modules[] | select(.address == "module.azure_devops_elastic_pool_windows_vmss_pool").resources[0].values.result' | jq
+```
+
+If you get a json result like the following, then you will need to make sure your Azure DevOps agent pools have updated ids.
+
+```json
+{
+  "agent_pool_id": "null",
+  "agent_queue_id": "null",
+  "elastic_pool_id": "null"
+}
+```
+
+2. You can recreate your Azure DevOps VMSS Pool
+
+```bash
+# force recreation of the Azure DevOps Azure VMSS Pools
+terraform destroy \
+    --target module.azure_devops_elastic_pool_linux_vmss_pool.null_resource.RemoveVMSSAgentPool \
+    --target module.azure_devops_elastic_pool_windows_vmss_pool.null_resource.RemoveVMSSAgentPool
+```
+
+After you have destroyed, you can `terraform apply` to pick up changes:
+
+```bash
+terraform apply
+```
+
+* You can check your terraform state (as in step 1) to see if you are now getting non-null values:
+
+```json
+{
+  "agent_pool_id": "11",
+  "agent_queue_id": "22",
+  "elastic_pool_id": "11"
+}
+```
+
+3. If you are still seeing null values for your result from Step 1, you can also look to remove pipeline assignments through Terraform:
+
+```bash
+# example to remove pipeline assignments
+terraform destroy \
+    --target module.azure_devops_elastic_pool_linux_vmss_pool.null_resource.RemoveVMSSAgentPool \
+    --target module.azure_devops_elastic_pool_windows_vmss_pool.null_resource.RemoveVMSSAgentPool \
+    --target module.azure_devops_elastic_pool_for_broadsea_build_pipeline_assignment.null_resource.azure_devops_elastic_pool_pipeline_assignment_remove \
+    --target module.azure_devops_elastic_pool_for_broadsea_releasepipeline_assignment.null_resource.azure_devops_elastic_pool_pipeline_assignment_remove \
+    --target module.azure_devops_elastic_pool_for_environment_pipeline_assignment.null_resource.azure_devops_elastic_pool_pipeline_assignment_remove \
+    --target module.azure_devops_elastic_pool_for_vocabulary_build_pipeline_assignment.null_resource.azure_devops_elastic_pool_pipeline_assignment_remove \
+    --target module.azure_devops_elastic_pool_for_vocabulary_release_pipeline_assignment.null_resource.azure_devops_elastic_pool_pipeline_assignment_remove \
+    --target module.azure_devops_environment_broadsea_build_pipeline_assignment.null_resource.azure_devops_environment_pipeline_assignment_remove \
+    --target module.azure_devops_environment_broadsea_release_pipeline_assignment.null_resource.azure_devops_environment_pipeline_assignment_remove \
+    --target module.azure_devops_environment_tf_apply_pipeline_assignment.null_resource.azure_devops_environment_pipeline_assignment_remove \
+    --target module.azure_devops_environment_tf_plan_pipeline_assignment.null_resource.azure_devops_environment_pipeline_assignment_remove \
+    --target module.azure_devops_environment_vocabulary_build_pipeline_assignment.null_resource.azure_devops_environment_pipeline_assignment_remove \
+    --target module.azure_devops_environment_vocabulary_release_pipeline_assignment.null_resource.azure_devops_environment_pipeline_assignment_remove
+```
+
+After you have destroyed, you can `terraform apply` to pick up changes:
+
+```bash
+# refresh the environment
+terraform apply
+```
+
+* You can check your terraform state (as in step 1) to see if you are now getting non-null values:
+
+```json
+{
+  "agent_pool_id": "11",
+  "agent_queue_id": "22",
+  "elastic_pool_id": "11"
+}
 ```

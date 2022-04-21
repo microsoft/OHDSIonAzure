@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[person] (
+CREATE TABLE [dbo].[person] (
     [person_id]                   INT           NOT NULL,
     [gender_concept_id]           INT           NOT NULL,
     [year_of_birth]               INT           NOT NULL,
@@ -33,4 +33,3 @@
 GO
 CREATE UNIQUE CLUSTERED INDEX [idx_person_id]
     ON [dbo].[person]([person_id] ASC);
-

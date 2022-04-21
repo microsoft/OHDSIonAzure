@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[location] (
+CREATE TABLE [dbo].[location] (
     [location_id]           INT          NOT NULL,
     [address_1]             VARCHAR (50) NULL,
     [address_2]             VARCHAR (50) NULL,
@@ -9,4 +9,3 @@
     [location_source_value] VARCHAR (50) NULL,
     CONSTRAINT [xpk_location] PRIMARY KEY NONCLUSTERED ([location_id] ASC)
 );
-
