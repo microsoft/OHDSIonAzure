@@ -240,3 +240,59 @@ ALTER ROLE db_owner ADD MEMBER [MyADOAgentPoolVMSSName]
   # pool: 'some-ado-build-windows-vmss-agent-pool' # this should match the name of your azure devops Windows VMSS agent pool.  You can comment this out when you have authorized your Azure DevOps agent pool and then rely on the variable from your Variable Group.
   ...
   ```
+
+### Step 5. Setup your vocabulary
+
+Assuming you have finished the prior steps successfully, you can proceed with [setting up your vocabulary](/docs/setup/setup_vocabulary.md).
+
+## Clean Up Notes
+
+If you would like to tear down your environment resoucre group using Terraform, you can work through the following steps.
+
+> Note, while these steps will clean up your resource group, you should ensure you have backed up relevant assets (e.g. [Vocabulary](/docs/setup/setup_vocabulary.md), [Azure SQL CDM](/sql/README.md)) prior to clean up.
+
+1. Navigate to your Terraform project:
+
+```bash
+# from the repository root directory
+cd /infra/terraform/omop
+```
+
+2. Ensure you have connected Terraform to your [backend state](/infra/terraform/omop/README.md#step-2-push-your-terraform-omop-project-tf-state-to-your-remote-backend).
+
+* You should use the same Azure Storage Account settings that were included as part of your [bootstrap Terraform project](/infra/terraform/bootstrap/README.md).
+
+3. Break any existing lease on your terraform state file in Azure Blob Storage
+
+> This step assumes that any existing [Environment Pipeline run](/infra/terraform/omop/README.md#step-3-use-your-tf-environment-pipeline) is finished
+
+```bash
+TF_STATE_BLOB_NAME='terraform.tfstate'
+TF_STATE_CONTAINER_NAME='some-statefile-container'
+STORAGE_ACCOUNT_NAME='sometfstatesa'
+RESOURCE_GROUP_NAME='some-ado-bootstrap-omop-rg'
+
+ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query '[0].value' -o tsv)
+
+az storage blob lease break -b $TF_STATE_BLOB_NAME -c $TF_STATE_CONTAINER_NAME --account-name $STORAGE_ACCOUNT_NAME --account-key $ACCOUNT_KEY
+```
+
+4. Run `terraform destroy` to clean up your omop RG.
+
+> Note, in this case the variables are filled in with placeholder values.  You do not need real values to complete the destroy step, only values for required variables to pass variable validation (E.g. use `00000000-0000-0000-0000-000000000000` for guid)
+
+```bash
+# make sure to use placeholder values for the variables required for the omop Terraform project
+terraform destroy \
+-var omop_password=something \
+-var ado_agent_pool_vmss_name=some-ado-build-linux-vmss-agent \
+-var bootstrap_admin_object_id=00000000-0000-0000-0000-000000000000 \
+-var sp_service_connection_object_id=00000000-0000-0000-0000-000000000000 \
+-var vmss_managed_identity_object_id=00000000-0000-0000-0000-000000000000 \
+-var aad_admin_login_name=some-omop-admin \
+-var aad_admin_object_id=00000000-0000-0000-0000-000000000000 \
+-var aad_directory_readers_login_name=some-omop-directory-readers \
+-var aad_directory_readers_object_id=00000000-0000-0000-0000-000000000000
+```
+
+5. You can validate that your resource group is cleaned up in the Azure Portal.  If desired, you can re-run your [Environment Pipeline](/infra/terraform/omop/README.md#step-3-use-your-tf-environment-pipeline).
