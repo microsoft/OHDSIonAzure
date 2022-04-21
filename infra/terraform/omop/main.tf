@@ -5,14 +5,14 @@ provider "azurerm" {
 
 # Define azurerm backend, Azure DevOps will fill in other required details
 terraform {
-  backend "azurerm" {}
+  #backend "azurerm" {}
   # Uncomment to include your backend state for first time run
-  # backend "azurerm" {
-  #     resource_group_name  = "some-ado-bootstrap-omop-rg"
-  #     storage_account_name = "sometfstatesa"
-  #     container_name       = "some-statefile-container"
-  #     key                  = "terraform.tfstate"
-  # }
+  backend "azurerm" {
+       resource_group_name  = var.bootstrapRg
+       storage_account_name = var.tfBackendStorageAccount
+       container_name       = var.tfBackendContainer
+       key                  = "terraform.tfstate"
+  }
   required_version = "~> 1.1.4"
 
   required_providers {

@@ -415,6 +415,27 @@ resource "azuredevops_variable_group" "adoenvvg" {
     value = "2.7.0"
   }
 
+   variable {
+    name = "bootstrapRg"
+    value = "${var.prefix}-${var.environment}-ado-bootstrap-omop-rg"
+  }
+
+  variable {
+    name = "tfBackendStorageAccount"
+    value = "${var.prefix}${var.environment}tfstatesa"
+  }
+
+  variable {
+    name = "tfBackendContainer"
+    value = "${var.prefix}-${var.environment}-statefile-container"
+
+  }
+
+  variable {
+    name = "storageAccountKey"
+    value = "${azurerm_storage_account.tfstatesa.primary_access_key}"
+  }
+
   depends_on = [
     azuredevops_project.project,
     module.azure_devops_environment_vocabulary_build,
