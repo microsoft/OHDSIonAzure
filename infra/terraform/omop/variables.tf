@@ -87,7 +87,7 @@ variable "tf_storage_resource_group" {
   description = "The bootstrap resource group name"
 }
 
-variable tf_backend_storage_account {
+variable "tf_backend_storage_account" {
   description = "Storage Account name for backend Terraform state file"
 }
 
