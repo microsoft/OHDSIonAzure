@@ -33,9 +33,9 @@ resource "azuredevops_git_repository" "repo" {
   # name       = "${var.prefix}-${var.environment}-OHDSIonAzure" # you have an option to rename the repository
 
   # Comment this out if you want to make a new repo
-  #initialization {
-  # init_type = "Uninitialized"
-  #}
+  # initialization {
+  #   init_type = "Uninitialized"
+  # }
   # Use Terraform import instead, otherwise this resource will destroy the existing repository.
   lifecycle {
     prevent_destroy = true # prevent destroying the repo
@@ -51,11 +51,11 @@ resource "azuredevops_git_repository" "repo" {
   initialization {
     init_type   = "Import"
     source_type = "Git"
-    #   # you can import from an existing ADO repository
-    #source_url            = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}" # you can import from an existing ADO repository
-    service_connection_id = azuredevops_serviceendpoint_generic_git.serviceendpoint.id
+    # you can import from an existing ADO repository
+    # source_url            = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}" # you can import from an existing ADO repository
+    # service_connection_id = azuredevops_serviceendpoint_generic_git.serviceendpoint.id
 
-    #   # You can import from a public repository
+    # You can import from a public repository
     source_url = "https://github.com/microsoft/OHDSIonAzure.git"
   }
 }

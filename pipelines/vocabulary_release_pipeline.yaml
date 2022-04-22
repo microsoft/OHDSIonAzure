@@ -120,6 +120,9 @@ stages:
         deploy:
           steps:
 
+          # Run test suite validation
+          - template: templates/test_suite/sql_test_suite_pipeline.yaml
+
           # Install sqlcmd
           - ${{ if eq(variables.PublishPostTFDeploy, 'true') }}:
             - template: templates/install_sqlcmd.yml

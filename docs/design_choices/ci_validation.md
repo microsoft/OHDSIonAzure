@@ -18,11 +18,15 @@ The linters should cover the following:
 * Markdown using [markdownlint](https://github.com/DavidAnson/markdownlint)
 * YAML using [yamllint](https://github.com/adrienverge/yamllint)
 * Terraform using [tflint](https://github.com/terraform-linters/tflint)
+* Python using [flake8](https://flake8.pycqa.org/en/latest) and [black](https://black.readthedocs.io/en/stable/getting_started.html)
 
 ## Testing
 
 * The application pipelines include [smoketests](/pipelines/templates/smoke_test/).
 
-* TODO: Setup Test Suite and add into github actions workflow
-  * SQL
-  * Terraform (tfplan)
+* Setup Test Suite and add into github actions workflow
+  * SQL - this project will use [pytest](https://docs.pytest.org/en/7.1.x/) to wrap a test suite for working with the [SQL project](/sql) including the [CDM](/sql/cdm/) through [dacpacs](https://docs.microsoft.com/en-us/sql/relational-databases/data-tier-applications/data-tier-applications?view=sql-server-ver15).  By default, the test suite will run against a local [SQL Server 2019 Docker container](https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-docker-container-deployment?view=sql-server-ver15) instead of Azure SQL.
+    * The test suite can be run [locally](/local_development_setup.md#sql-testing), and it is included as part of CI validation.
+    * The test suite is also included with the [vocabulary release pipeline](/pipelines/README.md/#vocabulary-release-pipeline) as a step prior to publishing in your environment.
+
+  * TODO: Terraform (tfplan)

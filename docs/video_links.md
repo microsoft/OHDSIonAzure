@@ -8,7 +8,7 @@ This is a collection of links for working with the OHDSI on Azure project.
 
 Setting up the overall E2E
 
-[Setup E2E Overview](https://user-images.githubusercontent.com/2498998/165633272-e71bc539-0ccf-4ed7-89a2-db9eecfba2f9.mp4)
+[Setup E2E Overview](https://user-images.githubusercontent.com/2498998/165869078-818ef83d-8053-4dff-9863-61efae879985.mp4)
 
 ### Setup Bootstrap Resource Group
 

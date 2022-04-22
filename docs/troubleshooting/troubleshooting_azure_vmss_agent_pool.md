@@ -76,6 +76,18 @@ You can use the following steps to confirm your Azure VMSS instance has its depe
   dotnet --version
   ```
 
+* make
+
+  ```bash
+  make --version
+  ```
+
+* python3
+
+  ```bash
+  python3 --version
+  ```
+
 3. If these dependencies aren't available, you may need to check the cloud-init status:
 
     ```bash
