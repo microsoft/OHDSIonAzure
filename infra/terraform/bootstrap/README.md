@@ -382,17 +382,17 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
 
       Uncomment the `azuread_directory_role` and `azuread_directory_role_member` in the [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) resource block to assign the Azure AD group to a role:
 
-      ```hcl
+      ```diff
       # Uncomment the following section to get the Directory Readers role
-      # resource "azuread_directory_role" "directoryreaders" {
-      #   display_name = "Directory Readers"
-      # }
+      + resource "azuread_directory_role" "directoryreaders" {
+      +   display_name = "Directory Readers"
+      + }
 
       # Uncomment the following section if you have AAD premium enabled in your Azure subscription
-      # resource "azuread_directory_role_member" "directoryreadersmember" {
-      #   role_object_id   = azuread_directory_role.directoryreaders.object_id
-      #   member_object_id = azuread_group.directoryreadersaadgroup.object_id
-      # }
+      + resource "azuread_directory_role_member" "directoryreadersmember" {
+      +   role_object_id   = azuread_directory_role.directoryreaders.object_id
+      +   member_object_id = azuread_group.directoryreadersaadgroup.object_id
+      + }
       ```
 
 3. Run Terraform for your project:
