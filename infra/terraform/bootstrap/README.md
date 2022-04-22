@@ -72,9 +72,32 @@ You will need to ensure you have completed the following steps before running th
 4. Ensure you have appropriate [Azure AD permissions](#azure-ad-permissions) setup
 
 5. You have [installed terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/azure-get-started) locally
-    * Ensure you have also setup the Azure DevOps provider for Terraform.  Until the next release for the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/541) is available, you will need to ensure that you can run [two different versions](/infra/terraform/modules/azure_devops_environment/README.md/#local-version-usage) of the Azure DevOps provider.
+  
+* Ensure you have also setup the Azure DevOps provider for Terraform.  Until the next release for the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/541) is available, you will need to ensure that you can run [two different versions](/infra/terraform/modules/azure_devops_environment/README.md/#local-version-usage) of the Azure DevOps provider.
 
-    * This has been tested with `Terraform v1.0.10`, and you can confirm your terraform version with `terraform --version`
+```bash
+# Get a local copy of the Azure DevOps Provider 0.2.0 and refer to it as azuredevops2 within terraform
+PLUGIN_PATH=/usr/share/terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/linux_amd64
+mkdir -p $PLUGIN_PATH
+curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_linux_amd64.zip'
+unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
+rm _
+chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
+```
+
+If you are running mac, you can use these steps instead:
+
+```console
+PLUGIN_PATH=/Library/Application Support/io.terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/darwin_amd64
+sudo mkdir -p ${PLUGIN_PATH}
+sudo chmod 755 ${PLUGIN_PATH}
+curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_darwin_amd64.zip'
+unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
+rm _
+sudo chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
+```
+
+* This has been tested with `Terraform v1.0.10`, and you can confirm your terraform version with `terraform --version`
 
 6. You have `git clone` the repository
 
@@ -359,17 +382,17 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
 
       Uncomment the `azuread_directory_role` and `azuread_directory_role_member` in the [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) resource block to assign the Azure AD group to a role:
 
-      ```hcl
+      ```diff
       # Uncomment the following section to get the Directory Readers role
-      # resource "azuread_directory_role" "directoryreaders" {
-      #   display_name = "Directory Readers"
-      # }
+      + resource "azuread_directory_role" "directoryreaders" {
+      +   display_name = "Directory Readers"
+      + }
 
       # Uncomment the following section if you have AAD premium enabled in your Azure subscription
-      # resource "azuread_directory_role_member" "directoryreadersmember" {
-      #   role_object_id   = azuread_directory_role.directoryreaders.object_id
-      #   member_object_id = azuread_group.directoryreadersaadgroup.object_id
-      # }
+      + resource "azuread_directory_role_member" "directoryreadersmember" {
+      +   role_object_id   = azuread_directory_role.directoryreaders.object_id
+      +   member_object_id = azuread_group.directoryreadersaadgroup.object_id
+      + }
       ```
 
 3. Run Terraform for your project:
@@ -580,3 +603,109 @@ terraform apply
   "elastic_pool_id": "11"
 }
 ```
+
+### Permission Denied Error for running scripts
+
+You may run into `permission denied` messages like the following when running `terraform apply`:
+
+```bash
+Error: local-exec provisioner error
+│
+│   with module.azure_devops_environment_vocabulary_release_pipeline_assignment.null_resource.azure_devops_environment_pipeline_assignment_remove,
+│   on ../modules/azure_devops_environment_pipeline_assignment/azure_devops_environment_pipeline_assignment.tf line 28, in resource "null_resource" "azure_devops_environment_pipeline_assignment_remove":
+│   28:   provisioner "local-exec" {
+│
+│ Error running command
+│ '../modules/azure_devops_environment_pipeline_assignment/azure_devops_environment_pipeline_assignment.sh >
+│ azure_devops_environment_pipeline_assignment.txt': exit status 126. Output: /bin/sh:
+│ ../modules/azure_devops_environment_pipeline_assignment/azure_devops_environment_pipeline_assignment.sh:
+│ Permission denied
+```
+
+1. You can update your permissions for the modules directory using the following command:
+
+```bash
+# run from your repository root directory
+chmod -R -x infra/modules
+```
+
+> You may need to elevate your permissions in order to run `chmod` using `sudo`.  You can also review permissions using `stat path/to/module`.
+
+### Issues with deleting an Azure DevOps project
+
+If you are using `terraform destroy` to tear down the bootstrap project, you should be careful to not actually destroy Azure DevOps project.
+
+In the case that you have **unintentionally** deleted your Azure DevOps project, you will need to work with your Azure DevOps [Project Collection Administrator](https://docs.microsoft.com/en-us/azure/devops/organizations/projects/restore-project?view=azure-devops#prerequisites) to [restore your project](https://docs.microsoft.com/en-us/azure/devops/organizations/projects/restore-project?view=azure-devops).
+
+#### Intentional Delete for your Azure DevOps project and repository
+
+The Azure DevOps project and repository are marked with `prevent_destroy = true` to address **unintentional** delete for your Azure DevOps project and repository:
+
+```diff
+resource "azuredevops_project" "project" {
+  ...
+  lifecycle {
++   prevent_destroy = true # prevent destroying the project
+  ...
+  }
+  ...
+}
+
+resource "azuredevops_git_repository" "repo" {
+  project_id = azuredevops_project.project.id
+  ...
+
+  lifecycle {
++    prevent_destroy = true # prevent destroying the repo
+  ...
+  }
+  ...
+}
+```
+
+If you **intend** to remove your Azure DevOps project and repository, you can comment out the `prevent_destroy` attribute and proceed with your `terraform destroy`.
+
+> Note, your Azure DevOps account may not have permissions to delete an Azure DevOps project, in which case attempting to delete the project through `terraform destroy` will not work.
+
+#### Remove your Azure DevOps project and repository from your terraform context
+
+This is a **non-destructive** path and is preferred and safer compared to removing your Azure DevOps project and repository.
+
+To safely remove your Azure DevOps project and repository from your terraform context (and not actually delete your Azure DevOps project and repository), you can update your terraform state using the following steps:
+
+1. Remove Repository from Terraform state:
+
+```bash
+terraform state rm azuredevops_git_repository.repo
+```
+
+2. Remove Project from Terraform state:
+
+```bash
+terraform state rm azuredevops_project.project
+```
+
+3. You can proceed with your `terraform destroy`
+
+### Issues with Extensions property on your Azure VMSS
+
+If you are running `terraform destroy` to clean up your bootstrap Terraform project, you may run into the following issue with your Azure VMSS:
+
+```bash
+Error: deleting Extension "some-test-build-agent-dependencies" (Virtual Machine Scale Set "some-test-ado-build-windows-vmss-agent" / Resource Group "some-test-ado-bootstrap-omop-rg"): compute.
+VirtualMachineScaleSetExtensionsClient#Delete: Failure sending request: StatusCode=400 -- Original Error: Code="BadRequest" Message="On resource 'some-test-ado-build-windows-vmss-agent', extension 'Microsoft.Azure.DevOps.Pipelines.Agent' specifies 'some-test-build-agent-dependencies' in its provisionAfterExtensions property, but the extension 'some-test-build-agent-dependencies' will no longer exist. First, remove the extension 'Microsoft.Azure.DevOps.Pipelines.Agent' or remove 'some-test-build-agent-dependencies' from the provisionAfterExtensions property of 'Microsoft.Azure.DevOps.Pipelines.Agent
+```
+
+1. Uninstall the `Microsoft.Azure.DevOps.Pipelines.Agent` from your Azure Windows VMSS
+  
+* You can manually uninstall the extension in the Azure Portal:
+
+![Remove Azure VMSS Extension](/docs/media/azure_devops_vmss_agent_extension_remove.png)
+
+* If preferred, you can also use [azure cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
+```bash
+az vmss extension delete -n 'Microsoft.Azure.DevOps.Pipelines.Agent' -g some-ado-bootstrap-rg --vmss-name some-ado-build-windows-vmss-agent
+```
+
+2. Once you have removed the extension from your [Azure Windows VMSS](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview), you can proceed with `terraform destroy` to continue your clean up.
