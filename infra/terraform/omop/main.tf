@@ -8,10 +8,10 @@ terraform {
   #backend "azurerm" {}
   # Uncomment to include your backend state for first time run
   backend "azurerm" {
-       resource_group_name  = var.bootstrap_rg
+       resource_group_name  = var.tf_storage_resource_group
        storage_account_name = var.tf_backend_storage_account
        container_name       = var.tf_backend_container
-       key                  = "terraform.tfstate"
+       key                  = var.tf_state_filename
   }
   required_version = "~> 1.1.4"
 

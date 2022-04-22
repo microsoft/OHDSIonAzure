@@ -144,6 +144,12 @@ resource "azurerm_key_vault_secret" "vmssManagedIdentityObjectId" {
   value        = azurerm_linux_virtual_machine_scale_set.vmss.identity[0].principal_id
 }
 
+resource "azurerm_key_vault_secret" "storageAccountKey" {
+  key_vault_id = azurerm_key_vault.keyvault.id
+  name         = "storageAccountKey"
+  value        = azurerm_storage_account.tfstatesa.primary_access_key
+}
+
 #############################
 # Azure Storage
 # Used for bootstrap TF State

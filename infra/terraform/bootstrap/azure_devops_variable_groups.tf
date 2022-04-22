@@ -33,12 +33,18 @@ resource "azuredevops_variable_group" "adobootstrapvg" {
     name = "vmssManagedIdentityObjectId"
   }
 
+  variable {
+    name = "storageAccountKey"
+  }
+
   depends_on = [
+    azurerm_storage_account.tfstatesa,
     azurerm_key_vault.keyvault,
     azurerm_key_vault_secret.omopPassword,
     azurerm_key_vault_secret.bootstrapAdminObjectId,
     azurerm_key_vault_secret.spServiceConnectionObjectId,
     azurerm_key_vault_secret.vmssManagedIdentityObjectId,
+    azurerm_key_vault_secret.storageAccountKey,
     azuredevops_serviceendpoint_azurerm.endpointazure
   ]
 }
@@ -198,27 +204,6 @@ resource "azuredevops_variable_group" "adobootstrapsettingsvg" {
   variable {
     name  = "tf_approval_environment"
     value = module.azure_devops_environment_tf_apply.azure_devops_environment_name
-  }
-
-  variable {
-    name = "bootstrapRg"
-    value = "${var.prefix}-${var.environment}-ado-bootstrap-omop-rg"
-  }
-
-  variable {
-    name = "tfBackendStorageAccount"
-    value = "${var.prefix}${var.environment}tfstatesa"
-  }
-
-  variable {
-    name = "tfBackendContainer"
-    value = "${var.prefix}-${var.environment}-statefile-container"
-
-  }
-
-  variable {
-    name = "storageAccountKey"
-    value = "${azurerm_storage_account.tfstatesa.primary_access_key}"
   }
 
   depends_on = [
