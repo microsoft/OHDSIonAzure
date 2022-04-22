@@ -174,11 +174,21 @@ You can also review the [configuration options](https://github.com/DavidAnson/ma
 
 1. In order to install, you will need to have `node` and `npm`.
 
+    * Add nodejs to your repo:
+
+    ```bash
+    # Add nodejs 14 to your repo
+    curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+    ```
+
+    * Install `nodejs` and `npm`:
+
     ```bash
     sudo apt-get update -y
     sudo apt-get upgrade -y
 
-    sudo apt-get install nodejs npm -y
+    # Install nodejs (which should include npm install)
+    sudo apt-get install -y nodejs
 
     # confirm node installed
     node -v
@@ -189,8 +199,17 @@ You can also review the [configuration options](https://github.com/DavidAnson/ma
 
 2. Once you have `node` and `npm` installed, you can install the linter:
 
+    * Install the cli
+
     ```bash
-    npm install markdownlint --save-dev
+    npm install -g markdownlint-cli
+    ```
+
+3. You can run `markdownlint` on your `markdown` file:
+
+    ```bash
+    # use the markdownlint configuration file with a markdown file
+    markdownlint -c .github/linters/.markdownlint.json local_development_setup.md
     ```
 
 3. You can review the current configuration rules which are stored in the [.github/linters folder](./.github/linters/.markdownlint.json).
