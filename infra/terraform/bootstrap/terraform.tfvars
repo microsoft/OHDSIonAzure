@@ -1,5 +1,5 @@
-prefix      = "yvonne"
-environment = "test"
+prefix      = "sharing"
+environment = "dev"
 
 location = "westus3"
 
@@ -7,8 +7,6 @@ tags = {
   "Deployment"  = "OHDSI on Azure"
   "Environment" = "dev"
 }
-
-omop_password = "P@$$w0rd1234!"
 
 admin_user_jumpbox     = "azureuser"
 admin_password_jumpbox = "P@$$w0rd1234!"
@@ -19,7 +17,7 @@ admin_password = "replaceP@SSW0RD"
 ado_org_service_url = "https://dev.azure.com/US-HLS-AppInnovations"
 ado_project_name    = "OHDSIonAzure"
 ado_repo_name       = "OHDSIonAzure"
-ado_pat             = ""
+ado_pat             = "<azdo-personal-access-token>"
 
 tf_environment_build_pipeline_name = "TF OMOP Environment Pipeline"
 vocabulary_build_pipeline_name     = "Vocabulary Build Pipeline"

@@ -7,12 +7,6 @@ variables:
   value: 'infra/terraform/omop'
 - name: terraform_version
   value: '1.1.4'
-# - name: TF_VAR_bootstrap_rg
-#   value: $(bootstrapRg)
-# - name: TF_VAR_tf_backend_container
-#   value: $(tfBackendContainer)
-# - name: TF_VAR_tf_backend_storage_account
-#   value: $(tfBackendStorageAccount)
 - name: ARM_ACCESS_KEY
   value: $(storageAccountKey)
 
