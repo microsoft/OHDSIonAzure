@@ -88,7 +88,7 @@ variable "bootstrap_rg" {
 }
 
 variable tf_backend_storage_account {
-  desrciption = "Storage Account name for backend Terraform state file"
+  description = "Storage Account name for backend Terraform state file"
 }
 
 variable "tf_backend_container" {

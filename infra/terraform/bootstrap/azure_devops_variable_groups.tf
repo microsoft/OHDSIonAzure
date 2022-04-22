@@ -200,6 +200,27 @@ resource "azuredevops_variable_group" "adobootstrapsettingsvg" {
     value = module.azure_devops_environment_tf_apply.azure_devops_environment_name
   }
 
+  variable {
+    name = "bootstrapRg"
+    value = "${var.prefix}-${var.environment}-ado-bootstrap-omop-rg"
+  }
+
+  variable {
+    name = "tfBackendStorageAccount"
+    value = "${var.prefix}${var.environment}tfstatesa"
+  }
+
+  variable {
+    name = "tfBackendContainer"
+    value = "${var.prefix}-${var.environment}-statefile-container"
+
+  }
+
+  variable {
+    name = "storageAccountKey"
+    value = "${azurerm_storage_account.tfstatesa.primary_access_key}"
+  }
+
   depends_on = [
     azuredevops_serviceendpoint_azurerm.endpointazure,
     azurerm_resource_group.adobootstrap,
@@ -413,27 +434,6 @@ resource "azuredevops_variable_group" "adoenvvg" {
   variable {
     name  = "resultsSchema"
     value = "2.7.0"
-  }
-
-   variable {
-    name = "bootstrapRg"
-    value = "${var.prefix}-${var.environment}-ado-bootstrap-omop-rg"
-  }
-
-  variable {
-    name = "tfBackendStorageAccount"
-    value = "${var.prefix}${var.environment}tfstatesa"
-  }
-
-  variable {
-    name = "tfBackendContainer"
-    value = "${var.prefix}-${var.environment}-statefile-container"
-
-  }
-
-  variable {
-    name = "storageAccountKey"
-    value = "${azurerm_storage_account.tfstatesa.primary_access_key}"
   }
 
   depends_on = [
