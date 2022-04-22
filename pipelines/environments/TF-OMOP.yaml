@@ -3,15 +3,16 @@ variables:
 # Variables are included through Variable Groups through bootstrap TF
 - name: adoVMSSAgentPoolName
   value: $(adoVMSSBuildAgentPoolName) # For example, this can be <prefix>-<environment>-ado-build-linux-vmss-agent-pool
-
 - name: tf_directory
   value: 'infra/terraform/omop'
 - name: terraform_version
   value: '1.1.4'
+- name: ARM_ACCESS_KEY
+  value: $(storageAccountKey)
 
 # Environment settings should come from bootstrap VG setup through bootstrap TF
 - name: tf_command_variables
-  value: '-var="prefix=$(prefix)" -var="environment=$(environment)" -var="omop_password=$(omopPassword)" -var="bootstrap_admin_object_id=$(bootstrapAdminObjectId)" -var="sp_service_connection_object_id=$(spServiceConnectionObjectId)" -var="vmss_managed_identity_object_id=$(vmssManagedIdentityObjectId)" -var="acr_sku_edition=$(acr_sku_edition)" -var="aad_admin_login_name=$(aad_admin_login_name)" -var="aad_admin_object_id=$(aad_admin_object_id)" -var="aad_directory_readers_login_name=$(aad_directory_readers_login_name)" -var="aad_directory_readers_object_id=$(aad_directory_readers_object_id)" -var="asp_kind_edition=$(asp_kind_edition)" -var="asp_sku_size=$(asp_sku_size)" -var="asp_sku_tier=$(asp_sku_tier)" -var="cdr_vocab_container_name=$(cdr_vocab_container_name)" -var="location=$(location)" -var="omop_db_size=$(omop_db_size)" -var="omop_db_sku=$(omop_db_sku)" -var="ado_agent_pool_vmss_name=$(ado_agent_pool_vmss_name)"' # yamllint disable-line rule:line-length
+  value: '-var="prefix=$(prefix)" -var="environment=$(environment)" -var="omop_password=$(omopPassword)" -var="bootstrap_admin_object_id=$(bootstrapAdminObjectId)" -var="sp_service_connection_object_id=$(spServiceConnectionObjectId)" -var="vmss_managed_identity_object_id=$(vmssManagedIdentityObjectId)" -var="acr_sku_edition=$(acr_sku_edition)" -var="aad_admin_login_name=$(aad_admin_login_name)" -var="aad_admin_object_id=$(aad_admin_object_id)" -var="aad_directory_readers_login_name=$(aad_directory_readers_login_name)" -var="aad_directory_readers_object_id=$(aad_directory_readers_object_id)" -var="asp_kind_edition=$(asp_kind_edition)" -var="asp_sku_size=$(asp_sku_size)" -var="asp_sku_tier=$(asp_sku_tier)" -var="cdr_vocab_container_name=$(cdr_vocab_container_name)" -var="location=$(location)" -var="omop_db_size=$(omop_db_size)" -var="omop_db_sku=$(omop_db_sku)" -var="ado_agent_pool_vmss_name=$(ado_agent_pool_vmss_name)" -var="tf_storage_resource_group=$(tf_storage_resource_group)" -var="tf_backend_storage_account=$(tf_storage_account_name)" -var="tf_backend_container=$(tf_storage_container_name)" -var="tf_state_filename=$(tf_state_filename)"' # yamllint disable-line rule:line-length
 - name: tf_init_command_options
   value: '-input=false'
 - name: tf_validate_command_options

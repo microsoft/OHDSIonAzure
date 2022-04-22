@@ -33,12 +33,18 @@ resource "azuredevops_variable_group" "adobootstrapvg" {
     name = "vmssManagedIdentityObjectId"
   }
 
+  variable {
+    name = "storageAccountKey"
+  }
+
   depends_on = [
+    azurerm_storage_account.tfstatesa,
     azurerm_key_vault.keyvault,
     azurerm_key_vault_secret.omopPassword,
     azurerm_key_vault_secret.bootstrapAdminObjectId,
     azurerm_key_vault_secret.spServiceConnectionObjectId,
     azurerm_key_vault_secret.vmssManagedIdentityObjectId,
+    azurerm_key_vault_secret.storageAccountKey,
     azuredevops_serviceendpoint_azurerm.endpointazure
   ]
 }

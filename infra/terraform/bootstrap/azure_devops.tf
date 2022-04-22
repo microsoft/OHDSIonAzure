@@ -24,7 +24,7 @@ resource "azuredevops_project" "project" {
   }
 }
 
-# you can import the repo 
+# you can import the repo
 # terraform import azuredevops_git_repository.repo projectName/repoName
 # e.g. terraform import azuredevops_git_repository.repo OHDSIonAzure/OHDSIonAzure
 resource "azuredevops_git_repository" "repo" {
@@ -33,9 +33,9 @@ resource "azuredevops_git_repository" "repo" {
   # name       = "${var.prefix}-${var.environment}-OHDSIonAzure" # you have an option to rename the repository
 
   # Comment this out if you want to make a new repo
-  initialization {
-    init_type = "Uninitialized"
-  }
+  #initialization {
+  # init_type = "Uninitialized"
+  #}
   # Use Terraform import instead, otherwise this resource will destroy the existing repository.
   lifecycle {
     prevent_destroy = true # prevent destroying the repo
@@ -48,16 +48,16 @@ resource "azuredevops_git_repository" "repo" {
   }
 
   ## Uncomment this section to import the contents of another git repo into this repo
-  # initialization {
-  #   init_type             = "Import"
-  #   source_type           = "Git"
-  #   # you can import from an existing ADO repository
-  #   # source_url            = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}" # you can import from an existing ADO repository
-  #   # service_connection_id = azuredevops_serviceendpoint_generic_git.serviceendpoint.id
+  initialization {
+    init_type   = "Import"
+    source_type = "Git"
+    #   # you can import from an existing ADO repository
+    #source_url            = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}" # you can import from an existing ADO repository
+    service_connection_id = azuredevops_serviceendpoint_generic_git.serviceendpoint.id
 
-  #   # You can import from a public repository
-  #   source_url            = "https://github.com/microsoft/OHDSIonAzure.git"
-  # }
+    #   # You can import from a public repository
+    source_url = "https://github.com/microsoft/OHDSIonAzure.git"
+  }
 }
 
 # Include if you want to import from an existing repository using a service endpoint to authenticate to the repo
