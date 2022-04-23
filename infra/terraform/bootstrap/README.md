@@ -367,7 +367,7 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
       ```
 
     * Your Azure SQL Managed Identity should have [Directory Reader assigned](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) to grant access for your Managed Identities in Azure SQL.  You will need to ensure you have [AAD premium activated](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept#license-requirements) so you can assign your [Azure AD Group](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept) the Directory Readers role.
-    If you cannot assign the Directory Readers role to your Azure SQL Server Managed Identity, you can follow a [workaround](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps).
+    If you cannot assign the Directory Readers role to your Azure SQL Server Managed Identity, you can follow a [workaround](/infra/terraform/omop/README.md/#step-3-run-post-terraform-deployment-steps).
 
       1. Uncomment the argument for `assignable_to_role` in the [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) if you have AAD premium, which will allow you to assign the Azure AD Group to a role:
 
@@ -444,7 +444,7 @@ You can also review the [Troubleshooting Azure VMSS Agent Pool](/docs/troublesho
 
 Assuming you have completed the rest of the bootstrap steps successfully, you can now setup your [environment](/infra/terraform/omop/README.md).
 
-Note, you will still need to work with your administrator to run your [environment post Terraform deployment steps](/infra/terraform/omop/README.md#step-4-run-post-terraform-deployment-steps).
+Note, you will still need to work with your administrator to run your [environment post Terraform deployment steps](/infra/terraform/omop/README.md#step-3-run-post-terraform-deployment-steps).
 
 ## Known Errors
 
@@ -709,3 +709,23 @@ az vmss extension delete -n 'Microsoft.Azure.DevOps.Pipelines.Agent' -g some-ado
 ```
 
 2. Once you have removed the extension from your [Azure Windows VMSS](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview), you can proceed with `terraform destroy` to continue your clean up.
+
+### Issues Deleting nic from your VM
+
+If you are running `terraform destroy` to clean up your bootstrap Terraform project, you may run into the following issue with your Azure VM:
+
+```bash
+│ Error: deleting Network Interface: (Name "some-jumpbox-nic" / Resource Group "some-ado-bootstrap-omop-rg"): network.InterfacesClient#Delete: Failure sending request: StatusCode=400 -- Original Error: Code="NicInUse" Message="Network Interface /subscriptions/<subid>/resourceGroups/some-ado-bootstrap-omop-rg/providers/Microsoft.Network/networkInterfaces/some-jumpbox-nic is used by existing resource /subscriptions/<subid>/resourceGroups/some-ado-bootstrap-omop-rg/providers/Microsoft.Compute/virtualMachines/somejump. In order to delete the network interface, it must be dissociated from the resource. To learn more, see aka.ms/deletenic." Details=[]
+```
+
+1. You can manually remove your Azure VM in the portal.
+
+![Remove Azure VM](/docs/media/azure_vm_clean_up.png)
+
+2. Update your terraform state
+
+```bash
+terraform state rm azurerm_network_interface.jumpbox
+```
+
+3. Once you have updated your terraform state, you can proceed with `terraform destroy`
