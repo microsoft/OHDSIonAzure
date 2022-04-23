@@ -51,7 +51,7 @@ The following settings should be covered through the [administrative steps](/inf
 2. Confirm Build Agent VMSS has Managed Identity enabled
 ![Azure VMSS Managed Identity enabled](/docs/media/azure_vmss_mi.png)
 
-3. Confirm with your administrator that the Azure SQL Managed Identity has [Directory Reader](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) enabled as part of the [administrative steps](/infra/README.md/#administrative-steps), which should also include granting access for your [Azure VMSS Managed Identity](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps) to Azure SQL.
+3. Confirm with your administrator that the Azure SQL Managed Identity has [Directory Reader](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) enabled as part of the [administrative steps](/infra/README.md/#administrative-steps), which should also include granting access for your [Azure VMSS Managed Identity](/infra/terraform/omop/README.md/#step-3-run-post-terraform-deployment-steps) to Azure SQL.
 
 4. Confirm Build Agent VMSS MI is added as a user in Azure SQL in your environment based on the [Post TF Deploy script](/sql/scripts/Post_TF_Deploy.sql), which should be included as part of your [vocabulary setup](/docs/setup/setup_vocabulary.md/#steps).
 

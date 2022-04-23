@@ -65,7 +65,7 @@ You will need to work with your administrator through the following steps:
 
     > You can review the [setup Azure Bootstrap Resource Group notes](/infra/terraform/bootstrap/README.md#setup-azure-bootstrap-resource-group), [setup Azure DevOps notes](/infra/terraform/bootstrap/README.md#setup-azure-devops), and [setup Azure AD Group notes](/infra/terraform/bootstrap/README.md#setup-azure-ad-group) for the full setup list included through the bootstrap Terraform project.
 
-2. You will also need your administrator to run the [Environment Post Terraform Deployment Steps](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps) to complete your setup with your [environment Terraform](/infra/terraform/omop/README.md).
+2. You will also need your administrator to run the [Environment Post Terraform Deployment Steps](/infra/terraform/omop/README.md/#step-3-run-post-terraform-deployment-steps) to complete your setup with your [environment Terraform](/infra/terraform/omop/README.md).
 
 You can also review the [setup infra notes](/docs/setup/setup_infra.md) to ensure that you have completed the Azure DevOps configuration.
 

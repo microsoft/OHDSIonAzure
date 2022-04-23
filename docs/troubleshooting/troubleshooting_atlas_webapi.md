@@ -48,7 +48,7 @@ You can also set the site settings for the App Service within [Terraform](/infra
 ## Connecting Azure App Service to Azure SQL
 
 1. Confirm that the Azure App Service MI is added to Azure SQL, which should be handled through the [Post TF Deploy script](/sql/scripts/Post_TF_Deploy.sql)
-    * Validate that the Azure App Service MI has [Directory Reader](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role) enabled with **your administrator**, and that the administrator is able to grant the Azure App Service MI login access to Azure SQL.  An example is included as part of the [Post Terraform Deployment steps](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps).
+    * Validate that the Azure App Service MI has [Directory Reader](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role) enabled with **your administrator**, and that the administrator is able to grant the Azure App Service MI login access to Azure SQL.  An example is included as part of the [Post Terraform Deployment steps](/infra/terraform/omop/README.md/#step-3-run-post-terraform-deployment-steps).
 
 Within Azure SQL, you can the following query for your Azure App Service:
 
@@ -84,7 +84,7 @@ You can verify the [MI is added as a user in Azure SQL](#verify-user-roles-in-az
 ![Confirm Azure VMSS MI Enabled](/docs/media/azure_vmss_mi.png).  This should be handled through the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#setup-azure-ad-group) by your administrator.
 
 2. Confirm that the Azure VMSS MI is added to Azure SQL, which should be handled through the [Post TF Deploy script](/sql/scripts/Post_TF_Deploy.sql)
-    * Validate that the Azure VMSS MI has [Directory Reader](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role) enabled with **your administrator**, and that the administrator is able to grant the Azure VMSS MI login access to Azure SQL.  An example is included as part of the [Post Terraform Deployment Steps](/infra/terraform/omop/README.md#step-4-run-post-terraform-deployment-steps).
+    * Validate that the Azure VMSS MI has [Directory Reader](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role) enabled with **your administrator**, and that the administrator is able to grant the Azure VMSS MI login access to Azure SQL.  An example is included as part of the [Post Terraform Deployment Steps](/infra/terraform/omop/README.md#step-3-run-post-terraform-deployment-steps).
 
 You can use the following query to create to add your Azure VMSS MI to Azure SQL:
 
@@ -167,7 +167,7 @@ WHERE type NOT IN ('A', 'G', 'R', 'X')
 ORDER BY username;
 ```
 
-If you have recently added the Broadsea Azure App Service Managed Identity to Azure SQL as part of the [Post TF deployment steps](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps), you can restart your Broadsea [Azure App Service](https://docs.microsoft.com/en-us/azure/app-service/overview) to enable your [Broadsea-webtools container](/apps/broadsea-webtools/README.md) to pick up the MI.
+If you have recently added the Broadsea Azure App Service Managed Identity to Azure SQL as part of the [Post TF deployment steps](/infra/terraform/omop/README.md/#step-3-run-post-terraform-deployment-steps), you can restart your Broadsea [Azure App Service](https://docs.microsoft.com/en-us/azure/app-service/overview) to enable your [Broadsea-webtools container](/apps/broadsea-webtools/README.md) to pick up the MI.
 
 #### Check Data With a Query
 
