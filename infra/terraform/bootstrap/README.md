@@ -20,6 +20,7 @@ The bootstrap Terraform project will setup the following resources per environme
 
 * Setup your Azure Bootstrap Resource Group including:
   * Setup [Azure Key Vault](https://docs.microsoft.com/en-us/azure/key-vault/general/overview) including [secrets](https://docs.microsoft.com/en-us/azure/key-vault/secrets/about-secrets)
+    * The name of the Azure Key Vault is globally unique and therefore needs to be defined by a unique combination of "prefix" and "environment" variables to avoid naming conflicts upon creation.
   * Setup [Azure Storage Container](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli) for your backend TF statefile
     * You will still need to configure your [Environment Terraform](/infra/terraform/omop/) to use the backend state in Azure Storage, see the [readme](/infra/README.md/#running-terraform) for more guidance
   * Setup [Azure Virtual Machine Scale Set](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview) for use later with your [Azure DevOps VMSS Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops)
@@ -76,7 +77,7 @@ You will need to ensure you have completed the following steps before running th
 4. Ensure you have appropriate [Azure AD permissions](#azure-ad-permissions) setup
 
 5. You have [installed terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/azure-get-started) locally
-  
+
 * Ensure you have also setup the Azure DevOps provider for Terraform.  Until the next release for the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/541) is available, you will need to ensure that you can run [two different versions](/infra/terraform/modules/azure_devops_environment/README.md/#local-version-usage) of the Azure DevOps provider.
 
 ```bash
@@ -240,7 +241,7 @@ You can also review the following table which describes the other bootstrap Terr
 Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/#step-1-update-your-variables), you can work next on running Terraform locally.
 
 1. Make sure your working directory is the [bootstrap directory](/infra/terraform/bootstrap/)
-  
+
     ```bash
     # from the repository root working directory
     cd infra/terraform/bootstrap
@@ -377,7 +378,7 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
 
       ```diff
       resource "azuread_group" "dbadminsaadgroup" {
-        ...        
+        ...
         # uncomment this if you have AAD premium enabled in your Azure       subscription
         # https://docs.microsoft.com/en-us/azure/active-directory/      roles/groups-concept
       + assignable_to_role = true
@@ -703,7 +704,7 @@ VirtualMachineScaleSetExtensionsClient#Delete: Failure sending request: StatusCo
 ```
 
 1. Uninstall the `Microsoft.Azure.DevOps.Pipelines.Agent` from your Azure Windows VMSS
-  
+
 * You can manually uninstall the extension in the Azure Portal:
 
 ![Remove Azure VMSS Extension](/docs/media/azure_devops_vmss_agent_extension_remove.png)

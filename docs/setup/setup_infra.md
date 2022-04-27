@@ -19,6 +19,7 @@ The following steps walkthrough setting up infra for OHDSI on Azure.
     * You have [created a service connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml).  Your administrator can refer to the [administrative steps](/infra/README.md/#administrative-steps) for more details to get the SP to use with the Service Connection.  Ensure the Service Principal has the Owner role access to the resource group where we will be deploying resources.
     * You have setup an [Azure DevOps VMSS Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops).  Your administrator can refer to the [administrative steps](/infra/README.md/#administrative-steps) and the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md#setup-azure-devops) for additional guidance.
     * You have [created an Azure DevOps variable group](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml) for sensitive values.  Your administrator can refer to the [administrative steps](/infra/README.md/#administrative-steps) and the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md#setup-azure-devops) for an example.  The variable group should be [linked to Azure KeyVault](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault) through the service connection.
+    * You have installed the [Azure Pipeline Terraform Task](https://marketplace.visualstudio.com/items?itemName=charleszipp.azure-pipelines-tasks-terraform) extension in your Azure DevOps organization.
 
 4. You have `git clone` the repository
 
@@ -55,7 +56,7 @@ aad_admin_login_name = "some-sharing-DB-Admins"
 aad_admin_object_id  = "some-guid"
 ```
 
-You can also review the following table which describes some OMOP Terraform variables.  
+You can also review the following table which describes some OMOP Terraform variables.
 
 > You can refer to the [environment Terraform project](/infra/terraform/omop/README.md#step-1-update-your-variables) for the complete list and for more details.
 

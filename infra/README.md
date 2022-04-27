@@ -86,7 +86,11 @@ Before running terraform, you will need to provide the required variables:
 * environment name (i.e `dev`)
 * resource location (i.e. `westus3`)
 
-These variables can be used in the `variables.tf` file itself or provided upon running terraform commands. Execute the following commands when in the `infra/terraform/omop` directory:
+These variables can be used in the `variables.tf` file itself or provided upon running terraform commands.
+
+**NOTE**: The name of some resources (e.g. Azure Container Registry) in this Terraform template are globally unique and therefore needs to be defined by a *unique* combination of "prefix" and "environment" variables to avoid naming conflicts upon creation.
+
+Execute the following commands when in the `infra/terraform/omop` directory:
 
 ```bash
 terraform init
