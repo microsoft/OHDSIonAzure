@@ -6,6 +6,12 @@ Below are instructions for setting up Atlas and WebAPI, including:
 * Connecting Azure App Service to Azure SQL using MI
 * Connecting the Build Agent to Azure SQL and ACR
 
+> Note this guide is part of setting up Broadsea
+  
+  [Setup Broadsea](https://user-images.githubusercontent.com/2498998/165582632-a5cefdd5-8b84-424b-9f83-4453ab1760d4.mp4)
+  
+> You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
+
 ## Prerequisites
 
 This page assumes you have completed all the steps in the [infra setup doc](/docs/setup/setup_infra.md) and [setup your vocabulary](/docs/setup/setup_vocabulary.md) for your environment.

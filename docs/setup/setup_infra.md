@@ -7,6 +7,10 @@ The following steps walkthrough setting up infra for OHDSI on Azure.
 1. You are able to work through the [infra setup notes](/infra/README.md/#setup), including working with your administrator to go through the [bootstrap administrative steps](/infra/README.md/#administrative-steps) and pushing the [backend state to Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli).
     > <mark>For convenience, administrative steps are included in the [bootstrap Terraform Project](/infra/terraform/bootstrap/README.md/#bootstrap-terraform). </mark>
 
+    [Setup Bootstrap RG](https://user-images.githubusercontent.com/2498998/165582260-613fd12e-3226-46be-9e63-e9e8578676ba.mp4)
+
+    > You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
+
 2. You have an Azure DevOps project and have [imported this repository](https://docs.microsoft.com/en-us/azure/devops/repos/git/import-git-repository?view=azure-devops).
 
 3. Confirm you (or your Administrator) have configured Azure DevOps, including the following:
@@ -26,6 +30,10 @@ git clone https://github.com/microsoft/OHDSIonAzure
 ## Steps
 
 Assuming you can complete the [prerequisites](#prerequisites), you can work through the following steps.
+
+[Setup Bootstrap Resource Group](https://user-images.githubusercontent.com/2498998/165582043-2f326c22-491e-4ce5-98af-ca10fcf8e80a.mp4)
+
+> You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
 
 ### Step 1. Update terraform.tfvars
 
