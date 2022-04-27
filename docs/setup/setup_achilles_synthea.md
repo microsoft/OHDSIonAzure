@@ -2,6 +2,12 @@
 
 Below are steps to setup [Achilles](https://github.com/OHDSI/Achilles) and [ETL-Synthea](https://github.com/OHDSI/ETL-Synthea).
 
+> Note this guide is part of setting up Broadsea
+
+[Setup Broadsea](https://user-images.githubusercontent.com/2498998/165582632-a5cefdd5-8b84-424b-9f83-4453ab1760d4.mp4)
+
+> You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
+
 ## Prerequisites
   
 1. You've successfully setup [Atlas](/docs/setup/setup_atlas_webapi.md)
