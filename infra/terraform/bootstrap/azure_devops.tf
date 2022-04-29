@@ -278,3 +278,13 @@ resource "azuredevops_resource_authorization" "auth" {
   resource_id = azuredevops_serviceendpoint_azurerm.endpointazure.id
   authorized  = true
 }
+
+#############################
+# Azure DevOps Extensions
+#############################
+
+resource "null_resource" "install_tf_ext" {
+  provisioner "local-exec" {
+    command = "./scripts/install_azdo_ext.sh"
+  }
+}
