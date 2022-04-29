@@ -107,6 +107,8 @@ Here's an overview of the pipeline parameters used:
 
 The [vocabulary release pipeline](/pipelines/vocabulary_release_pipeline.yaml) will consume the pipeline artifacts built by the [vocabulary build pipeline](#vocabulary-build-pipeline), including the [dacpacs](https://docs.microsoft.com/en-us/sql/relational-databases/data-tier-applications/data-tier-applications?view=sql-server-ver15) and [sql scripts](/sql/scripts/Post_TF_Deploy.sql) to deploy the vocabulary in your Azure SQL CDM.
 
+This pipeline also incorporates the [sql test suite](/sql/tests/) as a step prior to publishing the dacpacs and sql scripts.
+
 This pipeline uses your [variable groups](/docs/update_your_variables.md) for your environment settings.
 
 This pipeline assumes that the [TF environment pipeline](#environment-pipeline), [infra setup](/infra/README.md), and the [vocabulary build pipeline](#vocabulary-build-pipeline) have been completed successfully in your environment.  You can also refer to the [vocabulary setup](/docs/setup/setup_vocabulary.md) for additional guidance.

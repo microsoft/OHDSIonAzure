@@ -1,0 +1,26 @@
+﻿<Project Sdk="MSBuild.Sdk.SqlProj/1.17.1">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <!-- Check the corresponding version https://docs.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.dac.model.sqlserverversion?view=sql-dacfx-150-->
+        <SqlServerVersion>Sql150</SqlServerVersion>
+        <!-- For additional properties that can be set here, please refer to https://github.com/rr-wfm/MSBuild.Sdk.SqlProj#model-properties -->
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <!-- Refer to https://github.com/rr-wfm/MSBuild.Sdk.SqlProj#publishing-support for supported publishing options -->
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Content Remove="omop_vocabulary_ddl\obj\**" />
+        <Content Remove="omop_vocabulary_ddl\Scripts\**" />
+        <Content Remove="omop_vocabulary_indexes_constraints\**" />
+        <Content Include=".\OMOP_\**\*.sql" />
+        <None Remove="omop_vocabulary_ddl\obj\**" />
+        <!--For testing purposes, removing the post deployment script to address error SQL71006-->
+        <!--EXEC : error SQL71006: Only one statement is allowed per batch. A batch separator, such as 'GO', might be required between statements. -->
+        <!--Also would need to consider how to include blob storage data binding for local testing.  When building with msbuild, the dacpac will include the scripts-->
+        <None Remove="omop_vocabulary_ddl\Scripts\**" />
+        <None Remove="omop_vocabulary_indexes_constraints\**" />
+    </ItemGroup>
+
+</Project>

@@ -29,7 +29,7 @@ You can also [setup Achilles and Synthea](/docs/setup/setup_achilles_synthea.md)
 1. Run an [ETL job](/apps/broadsea-methods/README.md/#synthea-etl) and use [Synthea to generate synthetic patient data](/apps/broadsea-methods/README.md/#use-synthea-to-generate-synthetic-patient-data) as an optional step
 2. Run [Achilles](/apps/broadsea-methods/README.md/#achilles) to characterize the CDM data in Azure SQL
 
-[Setup E2E Overview](https://user-images.githubusercontent.com/2498998/165633272-e71bc539-0ccf-4ed7-89a2-db9eecfba2f9.mp4)
+[Setup E2E Overview](https://user-images.githubusercontent.com/2498998/165869078-818ef83d-8053-4dff-9863-61efae879985.mp4)
 
 ## CDM Version
 

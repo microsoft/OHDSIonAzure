@@ -44,6 +44,10 @@ These notes cover how you can setup a local development environment.
 
 * Install [python3](https://docs.microsoft.com/en-us/learn/modules/python-install-vscode/3-exercise-install-python3?pivots=linux)
 
+* Install [docker](https://docs.docker.com/get-docker/)
+
+* Install make `sudo apt install make`
+
 * Install [git](https://docs.microsoft.com/en-us/contribute/get-started-setup-tools#install-git-client-tools)
 
 * Clone this repository locally:
@@ -75,6 +79,7 @@ For local development, you can install these tools for linting:
 * Markdown [with Markdownlint](/local_development_setup.md/#markdown-with-markdownlint)
 * YAML [with Yamllint](/local_development_setup.md/#yaml-with-yamllint)
 * Terraform [with TFLint](/local_development_setup.md/#terraform-with-tflint)
+* Python with [Flake8](/local_development_setup.md#python-with-flake8) and [Black](/local_development_setup.md#python-with-black)
 
 These linters are also used as part of CI validation in a [github action](/.github/workflows/build-validation.yml) through [super-linter](https://github.com/github/super-linter), so ensuring your changes work locally before pushing commits can accelerate your feedback cycle.
 
@@ -271,3 +276,103 @@ tflint path/to/folder/or/file
 ```
 
 For example, from the repository root directory, you can run `tflint infra/terraform`.
+
+### Python with flake8
+
+You can use [flake8](https://flake8.pycqa.org/en/latest/) for linting `python` files.
+
+1. You can [install flake8](https://flake8.pycqa.org/en/latest/#installation):
+
+> This assumes you have already activated your [virtual environment](/local_development_setup.md#setup-a-python-virtual-environment)
+
+```bash
+python3 -m pip install flake8
+```
+
+2. You can use [flake8](https://flake8.pycqa.org/en/latest/#using-flake8) on files or folders:
+
+```bash
+flake8 --config path/config/.flake8 path/to/code/to/check.py
+# or
+flake8 --config path/config/.flake8 path/to/code/
+```
+
+For example, from the repository root directory, you can run `flake8 --config .github/linters/.flake8 sql/tests`
+
+### Python with black
+
+You can use [black](https://black.readthedocs.io/en/stable/getting_started.html) for linting `python` files.
+
+1. You can [install black](https://black.readthedocs.io/en/stable/getting_started.html#installation):
+
+> This assumes you have already activated your [virtual environment](/local_development_setup.md#setup-a-python-virtual-environment)
+
+```bash
+python3 -m pip install black
+```
+
+2. You can use [black](https://black.readthedocs.io/en/stable/getting_started.html#basic-usage) on files or folders:
+
+```bash
+black --config path/to/pyproject.toml path/to/code/to/check.py
+# or
+black --config path/to/pyproject.toml  path/to/code/
+```
+
+For example, from the repository root directory, you can run `black --config .github/linters/pyproject.toml sql/tests`
+
+## Testing
+
+You can setup testing for SQL.
+
+### SQL Testing
+
+The SQL test project uses [pytest](https://docs.pytest.org/en/7.1.x/) to wrap a test suite for working with the [SQL project](/sql) including the [CDM](/sql/cdm/) through [dacpacs](https://docs.microsoft.com/en-us/sql/relational-databases/data-tier-applications/data-tier-applications?view=sql-server-ver15).  By default, the test suite will run against a local [SQL Server 2019 Docker container](https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-docker-container-deployment?view=sql-server-ver15) instead of Azure SQL.
+
+1. From the repository root directory, you can navigate to the [sql/tests](/sql/tests/) folder.
+
+```bash
+# from repository root directory
+cd sql/tests
+```
+
+2. You can use `make` to setup your environment:
+
+> Note, if you don't have make, you can use `sudo apt-get install make` to setup make in your `bash` shell.
+
+```bash
+# you can setup your development environment for bash
+make bash-dev-env
+```
+
+> As a one-time step (or if you have local changes to SQL that you'd like to test), you can build the dacpac build dependencies.
+
+```bash
+make bash-dev-env-build-dacpac-dependencies
+```
+
+3. Confirm the [sql docker container](https://mcr.microsoft.com/v2/mssql/server/tags/list) is running
+
+```bash
+# confirm that you have sql running in docker
+docker ps
+```
+
+4. Create dacpacs for testing
+
+```bash
+# create dacpacs
+make bash-dev-env-build-supporting-dacpacs
+```
+
+5. Run your tests
+
+```bash
+make check-tests
+```
+
+6. You can clean up your environment as well
+
+```bash
+make bash-dev-env-clean
+```

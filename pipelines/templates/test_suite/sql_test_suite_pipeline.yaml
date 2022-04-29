@@ -1,0 +1,55 @@
+steps:
+  - checkout: self
+  - script: |
+      sudo apt-get update
+      sudo apt-get install -y apt-transport-https
+      sudo apt-get update
+      sudo apt-get install -y dotnet-sdk-5.0
+    displayName: 'Install dotnet runtime'
+
+  - script: |
+      dotnet new --install MSBuild.Sdk.SqlProj.Templates
+    displayName: 'Install dotnet templates'
+
+  - template: ../install_sqlpackage.yml
+
+  - script: |
+      cd sql/
+      make bash-dev-env
+      make bash-dev-env-build-supporting-dacpacs
+
+    displayName: Setup Dev Env Dependencies
+
+  - script: |
+      cd sql/
+      # Put together supporting dacpacs and run linting on test suite
+      make check-style
+
+      ls -l lint_report.xml
+      cd -
+
+    displayName: Lint test suite
+
+  - script: |
+      cd sql/
+      # Put together supporting dacpacs and run test suite
+      make check-tests
+
+      ls -l tests_report.xml
+      cd -
+
+    displayName: Run Test Suite
+
+  # Publish test results to Azure Pipelines
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit' # Options: JUnit, NUnit, VSTest, xUnit, cTest
+      testResultsFiles: 'sql/**/lint_*.xml'
+    displayName: Publish Lint Results
+
+  # Publish test results to Azure Pipelines
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit' # Options: JUnit, NUnit, VSTest, xUnit, cTest
+      testResultsFiles: 'sql/**/tests_*.xml'
+    displayName: Publish Test Results

@@ -1,10 +1,11 @@
 ---
 #################################
 #################################
-## Super Linter GitHub Actions ##
+## GitHub Actions ###############
+## lint #########################
+## Test SQL #####################
 #################################
-#################################
-name: Lint Code Base
+name: Build Validation
 
 #
 # Documentation:
@@ -31,7 +32,7 @@ concurrency:
 # Set the Job #
 ###############
 jobs:
-  build:
+  lint:
     # Name the Job
     name: Lint Code Base
     # Set the agent to run on
@@ -108,6 +109,7 @@ jobs:
           MARKDOWN_CONFIG_FILE: .markdownlint.json
           SQLFLUFF_CONFIG_FILE: .sqlfluff
           YAML_CONFIG_FILE: .yaml-lint.yml
+          PYTHON_BLACK_CONFIG_FILE: pyproject.toml
           VALIDATE_MARKDOWN: true
           VALIDATE_YAML: true
           VALIDATE_TERRAFORM_TFLINT: true
@@ -115,4 +117,133 @@ jobs:
           VALIDATE_POWERSHELL: true
           VALIDATE_DOCKERFILE_HADOLINT: true
           VALIDATE_SQLFLUFF: true # validate_sql does not support tsql
+          VALIDATE_PYTHON_BLACK: true
+          VALIDATE_PYTHON_FLAKE8: true
           VALIDATE_GITHUB_ACTIONS: true
+
+  test_sql:
+    needs: lint # job dependency
+    # Name the Job
+    name: Test SQL Project
+    # Set the agent to run on
+    runs-on: ubuntu-latest
+
+    ##################
+    # Load all steps #
+    ##################
+    steps:
+      ##########################
+      # Checkout the code base #
+      ##########################
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            sql:
+              # only check changes with the sql folder
+              - '**/sql/**/*'
+
+      - name: Setup dotnet
+        if: ${{ steps.filter.outputs.sql == 'true' }}
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.407'
+
+      - name: Install dotnet templates
+        if: ${{ steps.filter.outputs.sql == 'true' }}
+        run: dotnet new --install MSBuild.Sdk.SqlProj.Templates
+
+      - name: Install sqlpackage
+        if: ${{ steps.filter.outputs.sql == 'true' }}
+        run: |
+          # https://docs.microsoft.com/en-us/sql/tools/sqlpackage/sqlpackage-download?view=sql-server-ver15#get-sqlpackage-net-core-for-linux
+          sudo apt-get install libunwind8
+          sudo apt-get install libicu66
+
+          sudo rm -rf sqlpackage.zip
+
+          wget -O sqlpackage.zip https://go.microsoft.com/fwlink/?linkid=2157202
+
+          # clean up existing files
+          sudo rm -rf /sqlpackage
+          sudo mkdir /sqlpackage
+          sudo unzip sqlpackage.zip -d /sqlpackage
+
+          # update path
+          export PATH="$PATH:/sqlpackage"
+          echo "##vso[task.setvariable variable=PATH]${PATH}:/sqlpackage"
+          sudo chmod a+x /sqlpackage/sqlpackage
+
+          sudo ls -al /sqlpackage
+
+          echo 'checking sqlpackage version:'
+          sqlpackage /version
+
+      - name: Setup Dev Env Dependencies
+        if: ${{ steps.filter.outputs.sql == 'true' }}
+        run: |
+          cd sql/
+          make bash-dev-env
+          make bash-dev-env-build-supporting-dacpacs
+          cd -
+
+      # Lint Test Suite
+      - name: Run linting
+        if: ${{ steps.filter.outputs.sql == 'true' }}
+        run: |
+          cd sql/
+          # Put together supporting dacpacs and run linting on test suite
+          make check-style
+
+          ls -l lint_report.xml
+          cd -
+
+      - name: Upload Lint Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: lint-results
+          path: sql/**/lint_*.xml
+
+      # Run Test Suite
+      - name: Run Tests
+        if: ${{ steps.filter.outputs.sql == 'true' }}
+        run: |
+          cd sql/
+          # Put together supporting dacpacs and run test suite
+          make check-tests
+
+          ls -l tests_report.xml
+          cd -
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results
+          path: sql/**/tests_*.xml
+
+  publish-test-results:
+    name: "Publish Unit Tests Results"
+    needs: test_sql
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      # Publish test results
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: "artifacts/**/*.xml"
+          check_name: "SQL Unit Test and Lint Results"
+          comment_title: "SQL Unit Test and Lint Results"
