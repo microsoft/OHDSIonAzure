@@ -1,3 +1,5 @@
+#!/bin/bash
+
 az devops extension list | grep "charleszipp.azure-pipelines-tasks-terraform"
 
 if [ $? -eq 0 ]; then
