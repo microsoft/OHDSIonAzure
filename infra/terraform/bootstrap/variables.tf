@@ -104,13 +104,22 @@ variable "azure_subscription_name" {
   description = "This is your Azure Subscription Name for your Azure Service Connection"
 }
 
-variable "environment_pipeline_path" {
-  description = "Azure DevOps Environment Pipeline path e.g. /pipelines/environments/TF-OMOP.yaml"
+variable "tf_apply_environment_pipeline_path" {
+  description = "Azure DevOps Environment Pipeline path e.g. /pipelines/environments/omop-terraform-apply.yaml"
 }
 
-variable "tf_environment_build_pipeline_name" {
-  default     = "TF OMOP Environment Pipeline"
-  description = "Terraform Environment Build Pipeline Name"
+variable "tf_destroy_environment_pipeline_path" {
+  description = "Azure DevOps Environment Pipeline path e.g. /pipelines/environments/omop-terraform-destroy.yaml"
+}
+
+variable "tf_apply_environment_build_pipeline_name" {
+  default     = "TF Apply OMOP Environment Pipeline"
+  description = "Terraform Apply Environment Build Pipeline Name"
+}
+
+variable "tf_destroy_environment_build_pipeline_name" {
+  default     = "TF Destroy OMOP Environment Pipeline"
+  description = "Terraform Destroy Environment Build Pipeline Name"
 }
 
 variable "vocabulary_build_pipeline_name" {
