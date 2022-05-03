@@ -2,6 +2,7 @@ import pytest
 import os
 import pandas as pd
 from sqlalchemy import create_engine
+from tests.unit.docker_helper import DockerHelper
 from tests.unit.dacpac_helper import DacpacHelper
 from tests.unit.dacpac_helper import DacpacHelperEnvironmentVariables
 from collections import namedtuple
@@ -39,8 +40,28 @@ class TestScenario(str, Enum):
 
 
 @pytest.fixture(scope="class")
+def vocabulary_data_folder():
+    return "tests/data/vocabulary"
+
+
+@pytest.fixture(scope="class")
+def vocabulary_data_files():
+    return [
+        "CONCEPT_ANCESTOR.csv",
+        "CONCEPT_CLASS.csv",
+        "CONCEPT_RELATIONSHIP.csv",
+        "CONCEPT_SYNONYM.csv",
+        "CONCEPT.csv",
+        "DOMAIN.csv",
+        "DRUG_STRENGTH.csv",
+        "RELATIONSHIP.csv",
+        "source_to_concept_map.csv",
+        "VOCABULARY.csv",
+    ]
+
+
+@pytest.fixture(scope="class")
 def vocabulary_ddl_expected_table_row_count():
-    # TODO: Revisit with data loading for test
     return {
         "attribute_definition": 0,
         "care_site": 0,
@@ -48,21 +69,21 @@ def vocabulary_ddl_expected_table_row_count():
         "cohort": 0,
         "cohort_attribute": 0,
         "cohort_definition": 0,
-        "concept": 0,
-        "concept_ancestor": 0,
-        "concept_class": 0,
-        "concept_relationship": 0,
-        "concept_synonym": 0,
+        "concept": 1280,
+        "concept_ancestor": 100,
+        "concept_class": 415,
+        "concept_relationship": 100,
+        "concept_synonym": 4,
         "condition_era": 0,
         "condition_occurrence": 0,
         "cost": 0,
         "death": 0,
         "device_exposure": 0,
-        "domain": 0,
+        "domain": 48,
         "dose_era": 0,
         "drug_era": 0,
         "drug_exposure": 0,
-        "drug_strength": 0,
+        "drug_strength": 100,
         "fact_relationship": 0,
         "location": 0,
         "measurement": 0,
@@ -75,18 +96,17 @@ def vocabulary_ddl_expected_table_row_count():
         "person": 0,
         "procedure_occurrence": 0,
         "provider": 0,
-        "relationship": 0,
+        "relationship": 622,
         "source_to_concept_map": 0,
         "specimen": 0,
         "visit_detail": 0,
         "visit_occurrence": 0,
-        "vocabulary": 0,
+        "vocabulary": 58,
     }
 
 
 @pytest.fixture(scope="class")
 def vocabulary_indexes_constraints_expected_table_row_count():
-    # TODO: Revisit with data loading for test
     return {
         "attribute_definition": 0,
         "care_site": 0,
@@ -805,11 +825,17 @@ def vocabulary_ddl_dacpac_db_config(
     engine = create_engine(url)
     request.cls._engine = engine
     request.cls.expected_db_name = url.split("/")[-1]
+
     db_config = namedtuple(
-        "db_config", ["expected_table_row_count", "vocabulary_expected_indexes", "vocabulary_expected_constraints"]
+        "db_config",
+        [
+            "expected_table_row_count",
+            "vocabulary_expected_indexes",
+            "vocabulary_expected_constraints",
+        ],
     )
     instance_db_config = db_config(
-        vocabulary_ddl_expected_table_row_count,
+        vocabulary_ddl_expected_table_row_count,  # data should be loaded as part of unit test script
         vocabulary_ddl_dacpac_expected_indexes,
         vocabulary_ddl_dacpac_expected_constraints,
     )
@@ -832,7 +858,12 @@ def vocabulary_indexes_constraints_db_config(
     request.cls.expected_db_name = url.split("/")[-1]
 
     db_config = namedtuple(
-        "db_config", ["expected_table_row_count", "vocabulary_expected_indexes", "vocabulary_expected_constraints"]
+        "db_config",
+        [
+            "expected_table_row_count",
+            "vocabulary_expected_indexes",
+            "vocabulary_expected_constraints",
+        ],
     )
     instance_db_config = db_config(
         vocabulary_indexes_constraints_expected_table_row_count,
@@ -848,7 +879,7 @@ def vocabulary_indexes_constraints_db_config(
 @pytest.fixture(scope="class")
 def vocabulary_ddl_and_vocabulary_indexes_constraints_db_config(
     request,
-    vocabulary_indexes_constraints_expected_table_row_count,
+    vocabulary_ddl_expected_table_row_count,
     vocabulary_indexes_constraints_dacpac_expected_indexes,
     vocabulary_indexes_constraints_dacpac_expected_constraints,
 ):
@@ -858,10 +889,15 @@ def vocabulary_ddl_and_vocabulary_indexes_constraints_db_config(
     request.cls.expected_db_name = url.split("/")[-1]
 
     db_config = namedtuple(
-        "db_config", ["expected_table_row_count", "vocabulary_expected_indexes", "vocabulary_expected_constraints"]
+        "db_config",
+        [
+            "expected_table_row_count",
+            "vocabulary_expected_indexes",
+            "vocabulary_expected_constraints",
+        ],
     )
     instance_db_config = db_config(
-        vocabulary_indexes_constraints_expected_table_row_count,
+        vocabulary_ddl_expected_table_row_count,  # data should be loaded as part of unit test script
         vocabulary_indexes_constraints_dacpac_expected_indexes,
         vocabulary_indexes_constraints_dacpac_expected_constraints,
     )
@@ -884,8 +920,14 @@ def db_config(
     vocabulary_ddl_dacpac_db_config,
     vocabulary_indexes_constraints_db_config,
     vocabulary_ddl_and_vocabulary_indexes_constraints_db_config,
+    vocabulary_data_files,
+    vocabulary_data_folder,
 ):
     param = request.param
+
+    # Copy in files in for test data loading purposes.
+    for vocabulary_file in vocabulary_data_files:
+        DockerHelper.run_docker_copy(f"{vocabulary_data_folder}/{vocabulary_file}", vocabulary_file)
 
     if param == TestScenario.TEST_VOCABULARY_DDL_DACPAC:
         # deploy dacpac

@@ -1,4 +1,4 @@
-﻿<Project Sdk="MSBuild.Sdk.SqlProj/1.17.1">
+﻿<Project Sdk="MSBuild.Sdk.SqlProj/2.0.0">
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <!-- Check the corresponding version https://docs.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.dac.model.sqlserverversion?view=sql-dacfx-150-->

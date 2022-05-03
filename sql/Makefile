@@ -14,6 +14,9 @@ SQL_SERVER_DOCKER_IMAGE=mcr.microsoft.com/mssql/server:2019-latest
 SQL_SERVER_NAME=sql1
 SA_PASSWORD=You-can-run-a-unit-test.
 
+SQL_SERVER_DATA_SOURCE_NAME="<UnitTest>"
+SQL_SERVER_VOCABULARIES_CONTAINER_PATH="<UnitTest>"
+
 # URL format needs to be one expected by SQLAlchemy (https://docs.sqlalchemy.org/en/14/core/engines.html#database-urls)
 UNIT_TEST_DB_URL=mssql+pymssql://sa:$(SA_PASSWORD)@localhost:1433/unit_test_db
 SQL_PACKAGE_CONNECTION_STRING="User Id=sa;Password=$(SA_PASSWORD);Server=localhost,1433;Database=unit_test_db"
@@ -73,9 +76,6 @@ SQLPACKAGE_PATH=/sqlpackage/sqlpackage
 	python-dependencies-clean
 
 all: check install
-
-bash-build-test-container:
-	docker build -f Dockerfile -t sql-server-2019-with-azurite .
 
 bash-dev-env: python-dependencies docker-sql-server
 
@@ -149,6 +149,9 @@ check-tests: python-dependencies build-dir
 	export DOTNET_EMPTY_DACPAC_PATH=$(DOTNET_EMPTY_DACPAC_PATH) && \
 	export UNIT_TEST_DB_URL=$(UNIT_TEST_DB_URL) && \
 	export SQLPACKAGE_PATH=$(SQLPACKAGE_PATH) && \
+	export SQL_SERVER_NAME=$(SQL_SERVER_NAME) && \
+	export SQL_SERVER_DATA_SOURCE_NAME=$(SQL_SERVER_DATA_SOURCE_NAME) && \
+	export SQL_SERVER_VOCABULARIES_CONTAINER_PATH=$(SQL_SERVER_VOCABULARIES_CONTAINER_PATH) && \
 	python3 -m pipenv run pytest $(PYTEST_OPTIONS) $(TESTS_DIR)
 
 check-tests-clean:
