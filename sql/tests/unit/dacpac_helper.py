@@ -1,8 +1,8 @@
 import os
-from subprocess import Popen, PIPE
-import sys
 import logging
 from enum import Enum
+
+from tests.unit.process_helper import ProcessHelper
 
 
 log = logging.getLogger(__name__)
@@ -34,33 +34,32 @@ class DacpacHelperEnvironmentVariables(str, Enum):
     #: Environment Variable for the empty dacpac path
     DOTNET_EMPTY_DACPAC_PATH = "DOTNET_EMPTY_DACPAC_PATH"
 
+    #: Environment Variable for Data Source Name
+    SQL_SERVER_DATA_SOURCE_NAME = "SQL_SERVER_DATA_SOURCE_NAME"
+
+    #: Environment Variable for vocabularies container path
+    # SQL Server Vocabularies Container Path e.g. the vocabularies are stored under account/some/path/to/vocab.csv
+    # Then you can use /some/path/to as the value
+    SQL_SERVER_VOCABULARIES_CONTAINER_PATH = "SQL_SERVER_VOCABULARIES_CONTAINER_PATH"
+
     def __str__(self):
         return str(self.value)
 
 
-class DacpacHelper(object):
+class DacpacHelper(ProcessHelper):
     """
     DacpacHelper which will let you use a dacpac against a sql database using sqlpackage
     """
 
     @classmethod
-    def _run_process(cls, cmd):
-        p = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
-        print(f"Executing subprocess with {cmd}")
-        stdout, stderr = p.communicate()
-        sys.stdout.write(stdout.decode("utf-8"))
-        sys.stderr.write(stderr.decode("utf-8"))
-        log.info(stdout)
-        log.error(stderr)
-
-        if p.returncode != 0:
-            raise DacpacHelperError(
-                f"""
+    def _get_error(cls, cmd, stdout, stderr):
+        return DacpacHelperError(
+            f"""
             Could not execute subprocess with: {cmd}
             stdout: {stdout}
             stderr: {stderr}
             """
-            )
+        )
 
     @classmethod
     def run_vocabulary_ddl_dacpac(cls):
@@ -75,8 +74,12 @@ class DacpacHelper(object):
         conn_str = os.environ[DacpacHelperEnvironmentVariables.SQL_PACKAGE_CONNECTION_STRING]
         dacpac_file = os.environ[DacpacHelperEnvironmentVariables.DOTNET_VOCABULARY_DDL_DACPAC_PATH]
         sqlpackage_path = os.environ[DacpacHelperEnvironmentVariables.SQLPACKAGE_PATH]
+        data_source_name = os.environ[DacpacHelperEnvironmentVariables.SQL_SERVER_DATA_SOURCE_NAME]
+        vocabularies_container_path = os.environ[
+            DacpacHelperEnvironmentVariables.SQL_SERVER_VOCABULARIES_CONTAINER_PATH
+        ]
         # run the dacpac
-        cmd = f'{sqlpackage_path} /a:publish /sf:"{dacpac_file}" /tcs:"{conn_str}"'
+        cmd = f'{sqlpackage_path} /a:publish /sf:"{dacpac_file}" /tcs:"{conn_str}" /v:DSVocabularyBlobStorageName="{data_source_name}" /v:VocabulariesContainerPath="{vocabularies_container_path}"'
         cls._run_process(cmd)
 
     @classmethod

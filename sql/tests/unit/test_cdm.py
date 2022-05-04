@@ -103,7 +103,13 @@ class TestDboUnitTest(object):
         expected = db_config.vocabulary_expected_indexes  # should be pandas dataframe
 
         # find the diff between the data frames
-        diff_df = pd.merge(actual, expected, how="outer", on=["index_name", "index_type"], indicator="Exist")
+        diff_df = pd.merge(
+            actual,
+            expected,
+            how="outer",
+            on=["index_name", "index_type"],
+            indicator="Exist",
+        )
         diff_df = diff_df.loc[diff_df["Exist"] != "both"]
 
         assert_that(
@@ -125,7 +131,13 @@ class TestDboUnitTest(object):
         actual = pd.read_sql_query(query, self.connection)
         expected = db_config.vocabulary_expected_constraints  # should be pandas dataframe
 
-        diff_df = pd.merge(actual, expected, how="outer", on=["CONSTRAINT_NAME", "CONSTRAINT_TYPE"], indicator="Exist")
+        diff_df = pd.merge(
+            actual,
+            expected,
+            how="outer",
+            on=["CONSTRAINT_NAME", "CONSTRAINT_TYPE"],
+            indicator="Exist",
+        )
         diff_df = diff_df.loc[diff_df["Exist"] != "both"]
 
         assert_that(
