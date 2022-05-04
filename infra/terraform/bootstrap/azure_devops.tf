@@ -13,7 +13,7 @@ resource "azuredevops_project" "project" {
   work_item_template = "Agile"
 
   lifecycle {
-    #prevent_destroy = true # prevent destroying the project
+    prevent_destroy = true # prevent destroying the project
     ignore_changes = [
       # Ignore changes to visibility and work_item_template to support importing existing projects
       # Given that a project now exists, either imported into terraform state or created by terraform,
@@ -38,7 +38,7 @@ resource "azuredevops_git_repository" "repo" {
   # }
   # Use Terraform import instead, otherwise this resource will destroy the existing repository.
   lifecycle {
-    #prevent_destroy = true # prevent destroying the repo
+    prevent_destroy = true # prevent destroying the repo
     ignore_changes = [
       # Ignore changes to initialization to support importing existing repositories
       # Given that a repo now exists, either imported into terraform state or created by terraform,
