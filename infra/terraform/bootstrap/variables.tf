@@ -112,12 +112,12 @@ variable "tf_destroy_environment_pipeline_path" {
   description = "Azure DevOps Environment Pipeline path e.g. /pipelines/environments/omop-terraform-destroy.yaml"
 }
 
-variable "tf_apply_environment_build_pipeline_name" {
+variable "tf_apply_environment_pipeline_name" {
   default     = "TF Apply OMOP Environment Pipeline"
   description = "Terraform Apply Environment Build Pipeline Name"
 }
 
-variable "tf_destroy_environment_build_pipeline_name" {
+variable "tf_destroy_environment_pipeline_name" {
   default     = "TF Destroy OMOP Environment Pipeline"
   description = "Terraform Destroy Environment Build Pipeline Name"
 }

@@ -4,7 +4,7 @@
 #############################
 resource "azuredevops_build_definition" "tfapplyenvironmentpipeline" {
   project_id = azuredevops_project.project.id
-  name       = var.tf_apply_environment_build_pipeline_name
+  name       = var.tf_apply_environment_pipeline_name
   path       = "\\OHDSIOnAzure\\${var.prefix}-${var.environment}\\Terraform"
 
   repository {
@@ -21,18 +21,18 @@ resource "azuredevops_build_definition" "tfapplyenvironmentpipeline" {
   ]
 }
 
-module "azure_devops_elastic_pool_for_environment_pipeline_assignment" {
+module "azure_devops_elastic_pool_for_tf_apply_environment_pipeline_assignment" {
   source              = "../modules/azure_devops_elastic_pool_pipeline_assignment"
   authorized          = true
   ado_org_service_url = var.ado_org_service_url
   ado_pat             = var.ado_pat
   ado_project_name    = azuredevops_project.project.name
   ado_queue_id        = module.azure_devops_elastic_pool_linux_vmss_pool.vmssAgentQueueId
-  ado_pipeline_id     = azuredevops_build_definition.environmentpipeline.id
+  ado_pipeline_id     = azuredevops_build_definition.tfapplyenvironmentpipeline.id
 
   depends_on = [
     module.azure_devops_elastic_pool_linux_vmss_pool,
-    azuredevops_build_definition.environmentpipeline
+    azuredevops_build_definition.tfapplyenvironmentpipeline
   ]
 }
 
@@ -42,7 +42,7 @@ module "azure_devops_elastic_pool_for_environment_pipeline_assignment" {
 #############################
 resource "azuredevops_build_definition" "tfdestroyenvironmentpipeline" {
   project_id = azuredevops_project.project.id
-  name       = var.tf_destroy_environment_build_pipeline_name
+  name       = var.tf_destroy_environment_pipeline_name
   path       = "\\OHDSIOnAzure\\${var.prefix}-${var.environment}\\Terraform"
 
   repository {
@@ -59,18 +59,18 @@ resource "azuredevops_build_definition" "tfdestroyenvironmentpipeline" {
   ]
 }
 
-module "azure_devops_elastic_pool_for_environment_pipeline_assignment" {
+module "azure_devops_elastic_pool_for_tf_destroy_environment_pipeline_assignment" {
   source              = "../modules/azure_devops_elastic_pool_pipeline_assignment"
   authorized          = true
   ado_org_service_url = var.ado_org_service_url
   ado_pat             = var.ado_pat
   ado_project_name    = azuredevops_project.project.name
   ado_queue_id        = module.azure_devops_elastic_pool_linux_vmss_pool.vmssAgentQueueId
-  ado_pipeline_id     = azuredevops_build_definition.environmentpipeline.id
+  ado_pipeline_id     = azuredevops_build_definition.tfdestroyenvironmentpipeline.id
 
   depends_on = [
     module.azure_devops_elastic_pool_linux_vmss_pool,
-    azuredevops_build_definition.environmentpipeline
+    azuredevops_build_definition.tfdestroyenvironmentpipeline
   ]
 }
 
