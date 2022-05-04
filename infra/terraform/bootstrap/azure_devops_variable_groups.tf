@@ -50,10 +50,20 @@ resource "azuredevops_variable_group" "adobootstrapvg" {
 }
 
 # Authorize the VG for the Environment Pipeline
-resource "azuredevops_resource_authorization" "adobootstrapvgauth" {
+resource "azuredevops_resource_authorization" "tfapplyadobootstrapvgauth" {
   project_id    = azuredevops_project.project.id
   resource_id   = azuredevops_variable_group.adobootstrapvg.id
-  definition_id = azuredevops_build_definition.environmentpipeline.id
+  definition_id = azuredevops_build_definition.tfapplyenvironmentpipeline.id
+  authorized    = true
+  type          = "variablegroup"
+}
+
+
+# Authorize the VG for the Environment Pipeline
+resource "azuredevops_resource_authorization" "tfdestroyadobootstrapvgauth" {
+  project_id    = azuredevops_project.project.id
+  resource_id   = azuredevops_variable_group.adobootstrapvg.id
+  definition_id = azuredevops_build_definition.tfdestroyenvironmentpipeline.id
   authorized    = true
   type          = "variablegroup"
 }
@@ -218,10 +228,19 @@ resource "azuredevops_variable_group" "adobootstrapsettingsvg" {
 }
 
 # Authorize the VG for the Environment Pipeline
-resource "azuredevops_resource_authorization" "adobootstrapsettingsvgauth" {
+resource "azuredevops_resource_authorization" "tfapplyadobootstrapsettingsvgauth" {
   project_id    = azuredevops_project.project.id
   resource_id   = azuredevops_variable_group.adobootstrapsettingsvg.id
-  definition_id = azuredevops_build_definition.environmentpipeline.id
+  definition_id = azuredevops_build_definition.tfapplyenvironmentpipeline.id
+  authorized    = true
+  type          = "variablegroup"
+}
+
+# Authorize the VG for the Environment Pipeline
+resource "azuredevops_resource_authorization" "tfdestroyadobootstrapsettingsvgauth" {
+  project_id    = azuredevops_project.project.id
+  resource_id   = azuredevops_variable_group.adobootstrapsettingsvg.id
+  definition_id = azuredevops_build_definition.tfdestroyenvironmentpipeline.id
   authorized    = true
   type          = "variablegroup"
 }

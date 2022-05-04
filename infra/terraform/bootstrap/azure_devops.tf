@@ -176,7 +176,7 @@ module "azure_devops_environment_tf_plan_pipeline_assignment" {
   ado_pat             = var.ado_pat
   ado_project_name    = azuredevops_project.project.name
   ado_environment_id  = module.azure_devops_environment_tf_plan.azure_devops_environment_id
-  ado_pipeline_id     = azuredevops_build_definition.environmentpipeline.id
+  ado_pipeline_id     = azuredevops_build_definition.tfapplyenvironmentpipeline.id
 }
 
 module "azure_devops_environment_tf_apply_pipeline_assignment" {
@@ -186,7 +186,18 @@ module "azure_devops_environment_tf_apply_pipeline_assignment" {
   ado_pat             = var.ado_pat
   ado_project_name    = azuredevops_project.project.name
   ado_environment_id  = module.azure_devops_environment_tf_apply.azure_devops_environment_id
-  ado_pipeline_id     = azuredevops_build_definition.environmentpipeline.id
+  ado_pipeline_id     = azuredevops_build_definition.tfapplyenvironmentpipeline.id
+}
+
+module "azure_devops_environment_tf_destroy_pipeline_assignment" {
+  source              = "../modules/azure_devops_environment_pipeline_assignment"
+  authorized          = true
+  ado_org_service_url = var.ado_org_service_url
+  ado_pat             = var.ado_pat
+  ado_project_name    = azuredevops_project.project.name
+  # Should the ado_environment_id be something else?
+  ado_environment_id = module.azure_devops_environment_tf_apply.azure_devops_environment_id
+  ado_pipeline_id    = azuredevops_build_definition.tfdestroyenvironmentpipeline.id
 }
 
 module "azure_devops_environment_vocabulary_build_pipeline_assignment" {
