@@ -2,7 +2,7 @@
 
 As part of your OMOP Common Data Model (CDM), you should deploy your [OMOP vocabularies](https://www.ohdsi.org/data-standardization/vocabulary-resources/) which should conform to your CDM.
 
-[Setup Vocabulary](https://user-images.githubusercontent.com/2498998/165581645-175a1c9f-783d-4e4e-a064-d1b0148554a1.mp4)
+[Setup Vocabulary](https://user-images.githubusercontent.com/2498998/167502866-eb7d49da-83fa-429f-a0dd-bb066d12482c.mp4)
 
 > You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
 

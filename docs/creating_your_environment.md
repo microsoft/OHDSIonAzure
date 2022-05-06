@@ -10,11 +10,11 @@ This guide will let you work through the E2E for setting up your environment in 
 
 * Setup your bootstrap resource group using the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md)
 
-[Setup Bootstrap Resource Group](https://user-images.githubusercontent.com/2498998/165582260-613fd12e-3226-46be-9e63-e9e8578676ba.mp4)
+[Setup Bootstrap Resource Group](https://user-images.githubusercontent.com/2498998/167498765-356f5b85-d9fe-402f-a8f2-6603856d79fe.mp4)
 
 * Setup your OMOP resource group using the [OMOP Terraform project](/infra/terraform/omop/README.md)
 
-[Setup OMOP Resource Group](https://user-images.githubusercontent.com/2498998/165582043-2f326c22-491e-4ce5-98af-ca10fcf8e80a.mp4)
+[Setup OMOP Resource Group](https://user-images.githubusercontent.com/2498998/167503494-5a99c3b5-a496-47cf-a776-92bec4e9819c.mp4)
 
 2. You can [setup your vocabulary](/docs/setup/setup_vocabulary.md) to populate your Azure SQL CDM in your environment.
 
@@ -23,8 +23,8 @@ This guide will let you work through the E2E for setting up your environment in 
   * For troubleshooting please review the notes [here](/docs/troubleshooting/troubleshooting_vocabulary.md)
 
 * Setup [your vocabulary](/docs/setup/setup_vocabulary.md)
-  
-[Setup Vocabulary](https://user-images.githubusercontent.com/2498998/165581645-175a1c9f-783d-4e4e-a064-d1b0148554a1.mp4)
+
+[Setup Vocabulary](https://user-images.githubusercontent.com/2498998/167502866-eb7d49da-83fa-429f-a0dd-bb066d12482c.mp4)
 
 3. Setup Broadsea webtools (Atlas / WebAPI) and broadsea methods (Achilles / ETL-Synthea) in your environment
 
@@ -36,4 +36,4 @@ This guide will let you work through the E2E for setting up your environment in 
 
 * Setup Broadsea in your environment
 
-[Setup Broadsea](https://user-images.githubusercontent.com/2498998/165582632-a5cefdd5-8b84-424b-9f83-4453ab1760d4.mp4)
+[Setup Broadsea](https://user-images.githubusercontent.com/2498998/167233874-1f1ebf77-0deb-4694-b1ce-f1a8df4de1eb.mp4)

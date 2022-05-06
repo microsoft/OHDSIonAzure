@@ -7,7 +7,7 @@ The following steps walkthrough setting up infra for OHDSI on Azure.
 1. You are able to work through the [infra setup notes](/infra/README.md/#setup), including working with your administrator to go through the [bootstrap administrative steps](/infra/README.md/#administrative-steps) and pushing the [backend state to Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli).
     > <mark>For convenience, administrative steps are included in the [bootstrap Terraform Project](/infra/terraform/bootstrap/README.md/#bootstrap-terraform). </mark>
 
-    [Setup Bootstrap RG](https://user-images.githubusercontent.com/2498998/165582260-613fd12e-3226-46be-9e63-e9e8578676ba.mp4)
+    [Setup Bootstrap RG](https://user-images.githubusercontent.com/2498998/167498765-356f5b85-d9fe-402f-a8f2-6603856d79fe.mp4)
 
     > You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
 
@@ -31,7 +31,7 @@ git clone https://github.com/microsoft/OHDSIonAzure
 
 Assuming you can complete the [prerequisites](#prerequisites), you can work through the following steps.
 
-[Setup Bootstrap Resource Group](https://user-images.githubusercontent.com/2498998/165582043-2f326c22-491e-4ce5-98af-ca10fcf8e80a.mp4)
+[Setup OMOP Resource Group](https://user-images.githubusercontent.com/2498998/167503494-5a99c3b5-a496-47cf-a776-92bec4e9819c.mp4)
 
 > You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
 

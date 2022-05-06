@@ -4,7 +4,7 @@ Below are steps to setup [Achilles](https://github.com/OHDSI/Achilles) and [ETL-
 
 > Note this guide is part of setting up Broadsea
 
-[Setup Broadsea](https://user-images.githubusercontent.com/2498998/165582632-a5cefdd5-8b84-424b-9f83-4453ab1760d4.mp4)
+[Setup Broadsea](https://user-images.githubusercontent.com/2498998/167233874-1f1ebf77-0deb-4694-b1ce-f1a8df4de1eb.mp4)
 
 > You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
 
