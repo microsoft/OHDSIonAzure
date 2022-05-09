@@ -15,7 +15,7 @@ This project will cover the resources in the `OMOP Resource Group`, which is dep
 * [Azure Container Registry](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-intro)
   * This will hold container images for [Broadsea-webtools](/apps/broadsea-webtools/README.md) and for [Broadsea-methods](/apps/broadsea-methods/README.md)
 
-[Setup OMOP Resource Group](https://user-images.githubusercontent.com/2498998/165582043-2f326c22-491e-4ce5-98af-ca10fcf8e80a.mp4)
+[Setup OMOP Resource Group](https://user-images.githubusercontent.com/2498998/167503494-5a99c3b5-a496-47cf-a776-92bec4e9819c.mp4)
 
 > You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
 

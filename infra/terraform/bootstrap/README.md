@@ -10,7 +10,7 @@ This project includes the bootstrap Resource Group and steps to ease your Azure 
 
 This project will look to ease running your [environment terraform](/infra/terraform/omop/README.md) and running OHDSI in Azure.  You are likely to only run this bootstrap terraform project when you are first setting up an environment, or if you need to use Terraform to manage other Azure DevOps settings.
 
-[Setup Bootstrap Resource Group](https://user-images.githubusercontent.com/2498998/165582260-613fd12e-3226-46be-9e63-e9e8578676ba.mp4)
+[Setup Bootstrap Resource Group](https://user-images.githubusercontent.com/2498998/167498765-356f5b85-d9fe-402f-a8f2-6603856d79fe.mp4)
 
 > You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
 
