@@ -1,6 +1,7 @@
 resource_group_name = "myAdoResourceGroup"
 environment         = "dev"
 
+# Be sure to pick a proper location for your Azure resources
 location = "westus3"
 
 tags = {

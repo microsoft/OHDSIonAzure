@@ -3,6 +3,7 @@
 #################################
 ## GitHub Actions ###############
 ## lint #########################
+## Check Terraform ##############
 ## Test SQL #####################
 #################################
 name: Build Validation
@@ -60,40 +61,16 @@ jobs:
               # our Terraform uses more than just *.tf files, so need to check changes in the folder
               - '**/terraform/**/*'
 
+      - name: Setup Terraform
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.1.4
+
       - name: Terraform format check
+        id: terraform_fmt
         if: ${{ steps.filter.outputs.terraform == 'true' }}
         run: terraform fmt -check -recursive
-
-      # find all terraform folders and run validate to catch
-      # configuration errors
-      - name: Terraform validation
-        if: ${{ steps.filter.outputs.terraform == 'true' }}
-        run: |
-          echo "***** Mirroring plugin for TF provider *****"
-          PLUGIN_PATH=/usr/share/terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/linux_amd64
-          mkdir -p $PLUGIN_PATH
-          curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_linux_amd64.zip'
-          unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
-          rm _
-          chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
-
-          echo "***** Checking plan for infra/terraform/omop *****"
-
-          echo "***** Validating: infra/terraform/bootstrap *****"
-          terraform -chdir=infra/terraform/bootstrap init -backend=false
-          terraform -chdir=infra/terraform/bootstrap validate
-
-          # TODO: Revisit after setting az login context
-          # echo "***** Checking plan for infra/terraform/bootstrap *****"
-          # terraform -chdir=infra/terraform/bootstrap plan
-
-          echo "***** Validating: infra/terraform/omop *****"
-          terraform -chdir=infra/terraform/omop init -backend=false
-          terraform -chdir=infra/terraform/omop validate
-
-          # TODO: Revisit after setting az login context
-          # echo "***** Checking plan for infra/terraform/omop *****"
-          # terraform -chdir=infra/terraform/omop plan
 
       ################################
       # Run Linter against code base #
@@ -120,6 +97,160 @@ jobs:
           VALIDATE_PYTHON_BLACK: true
           VALIDATE_PYTHON_FLAKE8: true
           VALIDATE_GITHUB_ACTIONS: true
+
+  check_terraform:
+    needs: lint # job dependency
+    # Name the Job
+    name: Check Terraform
+    # Set the agent to run on
+    runs-on: ubuntu-latest
+
+    ##################
+    # Load all steps #
+    ##################
+    steps:
+      ##########################
+      # Checkout the code base #
+      ##########################
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            terraform:
+              # our Terraform uses more than just *.tf files, so need to check changes in the folder
+              - '**/terraform/**/*'
+
+      - name: Setup Terraform
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.1.4
+
+      - name: Terraform format check
+        id: terraform_fmt
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: terraform fmt -check -recursive
+
+      # find all terraform folders and run validate to catch
+      # configuration errors
+      - name: Terraform Bootstrap Init
+        id: terraform_bootstrap_init
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: |
+          echo "***** Mirroring plugin for TF provider *****"
+          PLUGIN_PATH=/usr/share/terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/linux_amd64
+          mkdir -p $PLUGIN_PATH
+          curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_linux_amd64.zip'
+          unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
+          rm _
+          chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
+
+          echo "***** Initialize: infra/terraform/bootstrap *****"
+          terraform -chdir=infra/terraform/bootstrap init -backend=false
+
+      - name: Terraform Bootstrap Validate
+        id: terraform_bootstrap_validate
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: |
+          terraform -chdir=infra/terraform/bootstrap validate
+
+      - name: Terraform Bootstrap Plan
+        id: terraform_bootstrap_plan
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: |
+          terraform -chdir=infra/terraform/bootstrap plan -no-color -var 'prefix=validate' -var 'environment=ci' -var 'omop_password=Run-a-terraform-plan.' -var 'ado_pat=${{ secrets.ADO_PAT }}' -out=tfplan
+          terraform -chdir=infra/terraform/bootstrap show -no-color tfplan
+
+      # find all terraform folders and run validate to catch
+      # configuration errors
+      - name: Terraform OMOP Init
+        id: terraform_omop_init
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: |
+          echo "***** Validating: infra/terraform/omop *****"
+          terraform -chdir=infra/terraform/omop init -backend=false
+
+      - name: Terraform OMOP Validate
+        id: terraform_omop_validate
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: |
+          echo "***** Validating: infra/terraform/omop *****"
+          terraform -chdir=infra/terraform/omop validate
+
+      # - name: Terraform OMOP Plan
+      #   id: terraform_omop_plan
+      #   if: ${{ steps.filter.outputs.terraform == 'true' }}
+      #   env:
+      #     ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      #     ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      #     ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      #     ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      #   run: |
+      #     # TODO: Revisit after setting az login context
+      #     # echo "***** Checking plan for infra/terraform/omop *****"
+      #     # terraform -chdir=infra/terraform/omop plan
+
+      - name: Add Terraform Plan Comment
+        id: comment
+        uses: actions/github-script@v3
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `## Terraform Check Results
+            #### Terraform Format and Style 🖌\`${{ steps.terraform_fmt.outcome }}\`
+            #### Bootstrap Terraform Initialization ⚙️\`${{ steps.terraform_bootstrap_init.outcome }}\`
+            #### Bootstrap Terraform Validation 🤖\`${{ steps.terraform_bootstrap_validate.outcome }}\`
+            #### Bootstrap Terraform Plan 📖\`${{ steps.terraform_bootstrap_plan.outcome }}\`
+
+            #### OMOP Terraform Initialization ⚙️\`${{ steps.terraform_omop_init.outcome }}\`
+            #### OMOP Terraform Validation 🤖\`${{ steps.terraform_omop_validate.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`\n${{ steps.terraform_bootstrap_plan.outputs.stdout || steps.terraform_bootstrap_plan.outputs.stderr }}\`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            // Get the existing comments.
+            const {data: comments} = await github.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.number,
+            })
+
+            // Find any comment which includes the word 'Terraform' already made by the bot.
+            const botComment = comments.find(comment => comment.user.id === 41898282 && comment.body.includes("Terraform"))
+
+            if (botComment) {
+              await github.issues.updateComment({
+                comment_id: botComment.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            } else {
+              await github.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
 
   test_sql:
     needs: lint # job dependency

@@ -9,7 +9,7 @@ resource "azuread_group" "dbadminsaadgroup" {
   display_name  = "${var.prefix}-${var.environment}-omop-sql-server-admins"
   mail_nickname = "${var.prefix}-${var.environment}-omop-sql-server-admins"
   owners = toset([
-    data.azuread_client_config.current.object_id,
+    sensitive(data.azuread_client_config.current.object_id),
   ])
   security_enabled = true
 
@@ -18,9 +18,9 @@ resource "azuread_group" "dbadminsaadgroup" {
   # assignable_to_role = true
 
   members = toset([
-    data.azuread_client_config.current.object_id,
-    azuread_service_principal.spomop.id,
-    azurerm_linux_virtual_machine_scale_set.vmss.identity[0].principal_id
+    sensitive(data.azuread_client_config.current.object_id),
+    sensitive(azuread_service_principal.spomop.id),
+    sensitive(azurerm_linux_virtual_machine_scale_set.vmss.identity[0].principal_id)
   ])
 }
 
@@ -30,7 +30,7 @@ resource "azuread_group" "directoryreadersaadgroup" {
   display_name  = "${var.prefix}-${var.environment}-omop-sql-server-directory-readers"
   mail_nickname = "${var.prefix}-${var.environment}-omop-sql-server-directory-readers"
   owners = toset([
-    data.azuread_client_config.current.object_id,
+    sensitive(data.azuread_client_config.current.object_id),
   ])
   security_enabled = true
 
@@ -39,7 +39,7 @@ resource "azuread_group" "directoryreadersaadgroup" {
   assignable_to_role = true
 
   members = toset([
-    data.azuread_client_config.current.object_id,
+    sensitive(data.azuread_client_config.current.object_id),
   ])
 }
 
@@ -55,6 +55,6 @@ resource "azuread_directory_role" "directoryreaders" {
 }
 
 resource "azuread_directory_role_member" "directoryreadersmember" {
-  role_object_id   = azuread_directory_role.directoryreaders.object_id
-  member_object_id = azuread_group.directoryreadersaadgroup.object_id
+  role_object_id   = sensitive(azuread_directory_role.directoryreaders.object_id)
+  member_object_id = sensitive(azuread_group.directoryreadersaadgroup.object_id)
 }

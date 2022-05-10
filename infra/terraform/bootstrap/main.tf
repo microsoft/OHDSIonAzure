@@ -51,7 +51,7 @@ resource "azurerm_key_vault" "keyvault" {
   location                    = var.location
   resource_group_name         = azurerm_resource_group.adobootstrap.name
   enabled_for_disk_encryption = true
-  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  tenant_id                   = sensitive(data.azurerm_client_config.current.tenant_id)
   soft_delete_retention_days  = 7
   purge_protection_enabled    = false
 
@@ -59,8 +59,8 @@ resource "azurerm_key_vault" "keyvault" {
 
   access_policy = [
     {
-      tenant_id      = data.azurerm_client_config.current.tenant_id
-      object_id      = data.azurerm_client_config.current.object_id
+      tenant_id      = sensitive(data.azurerm_client_config.current.tenant_id)
+      object_id      = sensitive(data.azurerm_client_config.current.object_id)
       application_id = null
 
       secret_permissions = [
@@ -100,8 +100,8 @@ resource "azurerm_key_vault" "keyvault" {
     },
     ## Grant SP permissions
     {
-      tenant_id      = data.azurerm_client_config.current.tenant_id
-      object_id      = azuread_service_principal.spomop.object_id
+      tenant_id      = sensitive(data.azurerm_client_config.current.tenant_id)
+      object_id      = sensitive(azuread_service_principal.spomop.object_id)
       application_id = null
       secret_permissions = [
         "Get",
