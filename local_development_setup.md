@@ -80,6 +80,7 @@ For local development, you can install these tools for linting:
 * YAML [with Yamllint](/local_development_setup.md/#yaml-with-yamllint)
 * Terraform [with TFLint](/local_development_setup.md/#terraform-with-tflint)
 * Python with [Flake8](/local_development_setup.md#python-with-flake8) and [Black](/local_development_setup.md#python-with-black)
+* Github Actions with [Actionlint](/local_development_setup.md#github-actions-with-actionlint)
 
 These linters are also used as part of CI validation in a [github action](/.github/workflows/build-validation.yml) through [super-linter](https://github.com/github/super-linter), so ensuring your changes work locally before pushing commits can accelerate your feedback cycle.
 
@@ -320,6 +321,20 @@ black --config path/to/pyproject.toml  path/to/code/
 ```
 
 For example, from the repository root directory, you can run `black --config .github/linters/pyproject.toml sql/tests`
+
+### Github Actions with Actionlint
+
+You can use [actionlint](https://github.com/rhysd/actionlint/) for linting github actions workflows.
+
+1. You can [install](https://github.com/rhysd/actionlint/blob/main/docs/install.md) if you desire.
+
+2. You can use [actionlint](https://github.com/rhysd/actionlint/blob/main/docs/usage.md#docker) with docker:
+
+```bash
+cat /path/to/workflow.yml | docker run --rm -i rhysd/actionlint:latest -color -
+```
+
+For example, from the repository root directory, you can run `cat .github/workflows/build-validation.yml | docker run --rm -i rhysd/actionlint:latest -color -`.
 
 ## Testing
 

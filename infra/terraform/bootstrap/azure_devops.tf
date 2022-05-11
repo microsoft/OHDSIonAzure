@@ -247,21 +247,21 @@ module "azure_devops_environment_broadsea_release_pipeline_assignment" {
 
 resource "azuread_application" "spomop" {
   display_name = "sp-for-${var.prefix}-${var.environment}-omop-service-connection"
-  owners       = [data.azuread_client_config.current.object_id]
+  owners       = [sensitive(data.azuread_client_config.current.object_id)]
 }
 
 resource "azuread_service_principal" "spomop" {
   application_id = azuread_application.spomop.application_id
-  owners         = [data.azuread_client_config.current.object_id]
+  owners         = [sensitive(data.azuread_client_config.current.object_id)]
 }
 
 resource "azuread_service_principal_password" "spomop" {
-  service_principal_id = azuread_service_principal.spomop.id
+  service_principal_id = sensitive(azuread_service_principal.spomop.id)
 }
 
 resource "azurerm_role_assignment" "main" {
-  principal_id         = azuread_service_principal.spomop.id
-  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
+  principal_id         = sensitive(azuread_service_principal.spomop.id)
+  scope                = sensitive("/subscriptions/${data.azurerm_client_config.current.subscription_id}")
   role_definition_name = "Owner"
 }
 
@@ -278,8 +278,8 @@ resource "azuredevops_serviceendpoint_azurerm" "endpointazure" {
     serviceprincipalid  = azuread_service_principal.spomop.application_id
     serviceprincipalkey = azuread_service_principal_password.spomop.value
   }
-  azurerm_spn_tenantid      = data.azurerm_client_config.current.tenant_id
-  azurerm_subscription_id   = data.azurerm_client_config.current.subscription_id
+  azurerm_spn_tenantid      = sensitive(data.azurerm_client_config.current.tenant_id)
+  azurerm_subscription_id   = sensitive(data.azurerm_client_config.current.subscription_id)
   azurerm_subscription_name = var.azure_subscription_name
 }
 

@@ -45,7 +45,7 @@ To get started, first clone the repository.
 git clone https://github.com/microsoft/OHDSIonAzure
 ```
 
-You can work through the notes on setting up your [bootstrap Terraform project](/infra/README.md#bootstrap-deployment-overview) and [creating your environment](/docs/creating_your_environment.md) which will walk through how to set up OHDSI on Azure.
+You can work through the notes on [creating your environment](/docs/creating_your_environment.md) which will walk through how to set up OHDSI on Azure.
 
 ## Contributing
 

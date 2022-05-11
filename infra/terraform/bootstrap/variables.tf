@@ -21,19 +21,23 @@ variable "tags" {
 variable "admin_user_jumpbox" {
   description = "User name to use as the admin account on the Azure VM Jumpbox"
   default     = "azureuser"
+  sensitive   = true
 }
 
 variable "admin_password_jumpbox" {
   description = "Default password for admin account for the Azure VM Jumpbox"
+  sensitive   = true
 }
 
 variable "admin_user" {
   description = "User name to use as the admin account on the VMs that will be part of the VM scale set"
   default     = "azureuser"
+  sensitive   = true
 }
 
 variable "admin_password" {
   description = "Default password for admin account"
+  sensitive   = true
 }
 
 variable "omop_password" {
@@ -43,6 +47,7 @@ variable "omop_password" {
 
 variable "ado_org_service_url" {
   description = "Azure DevOps Organization URL e.g. https://dev.azure.com/my-org"
+  sensitive   = true
 }
 
 variable "ado_project_name" {
@@ -102,6 +107,7 @@ variable "ado_windows_vmss_agent_pool_settings" {
 
 variable "azure_subscription_name" {
   description = "This is your Azure Subscription Name for your Azure Service Connection"
+  sensitive   = true
 }
 
 variable "tf_apply_environment_pipeline_path" {
