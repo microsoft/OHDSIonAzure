@@ -1,9 +1,9 @@
 extends: default
 
 rules:
-  # 260 chars should be enough, but don't fail if a line is longer
+  # 300 chars should be enough, but don't fail if a line is longer
   line-length:
-    max: 260
+    max: 300
     level: warning
 
   comments:

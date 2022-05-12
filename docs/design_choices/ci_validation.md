@@ -19,6 +19,7 @@ The linters should cover the following:
 * YAML using [yamllint](https://github.com/adrienverge/yamllint)
 * Terraform using [tflint](https://github.com/terraform-linters/tflint)
 * Python using [flake8](https://flake8.pycqa.org/en/latest) and [black](https://black.readthedocs.io/en/stable/getting_started.html)
+* Github Actions with [Actionlint](https://github.com/rhysd/actionlint/)
 
 ## Testing
 
@@ -32,4 +33,11 @@ The linters should cover the following:
 
   * Terraform
     * The [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) and the [omop Terraform project](/infra/terraform/omop/README.md) can be both checked with `terraform fmt -check` and `terraform validate` as rudimentary [unit tests](https://www.hashicorp.com/blog/testing-hashicorp-terraform).  Further, you can run `terraform init` to ensure that the providers are available for each project.  Finally, you can incorporate `terraform plan` to verify prospective changes that would be pushed into your Azure subscription.  Currently this is enabled with the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md).
-      * TODO: Enable Terraform Plan for [omop Terraform project](/infra/terraform/omop/README.md).  Need to consider if having an actual CI environment (from main) will be helpful.
+
+    * You can use `terraform plan` for [omop Terraform project](/infra/terraform/omop/README.md) in the CI validation [environment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment).  This will allow checking for the `terraform plan` results when making PR's to main.  The testing strategy includes `terraform plan` as part of [unit testing](https://www.hashicorp.com/blog/testing-hashicorp-terraform).
+      * The CI environment uses [environment secrets](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#environment-secrets) to manage settings required for validating `main` within the CI environment.
+
+    * You can use `terraform apply` for both the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) and the [omop Terraform project](/infra/terraform/omop/README.md) to check that the OHDSI on Azure environment will deploy correctly.  This is rolled up with orchestrating the [pipelines](/pipelines/README.md) as part of an automated Demo [environment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) from a github actions workflow (see `.github/workflows/deploy.yml` as a starting point), which also serves as an integration test when making changes to the `main` branch.
+      * This approach also relies on using an [Azure Storage remote backend](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli) for both the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) and the [omop Terraform project](/infra/terraform/omop/README.md).
+      * The demo environment uses [environment secrets](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#environment-secrets) to manage settings required for setting up the OHDSI on Azure demo environment.
+      * This approach further assumes that the `main` branch is the default branch, as the [azure devops pipeline github action](https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/github-actions?#branch-considerations) relies on calling the default branch when calling a pipeline.  Currently you cannot set the default branch when importing a project through the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/297).

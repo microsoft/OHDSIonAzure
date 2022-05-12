@@ -265,7 +265,6 @@ resource "azurerm_role_assignment" "main" {
   role_definition_name = "Owner"
 }
 
-
 #############################
 # Azure Service Connection
 #############################
@@ -295,7 +294,17 @@ resource "azuredevops_resource_authorization" "auth" {
 #############################
 
 resource "null_resource" "install_tf_ext" {
+  triggers = {
+    ado_pat             = var.ado_pat
+    ado_org_service_url = var.ado_org_service_url
+    ado_project_name    = var.ado_project_name
+  }
   provisioner "local-exec" {
     command = "./scripts/install_azdo_ext.sh"
+    environment = {
+      PAT                 = self.triggers.ado_pat
+      ADO_ORG_SERVICE_URL = self.triggers.ado_org_service_url
+      ADO_PROJECT_NAME    = self.triggers.ado_project_name
+    }
   }
 }

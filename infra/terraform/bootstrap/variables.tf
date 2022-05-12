@@ -45,6 +45,12 @@ variable "omop_password" {
   sensitive   = true
 }
 
+variable "client_object_id" {
+  description = "Logged in User / Service Principal Object Id"
+  sensitive   = true
+  default     = null
+}
+
 variable "ado_org_service_url" {
   description = "Azure DevOps Organization URL e.g. https://dev.azure.com/my-org"
   sensitive   = true
