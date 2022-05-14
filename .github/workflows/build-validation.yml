@@ -104,6 +104,7 @@ jobs:
     name: Check Terraform
     # Set the agent to run on
     runs-on: ubuntu-latest
+    environment: ci-validation
 
     ##################
     # Load all steps #
@@ -143,6 +144,12 @@ jobs:
       - name: Terraform Bootstrap Init
         id: terraform_bootstrap_init
         if: ${{ steps.filter.outputs.terraform == 'true' }}
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
         run: |
           echo "***** Mirroring plugin for TF provider *****"
           PLUGIN_PATH=/usr/share/terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/linux_amd64
@@ -153,7 +160,15 @@ jobs:
           chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
 
           echo "***** Initialize: infra/terraform/bootstrap *****"
-          terraform -chdir=infra/terraform/bootstrap init -backend=false
+          # backend can be set to false if you're using a local backend
+          # terraform -chdir=infra/terraform/bootstrap init -backend=false
+
+          terraform -chdir=infra/terraform/bootstrap init \
+            -force-copy \
+            -backend-config='resource_group_name=${{ secrets.BOOTSTRAP_TF_STATE_RG }}' \
+            -backend-config='storage_account_name=${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT }}' \
+            -backend-config='container_name=${{ secrets.BOOTSTRAP_TF_STATE_CONTAINER_NAME }}' \
+            -backend-config='key=${{ secrets.BOOTSTRAP_TF_STATE_FILE_NAME }}'
 
       - name: Terraform Bootstrap Validate
         id: terraform_bootstrap_validate
@@ -170,7 +185,8 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         if: ${{ steps.filter.outputs.terraform == 'true' }}
         run: |
-          terraform -chdir=infra/terraform/bootstrap plan -no-color -var 'prefix=validate' -var 'environment=ci' -var 'omop_password=Run-a-terraform-plan.' -var 'ado_pat=${{ secrets.ADO_PAT }}' -out=tfplan
+          # assume not actually deploying, just a plan.  Setting -lock=false
+          terraform -chdir=infra/terraform/bootstrap plan -no-color -var 'prefix=${{ secrets.PREFIX }}' -var 'environment=${{ secrets.ENVIRONMENT }}' -var 'omop_password=${{ secrets.OMOP_PASSWORD }}' -var 'ado_pat=${{ secrets.ADO_PAT }}' -out=tfplan -lock=false
           terraform -chdir=infra/terraform/bootstrap show -no-color tfplan
 
       # find all terraform folders and run validate to catch

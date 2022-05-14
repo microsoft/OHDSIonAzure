@@ -119,6 +119,8 @@ Your administrator should have the appropriate [permissions](https://registry.te
 * [Groups Administrator](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#groups-administrator)
 * [User Administrator](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#user-administrator)
 
+> In the case that you'd like to use an Azure Service Principal for your administrator Azure credential context, you will also need to assign the [Application administrator](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#application-administrator) role to your credential.  You can also use your Azure Service Principal for your [Azure context with terraform](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/guides/service_principal_client_secret).
+
 Your administrator will need one of the following directory roles to [Assign the Directory Readers Role](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role?#assigning-the-directory-readers-role):
 
 * [Global Administrator](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#global-administrator)
@@ -136,6 +138,8 @@ Your Azure DevOps PAT should include the [following scopes](https://docs.microso
 * Build - Read & Execute
 * Code - Full
 * Environment - Read & Manage
+* Extension Data - Read & Write
+* Extensions - Read & Manage
 * Project and Team - Read, Write, & Manage
 * Service Connections - Read, Query, & Manage
 * Token Administration - Read & Manage
@@ -249,7 +253,80 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
     cd infra/terraform/bootstrap
     ```
 
-2. Review the [main.tf resources](/infra/terraform/bootstrap/main.tf), [azure_ad.tf resources](/infra/terraform/bootstrap/azure_ad.tf), and [azure_devops.tf resouorces](/infra/terraform/bootstrap/azure_devops.tf) before you run the project
+2. Review the [main.tf resources](/infra/terraform/bootstrap/main.tf), [azure_ad.tf resources](/infra/terraform/bootstrap/azure_ad.tf), and [azure_devops.tf resources](/infra/terraform/bootstrap/azure_devops.tf) before you run the project
+
+    * Using a local backend
+
+      1. For simplicity, you may choose to use a local backend for the bootstrap project.  This is the preferred path for getting started.  You will need to update your [main.tf](/infra/terraform/bootstrap/main.tf) and comment out the `backend` configuration:
+
+      ```diff
+      terraform {
+      + # backend "azurerm" {
+      + # }
+        ...
+      }
+      ```
+
+    * Using an Azure Storage Account for your remote backend
+
+      1. If desired, you can use an [Azure Storage Account for your remote backend state](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli) for your bootstrap Terraform project.  You can use Azure CLI to stand up your storage account:
+
+      ```bash
+      # Setup TF State Account for Bootstrap Remote Backend
+      #!/bin/bash
+
+      RESOURCE_GROUP_NAME=bootstrap-tf-state-rg
+      STORAGE_ACCOUNT_NAME=bootstraptfstate # use a unique name for your azure storage account
+      CONTAINER_NAME=tfstate
+      LOCATION=westus3
+
+      # Create resource group
+      az group create --name $RESOURCE_GROUP_NAME --location $LOCATION
+
+      # Create storage account
+      az storage account create --resource-group $RESOURCE_GROUP_NAME --name $STORAGE_ACCOUNT_NAME --sku Standard_LRS --encryption-services blob
+
+      # Create blob container
+      az storage container create --name $CONTAINER_NAME --account-name $STORAGE_ACCOUNT_NAME
+
+      # Store your account key an environment variable
+      ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query '[0].value' -o tsv)
+      export ARM_ACCESS_KEY="$ACCOUNT_KEY"
+      ```
+
+      2. Update your [main.tf](/infra/terraform/bootstrap/main.tf) to use the `backend` configuration block:
+
+      ```diff
+      terraform {
+      + backend "azurerm" {
+      + }
+        ...
+      }
+      ```
+
+      3. When you call `terraform init`, you can supply variables on the command line for your backend configuration.
+
+      ```bash
+      terraform init \
+        -backend-config='resource_group_name=bootstrap-tf-state-rg' \
+        -backend-config='storage_account_name=bootstraptfstate' \
+        -backend-config='container_name=tfstate' \
+        -backend-config='key=terraform.tfstate'
+      ```
+
+      > If you'd like to simplify the command to use `terraform init` only, you can also specify your Azure Storage Account settings in the [main.tf](/infra/terraform/bootstrap/main.tf):
+
+      ```diff
+      terraform {
+      + backend "azurerm" {
+      +   resource_group_name  = "bootstrap-tf-state-rg"
+      +   storage_account_name = "bootstraptfstate"
+      +   container_name       = "tfstate"
+      +   key                  = "terraform.tfstate"
+      + }
+      ...
+      }
+      ```
 
     * Creating an Azure DevOps project and a repository, and importing a public git repository
 

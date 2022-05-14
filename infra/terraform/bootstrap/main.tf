@@ -1,4 +1,6 @@
 terraform {
+  backend "azurerm" {
+  }
   required_version = ">=0.12"
 
   required_providers {
@@ -27,6 +29,7 @@ provider "azuredevops" {
 
 data "azuread_client_config" "current" {}
 data "azurerm_client_config" "current" {}
+data "azurerm_subscription" "primary" {}
 
 resource "azurerm_resource_group" "adobootstrap" {
   name     = "${var.prefix}-${var.environment}-ado-bootstrap-omop-rg"
@@ -60,7 +63,7 @@ resource "azurerm_key_vault" "keyvault" {
   access_policy = [
     {
       tenant_id      = sensitive(data.azurerm_client_config.current.tenant_id)
-      object_id      = sensitive(data.azurerm_client_config.current.object_id)
+      object_id      = coalesce("${var.client_object_id}", data.azurerm_client_config.current.object_id)
       application_id = null
 
       secret_permissions = [
