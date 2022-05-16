@@ -1,9 +1,11 @@
 steps:
   - checkout: self
   - script: |
-      sudo apt-get update
-      sudo apt-get install -y apt-transport-https
-      sudo apt-get update
+      # if you are running into issues locating packages you can follow these instructions
+      # https://docs.microsoft.com/en-gb/dotnet/core/install/linux-ubuntu#unable-to-locate--some-packages-could-not-be-installed
+      sudo apt-get update && \
+      sudo apt-get install -y apt-transport-https && \
+      sudo apt-get update && \
       sudo apt-get install -y dotnet-sdk-5.0
     displayName: 'Install dotnet runtime'
 

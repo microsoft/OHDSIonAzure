@@ -78,12 +78,14 @@ jobs:
 
             # Copy vocabulary files from the demo storage account into environment storage account
             # Note the pattern will be after the container name e.g. 10-SEP-21\* will match the virtual folder in the vocabularies container
+            # Note that in this case the demo storage account is public, so you don't need to include
+            # the --source-account-key
+            # You can specify storage account credentials if you are using a private Azure Storage Account
             az storage blob copy start-batch \
               --account-key ${{ secrets.STORAGE_ACCOUNT_KEY }} \
               --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} \
               --destination-container ${{ secrets.VOCABULARIES_CONTAINER_NAME }} \
               --pattern ${{ secrets.VOCABULARIES_SEARCH_PATTERN }} \
-              --source-account-key ${{ secrets.SOURCE_VOCABULARIES_STORAGE_ACCOUNT_KEY }} \
               --source-account-name ${{ secrets.SOURCE_VOCABULARIES_STORAGE_ACCOUNT_NAME }} \
               --source-container ${{ secrets.SOURCE_VOCABULARIES_STORAGE_ACCOUNT_CONTAINER }}
           fi
