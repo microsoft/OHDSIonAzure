@@ -108,6 +108,8 @@ bash-dev-env-build-dacpac-dependencies: bash-dev-env-install-sqlpackage bash-dev
 bash-dev-env-check-tests: bash-dev-env-build-supporting-dacpacs check-tests
 
 # SqlProj nuget package supports dotnet-sdk-5.0
+# if you are running into issues with locating packages you can instead follow these instructions
+# https://docs.microsoft.com/en-gb/dotnet/core/install/linux-ubuntu#unable-to-locate--some-packages-could-not-be-installed
 bash-dev-env-install-dotnet-runtime:
 	sudo apt-get update && \
 	sudo apt-get install -y apt-transport-https && \

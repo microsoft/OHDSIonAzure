@@ -93,12 +93,12 @@ chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
 If you are running mac, you can use these steps instead:
 
 ```console
-PLUGIN_PATH=/Library/Application Support/io.terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/darwin_amd64
+PLUGIN_PATH="/Library/Application Support/io.terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/darwin_amd64"
 sudo mkdir -p ${PLUGIN_PATH}
-sudo chmod 755 ${PLUGIN_PATH}
-curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_darwin_amd64.zip'
-unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
-rm _
+sudo chmod 775 ${PLUGIN_PATH}
+sudo curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_darwin_amd64.zip'
+sudo unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
+sudo rm _
 sudo chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
 ```
 
@@ -124,8 +124,28 @@ Your administrator should have the appropriate [permissions](https://registry.te
 Your administrator will need one of the following directory roles to [Assign the Directory Readers Role](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role?#assigning-the-directory-readers-role):
 
 * [Global Administrator](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#global-administrator)
+  > If your Azure administrator has `Global Administrator` rights, you will not need to assign the other directory roles (Groups Administrator, User Administrator, Privileged Role Administrator).  However, this directory role is usually reserved and should be assigned intentionally.
 
 * [Privileged Role Administrator](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#privileged-role-administrator)
+  > You can use this directory role in combination with the Groups Administrator and User Administrator for your Azure adminstrative principal.  This is preferred as the combination of these directory roles is less permissive than assigning Global Administrator.
+
+For example, if you'd like to give your Azure principal a specific directory role, you can work through the following steps:
+
+1. Navigate to your Azure AD directory in the Azure Portal
+
+![Azure AD Overview](/docs/media/azure_ad_prerequisites_0.png)
+
+2. Search for the directory role you'd to use.  For example, in this case, you can look for the `Groups Administrator` directory role:
+
+![Search for directory role in Azure AD](/docs/media/azure_ad_prerequisites_1.png)
+
+3. You can click add assignments to add in your Azure principal to the directory role
+
+![Add in directory role for Azure principal](/docs/media/azure_ad_prerequisites_2.png)
+
+4. Proceed with adding your Azure principal to your Directory Role
+
+![Add in directory role for Azure principal](/docs/media/azure_ad_prerequisites_3.png)
 
 ### ADO PAT Notes
 
@@ -248,236 +268,244 @@ Assuming you have updated your [variables](/infra/terraform/bootstrap/README.md/
 
 1. Make sure your working directory is the [bootstrap directory](/infra/terraform/bootstrap/)
 
-    ```bash
-    # from the repository root working directory
-    cd infra/terraform/bootstrap
-    ```
+```bash
+# from the repository root working directory
+cd infra/terraform/bootstrap
+```
 
 2. Review the [main.tf resources](/infra/terraform/bootstrap/main.tf), [azure_ad.tf resources](/infra/terraform/bootstrap/azure_ad.tf), and [azure_devops.tf resources](/infra/terraform/bootstrap/azure_devops.tf) before you run the project
 
-    * Using a local backend
+* Review the following options before running the project
 
-      1. For simplicity, you may choose to use a local backend for the bootstrap project.  This is the preferred path for getting started.  You will need to update your [main.tf](/infra/terraform/bootstrap/main.tf) and comment out the `backend` configuration:
+#### Using a local backend
 
-      ```diff
-      terraform {
-      + # backend "azurerm" {
-      + # }
-        ...
-      }
-      ```
+1. For simplicity, you may choose to use a local backend for the bootstrap project.  This is the preferred path for getting started.  You will need to update your [main.tf](/infra/terraform/bootstrap/main.tf) and comment out the `backend` configuration:
 
-    * Using an Azure Storage Account for your remote backend
+```diff
+terraform {
++ # backend "azurerm" {
++ # }
+...
+}
+```
 
-      1. If desired, you can use an [Azure Storage Account for your remote backend state](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli) for your bootstrap Terraform project.  You can use Azure CLI to stand up your storage account:
+#### Using an Azure Storage Account for your remote backend
 
-      ```bash
-      # Setup TF State Account for Bootstrap Remote Backend
-      #!/bin/bash
+Using a [Azure Storage Account for your remote backend state](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli) is the default approach for the project.  This approach sets up your project for use in a shared environment (e.g. from a [github actions workflow](/docs/creating_your_environment_with_github_actions.md)), as the state will be persisted in Azure Storage, so you can connect to it without needing to manage or share your terraform state locally.
 
-      RESOURCE_GROUP_NAME=bootstrap-tf-state-rg
-      STORAGE_ACCOUNT_NAME=bootstraptfstate # use a unique name for your azure storage account
-      CONTAINER_NAME=tfstate
-      LOCATION=westus3
+1. You can use Azure CLI to stand up your storage account:
 
-      # Create resource group
-      az group create --name $RESOURCE_GROUP_NAME --location $LOCATION
+```bash
+# Setup TF State Account for Bootstrap Remote Backend
+#!/bin/bash
 
-      # Create storage account
-      az storage account create --resource-group $RESOURCE_GROUP_NAME --name $STORAGE_ACCOUNT_NAME --sku Standard_LRS --encryption-services blob
+RESOURCE_GROUP_NAME=bootstrap-tf-state-rg
+STORAGE_ACCOUNT_NAME=bootstraptfstate # use a unique name for your azure storage account
+CONTAINER_NAME=tfstate
+LOCATION=westus3
 
-      # Create blob container
-      az storage container create --name $CONTAINER_NAME --account-name $STORAGE_ACCOUNT_NAME
+# Create resource group
+az group create --name $RESOURCE_GROUP_NAME --location $LOCATION
 
-      # Store your account key an environment variable
-      ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query '[0].value' -o tsv)
-      export ARM_ACCESS_KEY="$ACCOUNT_KEY"
-      ```
+# Create storage account
+az storage account create --resource-group $RESOURCE_GROUP_NAME --name $STORAGE_ACCOUNT_NAME --sku Standard_LRS --encryption-services blob
 
-      2. Update your [main.tf](/infra/terraform/bootstrap/main.tf) to use the `backend` configuration block:
+# Create blob container
+az storage container create --name $CONTAINER_NAME --account-name $STORAGE_ACCOUNT_NAME
 
-      ```diff
-      terraform {
-      + backend "azurerm" {
-      + }
-        ...
-      }
-      ```
+# Store your account key an environment variable
+ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query '[0].value' -o tsv)
+export ARM_ACCESS_KEY="$ACCOUNT_KEY"
+```
 
-      3. When you call `terraform init`, you can supply variables on the command line for your backend configuration.
+2. Update your [main.tf](/infra/terraform/bootstrap/main.tf) to use the `backend` configuration block:
 
-      ```bash
-      terraform init \
-        -backend-config='resource_group_name=bootstrap-tf-state-rg' \
-        -backend-config='storage_account_name=bootstraptfstate' \
-        -backend-config='container_name=tfstate' \
-        -backend-config='key=terraform.tfstate'
-      ```
+```diff
+terraform {
++ backend "azurerm" {
++ }
+  ...
+}
+```
 
-      > If you'd like to simplify the command to use `terraform init` only, you can also specify your Azure Storage Account settings in the [main.tf](/infra/terraform/bootstrap/main.tf):
+3. When you call `terraform init`, you can supply variables on the command line for your backend configuration.
 
-      ```diff
-      terraform {
-      + backend "azurerm" {
-      +   resource_group_name  = "bootstrap-tf-state-rg"
-      +   storage_account_name = "bootstraptfstate"
-      +   container_name       = "tfstate"
-      +   key                  = "terraform.tfstate"
-      + }
-      ...
-      }
-      ```
+```bash
+terraform init \
+  -backend-config='resource_group_name=bootstrap-tf-state-rg' \
+  -backend-config='storage_account_name=bootstraptfstate' \
+  -backend-config='container_name=tfstate' \
+  -backend-config='key=terraform.tfstate'
+```
 
-    * Creating an Azure DevOps project and a repository, and importing a public git repository
+> If you'd like to simplify the command to use `terraform init` only, you can also specify your Azure Storage Account settings in the [main.tf](/infra/terraform/bootstrap/main.tf):
 
-      1. If desired, you can name your project `OHDSIonAzure`.  You will need to update your [azure_devops.tf](/infra/terraform/bootstrap/azure_devops.tf) accordingly:
+```diff
+terraform {
++ backend "azurerm" {
++   resource_group_name  = "bootstrap-tf-state-rg"
++   storage_account_name = "bootstraptfstate"
++   container_name       = "tfstate"
++   key                  = "terraform.tfstate"
++ }
+...
+}
+```
 
-      ```diff
-        resource "azuredevops_project" "project" {
-      +   name = "OHDSIonAzure" # If you have an existing project named OHDSIonAzure, you can set the name
-      +   # name             = "${var.prefix}-${var.environment}-OHDSIonAzure" # You would use this naming convention if you prefer to have a separate environment Azure DevOps project
-        ...
-        }
-      ```
+#### Creating an Azure DevOps project and a repository, and importing a public git repository
 
-      2. The default name for your Azure DevOps repository is `OHDSIonAzure`, and you can import from the public git repository:
+1. If desired, you can name your project `OHDSIonAzure`.  You will need to update your [azure_devops.tf](/infra/terraform/bootstrap/azure_devops.tf) accordingly:
 
-      ```diff
-      resource "azuredevops_git_repository" "repo" {
-        project_id = azuredevops_project.project.id
-      + name       = "OHDSIonAzure" # keep this if you are just importing an existing repository according to the name
-      + # name       = "${var.prefix}-${var.environment}-OHDSIonAzure" # you have an option to rename the repository
+```diff
+  resource "azuredevops_project" "project" {
++   name = "OHDSIonAzure" # If you have an existing project named OHDSIonAzure, you can set the name
++   # name             = "${var.prefix}-${var.environment}-OHDSIonAzure" # You would use this naming convention if you prefer to have a separate environment Azure DevOps project
+  ...
+  }
+```
 
-      + # Comment this out if you want to make a new repo
-      + # initialization {
-      + #   init_type = "Uninitialized"
-      + # }
+2. The default name for your Azure DevOps repository is `OHDSIonAzure`, and you can import from the public git repository:
 
-      + # Use Terraform import instead, otherwise this resource will destroy the existing repository.
-      + lifecycle {
-      +   prevent_destroy = true # prevent destroying the repo
-      + # ignore_changes = [
-      + #   # Ignore changes to initialization to support importing existing repositories
-      + #   # Given that a repo now exists, either imported into terraform state or created by terraform,
-      + #   # we don't care for the configuration of initialization against the existing resource
-      + #   initialization, # comment this out if you are making a new repo (and want to import from an existing repository)
-      + # ]
-      }
+```diff
+resource "azuredevops_git_repository" "repo" {
+  project_id = azuredevops_project.project.id
++ name       = "OHDSIonAzure" # keep this if you are just importing an existing repository according to the name
++ # name       = "${var.prefix}-${var.environment}-OHDSIonAzure" # you have an option to rename the repository
 
-      + ## Uncomment this section to import the contents of another git repo into this repo
-      + initialization {
-      +   init_type             = "Import"
-      +   source_type           = "Git"
-      +   # you can import from an existing ADO repository
-      +   # source_url            = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}" # you can import from an existing ADO repository
-      +   # service_connection_id = azuredevops_serviceendpoint_generic_git.serviceendpoint.id
++ # Comment this out if you want to make a new repo
++ # initialization {
++ #   init_type = "Uninitialized"
++ # }
 
-      +   # You can import from a public repository
-      +  source_url            = "https://github.com/microsoft/OHDSIonAzure.git"
-      }
++ # Use Terraform import instead, otherwise this resource will destroy the existing repository.
++ lifecycle {
++   prevent_destroy = true # prevent destroying the repo
++ # ignore_changes = [
++ #   # Ignore changes to initialization to support importing existing repositories
++ #   # Given that a repo now exists, either imported into terraform state or created by terraform,
++ #   # we don't care for the configuration of initialization against the existing resource
++ #   initialization, # comment this out if you are making a new repo (and want to import from an existing repository)
++ # ]
+}
 
-      ...
-      }
++ ## Uncomment this section to import the contents of another git repo into this repo
++ initialization {
++   init_type             = "Import"
++   source_type           = "Git"
++   # you can import from an existing ADO repository
++   # source_url            = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}" # you can import from an existing ADO repository
++   # service_connection_id = azuredevops_serviceendpoint_generic_git.serviceendpoint.id
 
-      ```
++   # You can import from a public repository
++  source_url            = "https://github.com/microsoft/OHDSIonAzure.git"
+}
 
-      3. For more details and other examples, you can review the [Azure DevOps TF provider docs](https://registry.terraform.io/providers/microsoft/azuredevops/latest/docs/resources/git_repository)
+...
+}
 
-    * Importing an existing Azure DevOps project and repository into your terraform state
+```
 
-      1. If desired, you can name your project `OHDSIonAzure`.  You will need to update your [azure_devops.tf](/infra/terraform/bootstrap/azure_devops.tf) accordingly:
+3. For more details and other examples, you can review the [Azure DevOps TF provider docs](https://registry.terraform.io/providers/microsoft/azuredevops/latest/docs/resources/git_repository)
 
-      ```diff
-        resource "azuredevops_project" "project" {
-      +   name = "OHDSIonAzure" # If you have an existing project named OHDSIonAzure, you can set the name
-      +   # name             = "${var.prefix}-${var.environment}-OHDSIonAzure" # You would use this naming convention if you prefer to have a separate environment Azure DevOps project
-        ...
-        }
-      ```
+#### Importing an existing Azure DevOps project and repository into your terraform state
 
-      2. The default name for your Azure DevOps repository is `OHDSIonAzure`, but if you'd like to rename it you can do so to avoid conflicts:
+1. If desired, you can name your project `OHDSIonAzure`.  You will need to update your [azure_devops.tf](/infra/terraform/bootstrap/azure_devops.tf) accordingly:
 
-      ```diff
-      resource "azuredevops_git_repository" "repo" {
-        project_id = azuredevops_project.project.id
-      + # name       = "OHDSIonAzure" # keep this if you are just importing an existing repository according to the name
-      + name       = "${var.prefix}-${var.environment}-OHDSIonAzure" # you have an option to rename the repository
-        ...
-      }
+```diff
+  resource "azuredevops_project" "project" {
++   name = "OHDSIonAzure" # If you have an existing project named OHDSIonAzure, you can set the name
++   # name             = "${var.prefix}-${var.environment}-OHDSIonAzure" # You would use this naming convention if you prefer to have a separate environment Azure DevOps project
+  ...
+  }
+```
 
-      ```
+2. The default name for your Azure DevOps repository is `OHDSIonAzure`, but if you'd like to rename it you can do so to avoid conflicts:
 
-      3. You will need to import your Azure DevOps project and your Azure DevOps repository:
+```diff
+resource "azuredevops_git_repository" "repo" {
+  project_id = azuredevops_project.project.id
++ # name       = "OHDSIonAzure" # keep this if you are just importing an existing repository according to the name
++ name       = "${var.prefix}-${var.environment}-OHDSIonAzure" # you have an option to rename the repository
+  ...
+}
 
-      ```bash
-      terraform init # ensure you have initialized the project
-      terraform import azuredevops_project.project "OHDSIonAzure" # Import your existing project assuming your project in ADO is named "OHDSIonAzure"
+```
 
-      terraform import azuredevops_git_repository.repo OHDSIonAzure/OHDSIonAzure # Import your existing azure devops repo assuming the project is named "OHDSIonAzure" and the repository is named "OHDSIonAzure"
-      ```
+3. You will need to import your Azure DevOps project and your Azure DevOps repository:
 
-    * You can choose which Azure VM to use for your jumpbox.  For example, you may prefer to use an [Azure Linux VM](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview) for your jumpbox, so you can uncomment the resource in the [main.tf](/infra/terraform/bootstrap/main.tf) script.
+```bash
+terraform init # ensure you have initialized the project
+terraform import azuredevops_project.project "OHDSIonAzure" # Import your existing project assuming your project in ADO is named "OHDSIonAzure"
 
-      1. Using an [Azure Linux VM](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview) for your jumpbox, be sure to uncomment your `resource "azurerm_virtual_machine" "jumpbox"` and comment out your `resource "azurerm_windows_virtual_machine" "jumpbox-windows"` in the [main.tf](/infra/terraform/bootstrap/main.tf) script:
+terraform import azuredevops_git_repository.repo OHDSIonAzure/OHDSIonAzure # Import your existing azure devops repo assuming the project is named "OHDSIonAzure" and the repository is named "OHDSIonAzure"
+```
 
-      ```diff
-      ## Uncomment if you prefer to use an Azure Linux VM for your jumpbox
-      + resource "azurerm_virtual_machine" "jumpbox" {
-      + ...
-      + }
+#### Choosing your Jumpbox Azure VM
 
-      ...
+You can choose which Azure VM to use for your jumpbox.  For example, you may prefer to use an [Azure Linux VM](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview) for your jumpbox, so you can uncomment the resource in the [main.tf](/infra/terraform/bootstrap/main.tf) script.
 
-      ## Uncomment if you prefer to use an Azure Windows VM for your jumpbox
-      + # resource "azurerm_windows_virtual_machine" "jumpbox-windows" {
-      + #  ...
-      + # }
-      ```
+1. Using an [Azure Linux VM](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview) for your jumpbox, be sure to uncomment your `resource "azurerm_virtual_machine" "jumpbox"` and comment out your `resource "azurerm_windows_virtual_machine" "jumpbox-windows"` in the [main.tf](/infra/terraform/bootstrap/main.tf) script:
 
-      2. If you prefer to use an [Azure Windows VM](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/overview) instead for your jumpbox, be sure to comment out your `resource "azurerm_virtual_machine" "jumpbox"` and uncomment your `resource "azurerm_windows_virtual_machine" "jumpbox-windows"` in the [main.tf](/infra/terraform/bootstrap/main.tf) script:
+```diff
+## Uncomment if you prefer to use an Azure Linux VM for your jumpbox
++ resource "azurerm_virtual_machine" "jumpbox" {
++ ...
++ }
 
-      ```diff
-      ## Uncomment if you prefer to use an Azure Linux VM for your jumpbox
-      + # resource "azurerm_virtual_machine" "jumpbox" {
-      + #  ...
-      + # }
+...
 
-      ...
+## Uncomment if you prefer to use an Azure Windows VM for your jumpbox
++ # resource "azurerm_windows_virtual_machine" "jumpbox-windows" {
++ #  ...
++ # }
+```
 
-      ## Uncomment if you prefer to use an Azure Windows VM for your jumpbox
-      + resource "azurerm_windows_virtual_machine" "jumpbox-windows" {
-      +  ...
-      + }
-      ```
+2. If you prefer to use an [Azure Windows VM](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/overview) instead for your jumpbox, be sure to comment out your `resource "azurerm_virtual_machine" "jumpbox"` and uncomment your `resource "azurerm_windows_virtual_machine" "jumpbox-windows"` in the [main.tf](/infra/terraform/bootstrap/main.tf) script:
 
-    * Your Azure SQL Managed Identity should have [Directory Reader assigned](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) to grant access for your Managed Identities in Azure SQL.  You will need to ensure you have [AAD premium activated](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept#license-requirements) so you can assign your [Azure AD Group](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept) the Directory Readers role.
-    If you cannot assign the Directory Readers role to your Azure SQL Server Managed Identity, you can follow a [workaround](/infra/terraform/omop/README.md/#step-3-run-post-terraform-deployment-steps).
+```diff
+## Uncomment if you prefer to use an Azure Linux VM for your jumpbox
++ # resource "azurerm_virtual_machine" "jumpbox" {
++ #  ...
++ # }
 
-      1. Uncomment the argument for `assignable_to_role` in the [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) if you have AAD premium, which will allow you to assign the Azure AD Group to a role:
+...
 
-      ```diff
-      resource "azuread_group" "dbadminsaadgroup" {
-        ...
-        # uncomment this if you have AAD premium enabled in your Azure       subscription
-        # https://docs.microsoft.com/en-us/azure/active-directory/      roles/groups-concept
-      + assignable_to_role = true
-      + # assignable_to_role = true
-      ```
+## Uncomment if you prefer to use an Azure Windows VM for your jumpbox
++ resource "azurerm_windows_virtual_machine" "jumpbox-windows" {
++  ...
++ }
+```
 
-      Uncomment the `azuread_directory_role` and `azuread_directory_role_member` in the [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) resource block to assign the Azure AD group to a role:
+#### Assign Directory Reader to your Azure SQL Managed Identity
 
-      ```diff
-      # Uncomment the following section to get the Directory Readers role
-      + resource "azuread_directory_role" "directoryreaders" {
-      +   display_name = "Directory Readers"
-      + }
+Your Azure SQL Managed Identity should have [Directory Reader assigned](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) to grant access for your Managed Identities in Azure SQL.  You will need to ensure you have [AAD premium activated](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept#license-requirements) so you can assign your [Azure AD Group](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept) the Directory Readers role.
+If you cannot assign the Directory Readers role to your Azure SQL Server Managed Identity, you can follow a [workaround](/infra/terraform/omop/README.md/#step-3-run-post-terraform-deployment-steps).
 
-      # Uncomment the following section if you have AAD premium enabled in your Azure subscription
-      + resource "azuread_directory_role_member" "directoryreadersmember" {
-      +   role_object_id   = azuread_directory_role.directoryreaders.object_id
-      +   member_object_id = azuread_group.directoryreadersaadgroup.object_id
-      + }
-      ```
+1. Uncomment the argument for `assignable_to_role` in the [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) if you have AAD premium, which will allow you to assign the Azure AD Group to a role:
+
+```diff
+resource "azuread_group" "dbadminsaadgroup" {
+  ...
+  # uncomment this if you have AAD premium enabled in your Azure       subscription
+  # https://docs.microsoft.com/en-us/azure/active-directory/      roles/groups-concept
++ assignable_to_role = true
++ # assignable_to_role = true
+```
+
+Uncomment the `azuread_directory_role` and `azuread_directory_role_member` in the [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) resource block to assign the Azure AD group to a role:
+
+```diff
+# Uncomment the following section to get the Directory Readers role
++ resource "azuread_directory_role" "directoryreaders" {
++   display_name = "Directory Readers"
++ }
+
+# Uncomment the following section if you have AAD premium enabled in your Azure subscription
++ resource "azuread_directory_role_member" "directoryreadersmember" {
++   role_object_id   = azuread_directory_role.directoryreaders.object_id
++   member_object_id = azuread_group.directoryreadersaadgroup.object_id
++ }
+```
 
 3. Run Terraform for your project:
     > You will need to specify values for variables which are not specified through your defaults in your [variables.tf](/infra/terraform/bootstrap/variables.tf) or [terraform.tfvars](/infra/terraform/bootstrap/README.md/#step-1-update-your-variables).  For example, you may need to supply a value for `omop_password`.
