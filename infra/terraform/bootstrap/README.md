@@ -10,7 +10,7 @@ This project includes the bootstrap Resource Group and steps to ease your Azure 
 
 This project will look to ease running your [environment terraform](/infra/terraform/omop/README.md) and running OHDSI in Azure.  You are likely to only run this bootstrap terraform project when you are first setting up an environment, or if you need to use Terraform to manage other Azure DevOps settings.
 
-[Setup Bootstrap Resource Group](https://user-images.githubusercontent.com/2498998/167498765-356f5b85-d9fe-402f-a8f2-6603856d79fe.mp4)
+[Setup Bootstrap Resource Group](https://user-images.githubusercontent.com/2498998/169098316-8ae4d3c9-f2c5-491b-b6be-a101d14fb093.mp4)
 
 > You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
 
@@ -78,29 +78,7 @@ You will need to ensure you have completed the following steps before running th
 
 5. You have [installed terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/azure-get-started) locally
 
-* Ensure you have also setup the Azure DevOps provider for Terraform.  Until the next release for the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/541) is available, you will need to ensure that you can run [two different versions](/infra/terraform/modules/azure_devops_environment/README.md/#local-version-usage) of the Azure DevOps provider.
-
-```bash
-# Get a local copy of the Azure DevOps Provider 0.2.0 and refer to it as azuredevops2 within terraform
-PLUGIN_PATH=/usr/share/terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/linux_amd64
-mkdir -p $PLUGIN_PATH
-curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_linux_amd64.zip'
-unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
-rm _
-chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
-```
-
-If you are running mac, you can use these steps instead:
-
-```console
-PLUGIN_PATH="/Library/Application Support/io.terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/darwin_amd64"
-sudo mkdir -p ${PLUGIN_PATH}
-sudo chmod 775 ${PLUGIN_PATH}
-sudo curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_darwin_amd64.zip'
-sudo unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
-sudo rm _
-sudo chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
-```
+* Ensure you have also setup the Azure DevOps provider for Terraform and using the `0.2.1` version which contains a fix for the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/541)
 
 * This has been tested with `Terraform v1.0.10`, and you can confirm your terraform version with `terraform --version`
 

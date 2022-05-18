@@ -4,39 +4,9 @@ This module uses the [Azure devops provider](https://registry.terraform.io/provi
 
 ## Local Version Usage
 
-While you can use versions >= `0.2.0` for the Azure DevOps provider, you may run into issues where there are fixes available in a prior version (e.g. `0.1.8` for example with Azure DevOps variable groups).  In this case, you may choose to mirror the higher version (`0.2.0`) locally for use with this module.
+Ensure that you use the TF Azure DevOps provider with versions >= `0.2.1` as it contains a [401 authorization error fix](https://github.com/microsoft/terraform-provider-azuredevops/issues/541).
 
-```bash
-# Get a local copy of the Azure DevOps Provider 0.2.0 and refer to it as azuredevops2 within terraform
-PLUGIN_PATH=/usr/share/terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/linux_amd64
-mkdir -p $PLUGIN_PATH
-curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_linux_amd64.zip'
-unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
-rm _
-chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
-```
-
-If you are running mac, you can use these steps instead:
-
-```console
-PLUGIN_PATH=/Library/Application Support/io.terraform/plugins/registry.terraform.io/microsoft/azuredevops2/0.2.0/darwin_amd64
-sudo mkdir -p ${PLUGIN_PATH}
-sudo chmod 755 ${PLUGIN_PATH}
-curl -sLo_ 'https://github.com/microsoft/terraform-provider-azuredevops/releases/download/v0.2.0/terraform-provider-azuredevops_0.2.0_darwin_amd64.zip'
-unzip -p _ 'terraform-provider-azuredevops*' > ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
-rm _
-sudo chmod 755 ${PLUGIN_PATH}/terraform-provider-azuredevops2_v0.2.0
-```
-
-With this setup, you can refer to your second provider:
-
-```hcl
-resource "azuredevops_environment" "adoenvironment" {
-  provider = azuredevops2
-  ...
-```
-
-You will need to ensure that you can successfully `terraform init` from the root of your project to confirm that you are able to run multiple versions of the same provider.
+You will need to ensure that you can successfully `terraform init` from the root of your project to confirm your Terraform providers are setup correctly.
 
 ## How to configure
 

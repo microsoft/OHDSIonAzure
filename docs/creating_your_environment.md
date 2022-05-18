@@ -10,7 +10,7 @@ This guide will let you work through the E2E for setting up your environment in 
 
 * Setup your bootstrap resource group using the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md)
 
-[Setup Bootstrap Resource Group](https://user-images.githubusercontent.com/2498998/167498765-356f5b85-d9fe-402f-a8f2-6603856d79fe.mp4)
+[Setup Bootstrap Resource Group](https://user-images.githubusercontent.com/2498998/169098316-8ae4d3c9-f2c5-491b-b6be-a101d14fb093.mp4)
 
 * Setup your OMOP resource group using the [OMOP Terraform project](/infra/terraform/omop/README.md)
 

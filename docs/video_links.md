@@ -14,7 +14,7 @@ Setting up the overall E2E
 
 Setting up the Bootstrap Resource Group in your environment, see [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) for more guidance.
 
-[Setup Bootstrap RG with WSL](https://user-images.githubusercontent.com/2498998/167498765-356f5b85-d9fe-402f-a8f2-6603856d79fe.mp4)
+[Setup Bootstrap RG with WSL](https://user-images.githubusercontent.com/2498998/169098316-8ae4d3c9-f2c5-491b-b6be-a101d14fb093.mp4)
 
 ### Setup OMOP Resource Group
 
