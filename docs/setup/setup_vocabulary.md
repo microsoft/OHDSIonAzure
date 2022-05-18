@@ -17,6 +17,25 @@ As part of your OMOP Common Data Model (CDM), you should deploy your [OMOP vocab
 3. Load your vocabulary files into your Azure Storage Account blob container using [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/).  The default naming for the vocabulary container is `vocabularies`, and you can create a sub-folder path for a specific version (e.g. `19-AUG-2021` can hold the vocabulary from August 19, 2021).  Note that the filepaths are case-sensitive.
   ![Loaded Vocabularies](/docs/media/vocabulary_storage_account.png)
 
+> Alternatively, you can also copy the demo vocabulary files from the demo Azure Storage account which should be setup through your [Environment Pipeline](/infra/terraform/omop/README.md#step-2-use-your-tf-environment-pipeline)
+
+```shell
+destinationAzureStorageAccountKey='<your-storage-account-key>' # include your Azure Storage Account key for your vocabulary files.
+destinationAzureStorageAccountName='<your-storage-account-name>' # include your Azure Storage Account name for your vocabulary files.
+destinationContainer='vocabularies' # save the vocabularies in a container named 'vocabularies'
+sourceAccountName='demovocabohdsionazure' # This is the name for the public demo Azure Storage Account with the demo vocabulary files
+sourceContainer='vocabularies' # copy vocabulary files from a container named 'vocabularies' in your source storage account
+pattern='19-AUG-2021/*.csv' # Pull in vocabularies from 19-AUG-2021 from the public demo storage account
+
+az storage blob copy start-batch \
+  --account-key "$destinationAzureStorageAccountKey" \
+  --account-name "$destinationAzureStorageAccountName" \
+  --destination-container "$destinationContainer" \
+  --pattern "$pattern" \
+  --source-account-name "$sourceAccountName" \
+  --source-container "$sourceContainer"
+```
+
 > The source_to_concept_map.csv (tab delimited) can be empty and just include the header:
 
 ```csv

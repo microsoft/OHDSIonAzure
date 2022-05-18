@@ -26,6 +26,7 @@ jobs:
     name: Run Bootstrap Terraform
     # Set the agent to run on
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     environment: demo
 
     ##################
@@ -50,14 +51,12 @@ jobs:
 
       - name: Terraform format check
         id: terraform_fmt
-        if: github.ref == 'refs/heads/main'
         run: terraform fmt -check -recursive
 
       # find all terraform folders and run validate to catch
       # configuration errors
       - name: Terraform Bootstrap Init
         id: terraform_bootstrap_init
-        if: github.ref == 'refs/heads/main'
         env:
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
@@ -81,7 +80,6 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
-        if: github.ref == 'refs/heads/main'
         run: |
           terraform -chdir=infra/terraform/bootstrap validate
 
@@ -93,7 +91,6 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
-        if: github.ref == 'refs/heads/main'
         run: |
           terraform -chdir=infra/terraform/bootstrap plan -no-color -var 'prefix=${{ secrets.PREFIX }}' -var 'environment=${{ secrets.ENVIRONMENT }}' -var 'omop_password=${{ secrets.OMOP_PASSWORD }}' -var 'ado_pat=${{ secrets.ADO_PAT }}' -out=tfplan
           terraform -chdir=infra/terraform/bootstrap show -no-color tfplan
@@ -106,7 +103,7 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.event_name == 'push'
         run: |
           az login --service-principal -u "${{ secrets.ARM_CLIENT_ID }}" -p "${{ secrets.ARM_CLIENT_SECRET }}" --tenant "${{ secrets.ARM_TENANT_ID }}"
 
@@ -127,14 +124,12 @@ jobs:
       # configuration errors
       - name: Terraform OMOP Init
         id: terraform_omop_init
-        if: github.ref == 'refs/heads/main'
         run: |
           echo "***** Validating: infra/terraform/omop *****"
           terraform -chdir=infra/terraform/omop init -backend=false
 
       - name: Terraform OMOP Validate
         id: terraform_omop_validate
-        if: github.ref == 'refs/heads/main'
         run: |
           echo "***** Validating: infra/terraform/omop *****"
           terraform -chdir=infra/terraform/omop validate

@@ -70,7 +70,7 @@ You will need to ensure you have completed the following steps before running th
       2. `az account set -s <my-subscription-id>`
       3. `az account show` to confirm you have logged in
 
-2. You have [imported this git repository](https://docs.microsoft.com/en-us/azure/devops/repos/git/import-git-repository?view=azure-devops) to Azure DevOps
+2. You are able to [import this git repository](https://docs.microsoft.com/en-us/azure/devops/repos/git/import-git-repository?view=azure-devops) to Azure DevOps.  The bootstrap terraform project will attempt to [create an Azure DevOps git repository and import contents from the public git repo](/infra/terraform/bootstrap/README.md#creating-an-azure-devops-project-and-a-repository-and-importing-a-public-git-repository)
 
 3. You have setup an [Azure DevOps PAT](/infra/terraform/bootstrap/README.md/#ado-pat-notes)
 
@@ -78,9 +78,26 @@ You will need to ensure you have completed the following steps before running th
 
 5. You have [installed terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/azure-get-started) locally
 
-* Ensure you have also setup the Azure DevOps provider for Terraform and using the `0.2.1` version which contains a fix for the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/541)
+* Ensure you have also setup the Azure DevOps provider for Terraform and are using the `0.2.1` version which contains a fix for the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/541)
 
 * This has been tested with `Terraform v1.0.10`, and you can confirm your terraform version with `terraform --version`
+
+* You will also need `jq`, which you can install with `sudo apt-get install jq`.  For other tooling, you can refer to the [local development setup notes](https://github.com/microsoft/OHDSIonAzure/blob/main/local_development_setup.md).
+
+* You will need to ensure your Azure CLI also has the [Azure DevOps extension](https://docs.microsoft.com/en-us/azure/devops/cli/?view=azure-devops) installed
+
+```shell
+az config set extension.use_dynamic_install=yes_without_prompt
+
+az extension add --name azure-devops
+```
+
+* If you are running WSL, you may need to update your line endings.  You can use `dos2unix`:
+
+```shell
+sudo apt install dos2unix # Install dos2unix
+find infra -name '*.sh' -exec dos2unix {} + # convert scripts
+```
 
 6. You have `git clone` the repository
 
@@ -464,8 +481,8 @@ If you cannot assign the Directory Readers role to your Azure SQL Server Managed
 ```diff
 resource "azuread_group" "dbadminsaadgroup" {
   ...
-  # uncomment this if you have AAD premium enabled in your Azure       subscription
-  # https://docs.microsoft.com/en-us/azure/active-directory/      roles/groups-concept
+  # uncomment this if you have AAD premium enabled in your Azure subscription
+  # https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept
 + assignable_to_role = true
 + # assignable_to_role = true
 ```
@@ -490,20 +507,20 @@ Uncomment the `azuread_directory_role` and `azuread_directory_role_member` in th
 
     * Initialize Terraform:
 
-      ```hcl
+      ```shell
       terraform init
       ```
 
     * Check the Terraform Plan:
 
-      ```hcl
-      terraform plan
+      ```shell
+      terraform plan -var 'omop_password=beSureToReplaceYourP@SSW0RD'
       ```
 
     * Run Terraform Apply:
 
-      ```hcl
-      terraform apply
+      ```shell
+      terraform apply -var 'omop_password=beSureToReplaceYourP@SSW0RD'
       ```
 
       > You may need to ensure that your administrator has logged to Azure (e.g. `azure login`) using [elevated access](https://docs.microsoft.com/en-us/azure/role-based-access-control/elevate-access-global-admin).  Your administrator should also lower their elevated access when finished with the deployment.

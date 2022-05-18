@@ -17,6 +17,14 @@ These notes cover how you can setup a local development environment.
 * Install [Azure cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
     > You can use this to manage your Azure Subscription
 
+  * You will need to ensure your Azure CLI also has the [Azure DevOps extension](https://docs.microsoft.com/en-us/azure/devops/cli/?view=azure-devops) installed
+
+    ```shell
+    az config set extension.use_dynamic_install=yes_without_prompt
+
+    az extension add --name azure-devops
+    ```
+
 * Install [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/)
     > You can use this to manage your Azure Storage Accounts (e.g. for [setting up your vocabulary](/docs/setup/setup_vocabulary.md))
 
