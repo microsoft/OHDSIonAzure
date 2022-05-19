@@ -4,6 +4,7 @@ Automating validation is part of the CI strategy, which includes:
 
 1. [Linting](/docs/design_choices/ci_validation.md#linting)
 2. [Testing](/docs/design_choices/ci_validation.md#testing)
+3. [Portable Build and Deployment Environment](/docs/design_choices/ci_validation.md#portable-build-and-deployment-environment)
 
 ## Linting
 
@@ -41,3 +42,21 @@ The linters should cover the following:
       * This approach also relies on using an [Azure Storage remote backend](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli) for both the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) and the [omop Terraform project](/infra/terraform/omop/README.md).
       * The demo environment uses [environment secrets](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#environment-secrets) to manage settings required for setting up the OHDSI on Azure demo environment.
       * This approach further assumes that the `main` branch is the default branch, as the [azure devops pipeline github action](https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/github-actions?#branch-considerations) relies on calling the default branch when calling a pipeline.  Currently you cannot set the default branch when importing a project through the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/297).
+
+## Portable Build and Deployment Environment
+
+OHDSI on Azure uses [Porter](https://porter.sh/docs/) to have a build environment wrapped in an OCI container to capture dependencies and setup steps in a [CNAB (Cloud Native Application Bundle)](https://github.com/cnabio/cnab-spec) bundle manifest.
+
+Using a containerized environment will ensure that the deployment experience will be consistent provided you have met baseline dependencies setup locally (e.g. you can run Docker, you have an Azure subscription with administrative access, and you have an Azure DevOps PAT).  This approach also allows you to use the Porter OHDSI on Azure bundle from a deployment (CD) pipeline.
+
+The goal for the bundle is to wrap the OHDSI on Azure setup into a set of [commands](https://porter.sh/cli/porter/#see-also) and [actions](https://porter.sh/cli/porter_invoke/) using Porter, including handling the following:
+
+1. Install - provided you have setup your Porter parameters and credentials, you can use this command to bootstrap your OHDSI on Azure environment
+2. Deploy Environment - This is an action which you can run after the install.  This will setup your OHDSI on Azure OMOP Resource Group
+3. Deploy Vocabulary - This action will deploy your vocabulary in your OHDSI on Azure OMOP resource group
+4. Deploy Broadsea - This action will deploy broadsea in your OHDSI on Azure OMOP resource group
+5. Uninstall - You can use this command to clean up your OHDSI on Azure environment
+
+Wrapping the deployment steps into commands and scripts will reduce manual operational steps for running OHDSI on Azure.
+
+You can also use the lower level actions to troubleshoot and debug your deployment.  For example, you can call `porter invoke --action check-pipeline-run` to check on a particular pipeline run.

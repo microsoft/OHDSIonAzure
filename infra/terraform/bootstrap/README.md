@@ -59,6 +59,8 @@ This project will also setup an Azure AD group which will be assigned [Directory
 
 You can review the Terraform for [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) for more details.
 
+> You can use Terraform to assign Azure AD Groups and roles if you have [AAD Premium P2 enabled](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept).  Otherwise, you can use a workaround described for [assigning Directory Reader to your Azure SQL Managed Identity](/infra/terraform/bootstrap/README.md#assign-directory-reader-to-your-azure-sql-managed-identity).
+
 ## Prerequisites
 
 You will need to ensure you have completed the following steps before running the [bootstrap Terraform project](/infra/terraform/bootstrap/main.tf).
@@ -107,7 +109,7 @@ git clone https://github.com/microsoft/OHDSIonAzure
 
 ### Azure AD Permissions
 
-The [bootstrap Terraform project](/infra/terraform/bootstrap/main.tf) includes setting up [Azure AD groups](#setup-azure-ad-group).
+The [bootstrap Terraform project](/infra/terraform/bootstrap/main.tf) includes setting up [Azure AD groups](#setup-azure-ad-group).  You should also ensure you have [AAD premium](https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs) enabled so you can [assign Directory Reader to your Azure SQL Managed Identity](/infra/terraform/bootstrap/README.md#assign-directory-reader-to-your-azure-sql-managed-identity).
 
 Your administrator should have the appropriate [permissions](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/resources/group#api-permissions) including the following directory roles:
 
@@ -476,7 +478,7 @@ You can choose which Azure VM to use for your jumpbox.  For example, you may pre
 Your Azure SQL Managed Identity should have [Directory Reader assigned](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) to grant access for your Managed Identities in Azure SQL.  You will need to ensure you have [AAD premium activated](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept#license-requirements) so you can assign your [Azure AD Group](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept) the Directory Readers role.
 If you cannot assign the Directory Readers role to your Azure SQL Server Managed Identity, you can follow a [workaround](/infra/terraform/omop/README.md/#step-3-run-post-terraform-deployment-steps).
 
-1. Uncomment the argument for `assignable_to_role` in the [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) if you have AAD premium, which will allow you to assign the Azure AD Group to a role:
+1. Uncomment the argument for `assignable_to_role` in the [azure_ad.tf](/infra/terraform/bootstrap/azure_ad.tf) if you have [AAD premium](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept), which will allow you to assign the Azure AD Group to a role:
 
 ```diff
 resource "azuread_group" "dbadminsaadgroup" {
