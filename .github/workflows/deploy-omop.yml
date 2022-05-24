@@ -26,6 +26,7 @@ jobs:
     name: Run Terraform Environment
     # Set the agent to run on
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     environment: demo
 
     ##################
@@ -35,7 +36,7 @@ jobs:
       # Need to check if the agent pool is ready first.
       - name: Azure Pipelines Action
         uses: Azure/pipelines@v1
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.event_name == 'push'
         with:
           azure-devops-project-url: ${{ secrets.ADO_PROJECT_URL }} # e.g. https://dev.azure.com/<my-org>/<my-project>
           azure-pipeline-name: ${{ secrets.ENVIRONMENT_PIPELINE_NAME }}

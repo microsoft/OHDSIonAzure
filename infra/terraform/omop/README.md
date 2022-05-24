@@ -120,15 +120,16 @@ az ad group member add -g $myAzureADGroupObjectId --member-id $myAzureAppService
 az ad group member add -g $myAzureADGroupDirectoryReadersObjectId --member-id $myAzureSQLMIPrincipalId
 ```
 
-3. You will also need to run the query with your [Azure SQL Azure AD Administrator](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?tabs=azure-powershell) in Azure SQL to ensure that your Managed Identities can access Azure SQL.  For convenience, you can also check the outputs in the terraform apply task in your Azure DevOps [Environment pipeline](/pipelines/README.md/#environment-pipeline).
+3. In the case you have not assigned the [Directory Readers](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) role for your Azure SQL Managed Identity (directly or through Azure AD Group membership), you can run a SQL query with your [Azure SQL Azure AD Administrator](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-configure?tabs=azure-powershell) in Azure SQL to ensure that your Managed Identities can access Azure SQL.  For convenience, you can also check the outputs in the terraform apply task in your Azure DevOps [Environment pipeline](/pipelines/README.md/#environment-pipeline).
 
-    > This step is a workaround in case you have not assigned the [Directory Readers](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) role for your Azure SQL Managed Identity (directly or through Azure AD Group membership).  See [step 2](/infra/terraform/omop/README.md#step-2-run-your-terraform-omop-project) for more details.  If your Azure SQL Managed Identity has Directory Readers assigned, then the [Post TF Deploy script](/sql/README.md/#post-tf-deploy-script-notes) should be able to grant access for Azure SQL.
+    > If your Azure SQL Managed Identity has Directory Readers assigned, then the [Post TF Deploy script](/sql/README.md/#post-tf-deploy-script-notes) should be able to grant access for Azure SQL.
 
 ![Add Azure App Service and Azure VMSS access to Azure SQL](/docs/media/environment_pipeline_3.png)
 
 Your administrator should modify this SQL Query and run it with your Azure SQL Database for your environment:
 
 > You can use various methods to connect to [Azure SQL to run a query](https://docs.microsoft.com/en-us/azure/azure-sql/database/connect-query-content-reference-guide).   [SQL Server Management Studio](https://docs.microsoft.com/en-us/azure/azure-sql/database/connect-query-ssms) was used for this guide.
+> The [Post TF Deploy script](/sql/README.md/#post-tf-deploy-script-notes) handles adding in access for your Azure App Service MI and your Azure VMSS MI.  The sample below is included if you are running into issues with running the Post TF deployment script from the [vocabulary release pipeline](/pipelines/README.md#vocabulary-release-pipeline).
 
 ```sql
 -- Grant access to your Azure App Service MI in Azure SQL
@@ -144,7 +145,7 @@ ALTER ROLE db_datawriter ADD MEMBER [MyADOAgentPoolVMSSName]
 ALTER ROLE db_owner ADD MEMBER [MyADOAgentPoolVMSSName]
 ```
 
-4. Connect your [Azure DevOps Agent Pool to your Azure VMSS](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops).
+4. Confirm your the connection for your [Azure DevOps Agent Pool to your Azure VMSS](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops).
 
   > As a one-time step, you will need to ensure that you have a matching name for you Azure DevOps Agent Pool in your Azure DevOps pipeline before you run the pipeline, which will allow Azure DevOps to authorize your pipeline with your newly added Azure DevOps Agent Pool.  Once you have authorized your pipeline, you can update the pipeline to instead pull the Azure DevOps Agent pool name from a variable in your [Variable Group](/docs/update_your_variables.md/#3-environment-vg).  This approach is applicable to the [pipelines](/pipelines/README.md/) which can use the Variable Group to source the pool name.
   
