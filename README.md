@@ -5,10 +5,10 @@ The goal of this project is to ease running OHDSI projects in Azure.
 Some of the OHDSI projects include:
 
 * [Common Data Model (CDM)](https://github.com/OHDSI/CommonDataModel), including [Vocabulary](https://github.com/OHDSI/Vocabulary-v5.0)
-* [Atlas](https://github.com/OHDSI/Atlas)
-* [WebApi](https://github.com/OHDSI/WebAPI)
-* [Achilles](https://github.com/OHDSI/Achilles)
-* [ETL-Synthea](https://github.com/OHDSI/ETL-Synthea)
+* [Atlas](https://github.com/OHDSI/Atlas) - OSS tool used to conduct analyses on standardized observational data converted to the OMOP Common Data Model V5
+* [WebApi](https://github.com/OHDSI/WebAPI) - contains all OHDSI RESTful services that can be called from OHDSI applications
+* [Achilles](https://github.com/OHDSI/Achilles) - provides descriptive statistics on an OMOP CDM database
+* [ETL-Synthea](https://github.com/OHDSI/ETL-Synthea) - Conversion from Synthea CSV to OMOP CDM
 
 ## Overview
 
