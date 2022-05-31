@@ -1,0 +1,388 @@
+---
+#################################
+#################################
+## GitHub Actions ###############
+## lint #########################
+## Check Terraform ##############
+## Test SQL #####################
+#################################
+name: Build Validation
+
+#
+# Documentation:
+# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions
+#
+
+#############################
+# Start the job on all push #
+#############################
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches-ignore: [main]
+    # Remove the line above to run when pushing to main
+  pull_request:
+    branches: [main]
+
+# for each ref (branch/pr) run just the most recent,
+# cancel other pending/running ones
+concurrency:
+  group: "${{ github.workflow }}-${{ github.head_ref }}"
+  cancel-in-progress: true
+
+###############
+# Set the Job #
+###############
+jobs:
+  lint:
+    # Name the Job
+    name: Lint Code Base
+    # Set the agent to run on
+    runs-on: ubuntu-latest
+
+    ##################
+    # Load all steps #
+    ##################
+    steps:
+      ##########################
+      # Checkout the code base #
+      ##########################
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            terraform:
+              # our Terraform uses more than just *.tf files, so need to check changes in the folder
+              - '**/terraform/**/*'
+
+      - name: Setup Terraform
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.1.4
+
+      - name: Terraform format check
+        id: terraform_fmt
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: terraform fmt -check -recursive
+
+      ################################
+      # Run Linter against code base #
+      ################################
+      - name: Lint Code Base
+        # the slim image is 2GB smaller and we don't use the extra stuff
+        # Moved this after the Terraform checks above due something similar to this issue: https://github.com/github/super-linter/issues/2433
+        uses: github/super-linter/slim@v4
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MARKDOWN_CONFIG_FILE: .markdownlint.json
+          SQLFLUFF_CONFIG_FILE: .sqlfluff
+          YAML_CONFIG_FILE: .yaml-lint.yml
+          PYTHON_BLACK_CONFIG_FILE: pyproject.toml
+          VALIDATE_MARKDOWN: true
+          VALIDATE_YAML: true
+          VALIDATE_TERRAFORM_TFLINT: true
+          VALIDATE_BASH: true
+          VALIDATE_POWERSHELL: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
+          VALIDATE_SQLFLUFF: true # validate_sql does not support tsql
+          VALIDATE_PYTHON_BLACK: true
+          VALIDATE_PYTHON_FLAKE8: true
+          VALIDATE_GITHUB_ACTIONS: true
+
+  check_terraform:
+    needs: lint # job dependency
+    # Name the Job
+    name: Check Terraform
+    # Set the agent to run on
+    runs-on: ubuntu-latest
+    environment: ci-validation
+
+    ##################
+    # Load all steps #
+    ##################
+    steps:
+      ##########################
+      # Checkout the code base #
+      ##########################
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            terraform:
+              # our Terraform uses more than just *.tf files, so need to check changes in the folder
+              - '**/terraform/**/*'
+
+      - name: Setup Terraform
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.1.4
+
+      - name: Terraform format check
+        id: terraform_fmt
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: terraform fmt -check -recursive
+
+      # find all terraform folders and run validate to catch
+      # configuration errors
+      - name: Terraform Bootstrap Init
+        id: terraform_bootstrap_init
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
+        run: |
+          echo "***** Initialize: infra/terraform/bootstrap *****"
+          # backend can be set to false if you're using a local backend
+          # terraform -chdir=infra/terraform/bootstrap init -backend=false
+
+          terraform -chdir=infra/terraform/bootstrap init \
+            -force-copy \
+            -backend-config='resource_group_name=${{ secrets.BOOTSTRAP_TF_STATE_RG }}' \
+            -backend-config='storage_account_name=${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT }}' \
+            -backend-config='container_name=${{ secrets.BOOTSTRAP_TF_STATE_CONTAINER_NAME }}' \
+            -backend-config='key=${{ secrets.BOOTSTRAP_TF_STATE_FILE_NAME }}'
+
+      - name: Terraform Bootstrap Validate
+        id: terraform_bootstrap_validate
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: |
+          terraform -chdir=infra/terraform/bootstrap validate
+
+      - name: Terraform Bootstrap Plan
+        id: terraform_bootstrap_plan
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: |
+          # assume not actually deploying, just a plan.  Setting -lock=false
+          terraform -chdir=infra/terraform/bootstrap plan -no-color -var 'prefix=${{ secrets.PREFIX }}' -var 'environment=${{ secrets.ENVIRONMENT }}' -var 'omop_password=${{ secrets.OMOP_PASSWORD }}' -var 'ado_pat=${{ secrets.ADO_PAT }}' -out=tfplan -lock=false
+          terraform -chdir=infra/terraform/bootstrap show -no-color tfplan
+
+      # find all terraform folders and run validate to catch
+      # configuration errors
+      - name: Terraform OMOP Init
+        id: terraform_omop_init
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: |
+          echo "***** Validating: infra/terraform/omop *****"
+          terraform -chdir=infra/terraform/omop init -backend=false
+
+      - name: Terraform OMOP Validate
+        id: terraform_omop_validate
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: |
+          echo "***** Validating: infra/terraform/omop *****"
+          terraform -chdir=infra/terraform/omop validate
+
+      # - name: Terraform OMOP Plan
+      #   id: terraform_omop_plan
+      #   if: ${{ steps.filter.outputs.terraform == 'true' }}
+      #   env:
+      #     ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      #     ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      #     ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      #     ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      #   run: |
+      #     # TODO: Revisit after setting az login context
+      #     # echo "***** Checking plan for infra/terraform/omop *****"
+      #     # terraform -chdir=infra/terraform/omop plan
+
+      - name: Add Terraform Plan Comment
+        id: comment
+        uses: actions/github-script@v3
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `## Terraform Check Results
+            #### Terraform Format and Style 🖌\`${{ steps.terraform_fmt.outcome }}\`
+            #### Bootstrap Terraform Initialization ⚙️\`${{ steps.terraform_bootstrap_init.outcome }}\`
+            #### Bootstrap Terraform Validation 🤖\`${{ steps.terraform_bootstrap_validate.outcome }}\`
+            #### Bootstrap Terraform Plan 📖\`${{ steps.terraform_bootstrap_plan.outcome }}\`
+
+            #### OMOP Terraform Initialization ⚙️\`${{ steps.terraform_omop_init.outcome }}\`
+            #### OMOP Terraform Validation 🤖\`${{ steps.terraform_omop_validate.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`\n${{ steps.terraform_bootstrap_plan.outputs.stdout || steps.terraform_bootstrap_plan.outputs.stderr }}\`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            // Get the existing comments.
+            const {data: comments} = await github.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.number,
+            })
+
+            // Find any comment which includes the word 'Terraform' already made by the bot.
+            const botComment = comments.find(comment => comment.user.id === 41898282 && comment.body.includes("Terraform"))
+
+            if (botComment) {
+              await github.issues.updateComment({
+                comment_id: botComment.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            } else {
+              await github.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
+
+  test_sql:
+    needs: lint # job dependency
+    # Name the Job
+    name: Test SQL Project
+    # Set the agent to run on
+    runs-on: ubuntu-latest
+
+    ##################
+    # Load all steps #
+    ##################
+    steps:
+      ##########################
+      # Checkout the code base #
+      ##########################
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            sql:
+              # only check changes with the sql folder
+              - '**/sql/**/*'
+
+      - name: Setup dotnet
+        if: ${{ steps.filter.outputs.sql == 'true' }}
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.407'
+
+      - name: Install dotnet templates
+        if: ${{ steps.filter.outputs.sql == 'true' }}
+        run: dotnet new --install MSBuild.Sdk.SqlProj.Templates
+
+      - name: Install sqlpackage
+        if: ${{ steps.filter.outputs.sql == 'true' }}
+        run: |
+          # https://docs.microsoft.com/en-us/sql/tools/sqlpackage/sqlpackage-download?view=sql-server-ver15#get-sqlpackage-net-core-for-linux
+          sudo apt-get install libunwind8
+          sudo apt-get install libicu66
+
+          sudo rm -rf sqlpackage.zip
+
+          wget -O sqlpackage.zip https://go.microsoft.com/fwlink/?linkid=2157202
+
+          # clean up existing files
+          sudo rm -rf /sqlpackage
+          sudo mkdir /sqlpackage
+          sudo unzip sqlpackage.zip -d /sqlpackage
+
+          # update path
+          export PATH="$PATH:/sqlpackage"
+          echo "##vso[task.setvariable variable=PATH]${PATH}:/sqlpackage"
+          sudo chmod a+x /sqlpackage/sqlpackage
+
+          sudo ls -al /sqlpackage
+
+          echo 'checking sqlpackage version:'
+          sqlpackage /version
+
+      - name: Setup Dev Env Dependencies
+        if: ${{ steps.filter.outputs.sql == 'true' }}
+        run: |
+          cd sql/
+          make bash-dev-env
+          make bash-dev-env-build-supporting-dacpacs
+          cd -
+
+      # Lint Test Suite
+      - name: Run linting
+        if: ${{ steps.filter.outputs.sql == 'true' }}
+        run: |
+          cd sql/
+          # Put together supporting dacpacs and run linting on test suite
+          make check-style
+
+          ls -l lint_report.xml
+          cd -
+
+      - name: Upload Lint Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: lint-results
+          path: sql/**/lint_*.xml
+
+      # Run Test Suite
+      - name: Run Tests
+        if: ${{ steps.filter.outputs.sql == 'true' }}
+        run: |
+          cd sql/
+          # Put together supporting dacpacs and run test suite
+          make check-tests
+
+          ls -l tests_report.xml
+          cd -
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results
+          path: sql/**/tests_*.xml
+
+  publish-test-results:
+    name: "Publish Unit Tests Results"
+    needs: test_sql
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      # Publish test results
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: "artifacts/**/*.xml"
+          check_name: "SQL Unit Test and Lint Results"
+          comment_title: "SQL Unit Test and Lint Results"

@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[cohort_attribute] (
+CREATE TABLE [dbo].[cohort_attribute] (
     [cohort_definition_id]    INT        NOT NULL,
     [subject_id]              INT        NOT NULL,
     [cohort_start_date]       DATE       NOT NULL,
@@ -21,4 +21,3 @@ CREATE NONCLUSTERED INDEX [idx_ca_definition_id]
 GO
 CREATE NONCLUSTERED INDEX [idx_ca_subject_id]
     ON [dbo].[cohort_attribute]([subject_id] ASC);
-

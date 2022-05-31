@@ -24,6 +24,7 @@ The following settings should be covered through TF and the [administrative step
 1. Connect to ACR in the Azure Portal
 
 2. Confirm SP service connection is added to ACR with at least `ACRPush`.
+
   ![Azure Container Registry ACRPush for SP Service Connection](/docs/media/acr_sp_service_connection_mi.png)
   > In this case the Service Connection has `Contributor` which should be sufficient access
 
@@ -37,6 +38,7 @@ This assumes that the [Build Agent has access to ACR](#confirm-build-agent-acces
   ![image.png](/docs/media/confirm_acr_broadsea_methods_1.png)
 
 3. You can re-run the [Broadsea Build Pipeline](/pipelines/README.md#broadsea-build-pipeline) using your branch and include the option **build and publish broadsea-methods (Achilles / ETL-Synthea)** to push a new image to ACR
+
 ![Build and push Achilles / ETL-Synthea using the pipeline](/docs/media/broadsea_build_pipeline_achilles_etl_synthea.png)
   > Note that you will want to run the [Broadsea Build Pipeline](/pipelines/README.md#broadsea-build-pipeline) using your branch and include the option **build and publish broadsea-methods (Achilles / ETL-Synthea)** to ensure an image is in ACR **before** running the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) using your branch.
 
@@ -49,7 +51,7 @@ The following settings should be covered through the [administrative steps](/inf
 2. Confirm Build Agent VMSS has Managed Identity enabled
 ![Azure VMSS Managed Identity enabled](/docs/media/azure_vmss_mi.png)
 
-3. Confirm with your administrator that the Azure SQL Managed Identity has [Directory Reader](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) enabled as part of the [administrative steps](/infra/README.md/#administrative-steps), which should also include granting access for your [Azure VMSS Managed Identity](/infra/terraform/omop/README.md/#step-4-run-post-terraform-deployment-steps) to Azure SQL.
+3. Confirm with your administrator that the Azure SQL Managed Identity has [Directory Reader](https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal-tutorial#assign-directory-readers-permission-to-the-sql-logical-server-identity) enabled as part of the [administrative steps](/infra/README.md/#administrative-steps), which should also include granting access for your [Azure VMSS Managed Identity](/infra/terraform/omop/README.md/#step-3-run-post-terraform-deployment-steps) to Azure SQL.
 
 4. Confirm Build Agent VMSS MI is added as a user in Azure SQL in your environment based on the [Post TF Deploy script](/sql/scripts/Post_TF_Deploy.sql), which should be included as part of your [vocabulary setup](/docs/setup/setup_vocabulary.md/#steps).
 

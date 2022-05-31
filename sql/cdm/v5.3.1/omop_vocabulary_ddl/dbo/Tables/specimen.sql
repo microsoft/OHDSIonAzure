@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[specimen] (
+CREATE TABLE [dbo].[specimen] (
     [specimen_id]                 INT           NOT NULL,
     [person_id]                   INT           NOT NULL,
     [specimen_concept_id]         INT           NOT NULL,
@@ -15,4 +15,3 @@
     [anatomic_site_source_value]  VARCHAR (50)  NULL,
     [disease_status_source_value] VARCHAR (50)  NULL
 );
-

@@ -83,6 +83,22 @@ variable "cdr_vocab_container_name" {
   default     = "vocabularies"
 }
 
+variable "tf_storage_resource_group" {
+  description = "The bootstrap resource group name"
+}
+
+variable "tf_backend_storage_account" {
+  description = "Storage Account name for backend Terraform state file"
+}
+
+variable "tf_backend_container" {
+  description = "Storage Account Container name for backend Terraform state file"
+}
+
+variable "tf_state_filename" {
+  description = "The name of the tf state file"
+}
+
 /* Application Service Plan */
 variable "asp_kind_edition" {}
 variable "asp_sku_tier" {}

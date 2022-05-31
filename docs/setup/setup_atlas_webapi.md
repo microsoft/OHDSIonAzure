@@ -1,19 +1,27 @@
 # Setup Atlas and Web API
 
 Below are instructions for setting up Atlas and WebAPI, including:
+
 * Connecting Azure App Service to ACR using MI
 * Connecting Azure App Service to Azure SQL using MI
 * Connecting the Build Agent to Azure SQL and ACR
 
+> Note this guide is part of setting up Broadsea
+  
+  [Setup Broadsea](https://user-images.githubusercontent.com/2498998/167233874-1f1ebf77-0deb-4694-b1ce-f1a8df4de1eb.mp4)
+  
+> You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
+
 ## Prerequisites
 
 This page assumes you have completed all the steps in the [infra setup doc](/docs/setup/setup_infra.md) and [setup your vocabulary](/docs/setup/setup_vocabulary.md) for your environment.
- 
+
 ## Steps
 
 ### Step 1. Setup your Repo
 
 1. Clone the repository
+
     ```bash
     git clone https://github.com/microsoft/OHDSIonAzure
     ```
@@ -21,7 +29,7 @@ This page assumes you have completed all the steps in the [infra setup doc](/doc
 2. Create a feature branch (e.g. [your_alias)]/[new_feature_name]). An example would be `jane_doe/new_feature`
 
 3. Confirm your [variable groups](/docs/update_your_variables.md) reflect your environment settings.
- 
+
 > These settings will be used with the application pipelines (for more information, you can review how to run the [vocabulary pipelines](/pipelines/README.md/#vocabulary-pipelines) and the [broadsea pipelines](/pipelines/README.md/#broadsea-pipelines))
 
 ### Step 2. Run the Pipelines
@@ -93,6 +101,6 @@ https://my-app-service.azurewebsites.net/atlas/#/configure
 
 ![Confirm Atlas Configuration](/docs/media/confirm_atlas_2.png)
 
-# Troubleshooting Notes
+## Troubleshooting Notes
 
 Check the corresponding [troubleshooting notes](/docs/troubleshooting/troubleshooting_atlas_webapi.md) for more details.

@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[location] (
+CREATE TABLE [dbo].[location] (
     [location_id]           INT          NOT NULL,
     [address_1]             VARCHAR (50) NULL,
     [address_2]             VARCHAR (50) NULL,
@@ -8,4 +8,3 @@
     [county]                VARCHAR (20) NULL,
     [location_source_value] VARCHAR (50) NULL
 );
-

@@ -1,13 +1,16 @@
 output "vmss_public_ip_fqdn" {
-  value = azurerm_public_ip.vmss.fqdn
+  value     = azurerm_public_ip.vmss.fqdn
+  sensitive = true
 }
 
 output "jumpbox_public_ip_fqdn" {
-  value = azurerm_public_ip.jumpbox.fqdn
+  value     = azurerm_public_ip.jumpbox.fqdn
+  sensitive = true
 }
 
 output "jumpbox_public_ip" {
-  value = azurerm_public_ip.jumpbox.ip_address
+  value     = azurerm_public_ip.jumpbox.ip_address
+  sensitive = true
 }
 
 output "vmssElasticPoolId" {

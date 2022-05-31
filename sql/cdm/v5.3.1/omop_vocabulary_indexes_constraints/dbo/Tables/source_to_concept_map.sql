@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[source_to_concept_map] (
+CREATE TABLE [dbo].[source_to_concept_map] (
     [source_code]             VARCHAR (50)  NOT NULL,
     [source_concept_id]       INT           NOT NULL,
     [source_vocabulary_id]    VARCHAR (20)  NOT NULL,
@@ -34,4 +34,3 @@ CREATE NONCLUSTERED INDEX [idx_source_to_concept_map_id_1]
 GO
 CREATE CLUSTERED INDEX [idx_source_to_concept_map_id_3]
     ON [dbo].[source_to_concept_map]([target_concept_id] ASC);
-

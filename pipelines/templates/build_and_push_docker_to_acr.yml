@@ -35,11 +35,11 @@ steps:
       az acr repository list -n "${{ parameters.containerRegistry }}"
 
       TOKEN=$(az acr login --name "${{ parameters.containerRegistry }}" --expose-token --output tsv --query accessToken)
-      
+
       sudo docker login ${{ parameters.containerRegistry }}.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password $TOKEN
 
       # docker build from this folder
       cd "${{ parameters.sourceFolder }}"
-      
+
       sudo docker build -t "${{ parameters.containerRegistry }}.azurecr.io/${{ parameters.imageName }}:${{ parameters.imageTag }}" -t "${{ parameters.containerRegistry }}.azurecr.io/${{ parameters.imageName }}:$(Build.BuildNumber)" .
       sudo docker push --all-tags "${{ parameters.containerRegistry }}.azurecr.io/${{ parameters.imageName }}"

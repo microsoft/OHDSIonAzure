@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[cost] (
+CREATE TABLE [dbo].[cost] (
     [cost_id]                  INT          NOT NULL,
     [cost_event_id]            INT          NOT NULL,
     [cost_domain_id]           VARCHAR (20) NOT NULL,
@@ -26,4 +26,3 @@
     CONSTRAINT [fpk_visit_cost_currency] FOREIGN KEY ([currency_concept_id]) REFERENCES [dbo].[concept] ([concept_id]),
     CONSTRAINT [fpk_visit_cost_period] FOREIGN KEY ([payer_plan_period_id]) REFERENCES [dbo].[payer_plan_period] ([payer_plan_period_id])
 );
-

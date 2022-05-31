@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[concept] (
+CREATE TABLE [dbo].[concept] (
     [concept_id]       INT           NOT NULL,
     [concept_name]     VARCHAR (2000) NOT NULL, -- OMOP Expansion for vocabulary
     [domain_id]        VARCHAR (20)  NOT NULL,
@@ -39,4 +39,3 @@ CREATE NONCLUSTERED INDEX [idx_concept_code]
 GO
 CREATE UNIQUE CLUSTERED INDEX [idx_concept_concept_id]
     ON [dbo].[concept]([concept_id] ASC);
-

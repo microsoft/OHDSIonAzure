@@ -1,11 +1,15 @@
 # Infrastructure provisioning
- 
+
 The following steps walkthrough setting up infra for OHDSI on Azure.
 
 ## Prerequisites
 
 1. You are able to work through the [infra setup notes](/infra/README.md/#setup), including working with your administrator to go through the [bootstrap administrative steps](/infra/README.md/#administrative-steps) and pushing the [backend state to Azure Storage](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli).
-    * <mark>For convenience, administrative steps are included in the [bootstrap Terraform Project](/infra/terraform/bootstrap/README.md/#bootstrap-terraform).</mark>
+    > <mark>For convenience, administrative steps are included in the [bootstrap Terraform Project](/infra/terraform/bootstrap/README.md/#bootstrap-terraform). </mark>
+
+    [Setup Bootstrap RG](https://user-images.githubusercontent.com/2498998/169098316-8ae4d3c9-f2c5-491b-b6be-a101d14fb093.mp4)
+
+    > You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
 
 2. You have an Azure DevOps project and have [imported this repository](https://docs.microsoft.com/en-us/azure/devops/repos/git/import-git-repository?view=azure-devops).
 
@@ -15,6 +19,7 @@ The following steps walkthrough setting up infra for OHDSI on Azure.
     * You have [created a service connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml).  Your administrator can refer to the [administrative steps](/infra/README.md/#administrative-steps) for more details to get the SP to use with the Service Connection.  Ensure the Service Principal has the Owner role access to the resource group where we will be deploying resources.
     * You have setup an [Azure DevOps VMSS Agent Pool](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/scale-set-agents?view=azure-devops).  Your administrator can refer to the [administrative steps](/infra/README.md/#administrative-steps) and the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md#setup-azure-devops) for additional guidance.
     * You have [created an Azure DevOps variable group](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml) for sensitive values.  Your administrator can refer to the [administrative steps](/infra/README.md/#administrative-steps) and the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md#setup-azure-devops) for an example.  The variable group should be [linked to Azure KeyVault](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault) through the service connection.
+    * You have installed the [Azure Pipeline Terraform Task](https://marketplace.visualstudio.com/items?itemName=charleszipp.azure-pipelines-tasks-terraform) extension in your Azure DevOps organization.
 
 4. You have `git clone` the repository
 
@@ -26,14 +31,19 @@ git clone https://github.com/microsoft/OHDSIonAzure
 
 Assuming you can complete the [prerequisites](#prerequisites), you can work through the following steps.
 
+[Setup OMOP Resource Group](https://user-images.githubusercontent.com/2498998/167503494-5a99c3b5-a496-47cf-a776-92bec4e9819c.mp4)
+
+> You can also check under the [video links doc](/docs/video_links.md) for other setup guides.
+
 ### Step 1. Update terraform.tfvars
 
 1. In your local git cloned repo create a feature branch (e.g. [your_alias)]/[new_feature_name]). An example would be `jane_doe/new_feature`
 
 2. You can update your [omop terraform.tfvars](/infra/terraform/omop/terraform.tfvars) with the following values, which you can confirm with your administrator after they have completed the [administrative steps](/infra/README.md/#administrative-steps).
+
 > You can update your Terraform tfvars locally for testing, but you should also review your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg) before running your changes through the [Environment Pipeline](/pipelines/README.md#environment-pipeline).
 
-```
+```hcl
 omop_password   = "" # this should be filled in through the pipeline via Azure DevOps Variable Group
 prefix              = "sharing" # set to a given prefix for your environment
 
@@ -46,7 +56,7 @@ aad_admin_login_name = "some-sharing-DB-Admins"
 aad_admin_object_id  = "some-guid"
 ```
 
-You can also review the following table which describes some OMOP Terraform variables.  
+You can also review the following table which describes some OMOP Terraform variables.
 
 > You can refer to the [environment Terraform project](/infra/terraform/omop/README.md#step-1-update-your-variables) for the complete list and for more details.
 
@@ -64,13 +74,14 @@ You can also review the following table which describes some OMOP Terraform vari
 
 When working with sensitive values, you can use an [Azure DevOps Variable Group linked to Azure KeyVault](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault) as part of your [TF environment pipeline](/pipelines/README.md/#environment-pipeline).  With this approach, you do not need to check in secrets into your repository, instead, the secrets can be managed with Azure Key Vault for your environment setup.  Furthermore, you can restrict access to your SP used for your Service Connection in Azure Key Vault using an access policy.
 
-Your administrator can help populate the Azure Key Vault and your linked Variable Group, and you can refer to the [administrative steps](/infra/README.md/#administrative-steps) including the [bootstrap Terraform project ](/infra/terraform/bootstrap/README.md#setup-azure-bootstrap-resource-group) for guidance.
+Your administrator can help populate the Azure Key Vault and your linked Variable Group, and you can refer to the [administrative steps](/infra/README.md/#administrative-steps) including the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md#setup-azure-bootstrap-resource-group) for guidance.
 
 ### Step 2. Setup the Environment Pipeline
 
 We will initialize the infrastructure using the existing state file.
 
 1. Update your [TF environment pipeline](/pipelines/environments/TF-OMOP.yaml) variables to include values to reflect your environment.
+
   > For convenience, variables which may need to be updated for your environment when **just getting started** are marked as **bold**, e.g. **some setting name**.
   > You will also want to ensure you're using the correct [Azure DevOps Variable Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml) which should be setup by your administrator through the [administrative steps](/infra/README.md/#administrative-steps).
 
@@ -107,7 +118,7 @@ You can review some of the OMOP variables in the following table.  For the full 
 
 ![Run Environment Pipeline](/docs/media/run_environment_pipeline_2.png)
 
-2. Manually validate resource deployment in Azure portal.
+3. Manually validate resource deployment in Azure portal.
 
 ![Azure OMOP Resource Group](/docs/media/azure_omop_resource_group.png)
 

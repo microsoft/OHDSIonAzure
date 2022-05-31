@@ -36,6 +36,7 @@ You can also confirm if there's any errors using the [Azure App Service logstrea
 ## How to tear down Infrastructure
 
 1. Comment out code in [main.tf](/infra/terraform/omop/main.tf) in your branch.
+
 > You will want to keep the provider and the cred data block commented in for the TF tear down
 
 ```terraform
@@ -59,4 +60,5 @@ terraform {
 
 data "azurerm_client_config" "current" {}
 ```
+
 2. Run your [TF environment pipeline](/pipelines/README.md/#environment-pipeline) using your branch to clean out resources

@@ -139,7 +139,7 @@ stages:
         workspace:
           clean: all
         continueOnError: 'false'
-        
+
         # Azure DevOps environment should be setup through bootstrap TF and come from your environment-settings-vg
         environment: $(broadsea_release_environment)
         strategy:
@@ -366,7 +366,7 @@ stages:
                         az acr repository list -n "$(containerRegistry)"
 
                         TOKEN=$(az acr login --name "$(containerRegistry)" --expose-token --output tsv --query accessToken)
-                        
+
                         # Check Azure SQL Access
 
                         echo '****************Checking without private link resolution******************'
@@ -405,7 +405,7 @@ stages:
                       VOCAB_SCHEMA: $(vocabSchema)
                       SOURCE_NAME: "OHDSI CDM V5 Database"
                       NUM_THREADS: 1
-                  
+
                   # Run Smoke Test for Achilles
                   - template: templates/smoke_test/smoke_test_achilles_characterization.yaml
                     parameters:
@@ -415,7 +415,7 @@ stages:
                       containerRegistry: '$(containerRegistry)'
                       broadseaMethodsAcrImageTag: '$(broadseaMethodsAcrImageTag)'
                       achillesSmokeTestScriptFileName: '${{ variables.achillesSmokeTestScriptFileName }}'
-                  
+
                   - bash: |
                       cd /home/azureuser/agent/_work/
                       sudo find . -type d -name 'output' -exec rm -rf {} +

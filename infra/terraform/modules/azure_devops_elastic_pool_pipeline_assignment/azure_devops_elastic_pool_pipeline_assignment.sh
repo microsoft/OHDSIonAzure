@@ -4,12 +4,12 @@
 # https://github.com/MicrosoftDocs/vsts-rest-api-specs/tree/master/specification/distributedTask/7.1
 
 # Get from environment variables
-set -- ${PAT} "$@"
-set -- ${ADO_ORG_SERVICE_URL} "$@"
-set -- ${ADO_PROJECT_NAME} "$@"
-set -- ${QUEUE_ID} "$@"
-set -- ${PIPELINE_ID} "$@"
-set -- ${AUTHORIZED} "$@"
+set -- "${PAT}" "$@"
+set -- "${ADO_ORG_SERVICE_URL}" "$@"
+set -- "${ADO_PROJECT_NAME}" "$@"
+set -- "${QUEUE_ID}" "$@"
+set -- "${PIPELINE_ID}" "$@"
+set -- "${AUTHORIZED}" "$@"
 
 # read from query
 eval "$(jq -r '@sh "PAT=\(.pat) ADO_ORG_SERVICE_URL=\(.adoOrgServiceUrl) ADO_PROJECT_NAME=\(.adoProjectName) QUEUE_ID=\(.adoQueueId) PIPELINE_ID=\(.adoPipelineId) AUTHORIZED=\(.authorized)"')"
@@ -37,6 +37,6 @@ resultJson=$(curl -X PATCH "$ADO_ORG_SERVICE_URL/$ADO_PROJECT_NAME/_apis/pipelin
 
 # extract values for use later
 # output doesn't let you return an array, so convert authorized pipeline ids into a CSV
-authorizedPipelineIds=$(echo $resultJson | jq '(.pipelines[].id|tostring) ' | paste -s -d, -)
+authorizedPipelineIds=$(echo "$resultJson" | jq '(.pipelines[].id|tostring) ' | paste -s -d, -)
 
 jq -n --arg authorizedPipelineIds "$authorizedPipelineIds" '{"authorized_pipeline_ids":$authorizedPipelineIds}'

@@ -1,0 +1,135 @@
+---
+name: Deploy Bootstrap OHDSI on Azure in Demo Environment
+# This workflow is the integration build run for pushes to the main branch
+# It also runs on a schedule, serving as the nightly build
+
+on:  # yamllint disable-line rule:truthy
+  schedule:
+    # 1am each night https://crontab.guru/#0_1_*_*_*
+    - cron: "0 1 * * *"
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# This will prevent multiple runs of this entire workflow.
+# We should NOT cancel in progress runs as that can destabilize the environment.
+concurrency: "${{ github.workflow }}-${{ github.ref }}"
+
+###############
+# Set the Job #
+###############
+jobs:
+  run_terraform:
+    # Name the Job
+    name: Run Bootstrap Terraform
+    # Set the agent to run on
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: demo
+
+    ##################
+    # Load all steps #
+    ##################
+    steps:
+      ##########################
+      # Checkout the code base #
+      ##########################
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Terraform
+        if: github.ref == 'refs/heads/main'
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.1.4
+
+      - name: Terraform format check
+        id: terraform_fmt
+        run: terraform fmt -check -recursive
+
+      # find all terraform folders and run validate to catch
+      # configuration errors
+      - name: Terraform Bootstrap Init
+        id: terraform_bootstrap_init
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
+        run: |
+          echo "***** Initialize: infra/terraform/bootstrap *****"
+          terraform -chdir=infra/terraform/bootstrap init \
+            -force-copy \
+            -backend-config='resource_group_name=${{ secrets.BOOTSTRAP_TF_STATE_RG }}' \
+            -backend-config='storage_account_name=${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT }}' \
+            -backend-config='container_name=${{ secrets.BOOTSTRAP_TF_STATE_CONTAINER_NAME }}' \
+            -backend-config='key=${{ secrets.BOOTSTRAP_TF_STATE_FILE_NAME }}'
+
+      - name: Terraform Bootstrap Validate
+        id: terraform_bootstrap_validate
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
+        run: |
+          terraform -chdir=infra/terraform/bootstrap validate
+
+      - name: Terraform Bootstrap Plan
+        id: terraform_bootstrap_plan
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
+        run: |
+          terraform -chdir=infra/terraform/bootstrap plan -no-color -var 'prefix=${{ secrets.PREFIX }}' -var 'environment=${{ secrets.ENVIRONMENT }}' -var 'omop_password=${{ secrets.OMOP_PASSWORD }}' -var 'ado_pat=${{ secrets.ADO_PAT }}' -out=tfplan
+          terraform -chdir=infra/terraform/bootstrap show -no-color tfplan
+
+      - name: Terraform Bootstrap Apply
+        id: terraform_bootstrap_apply
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
+        if: github.event_name == 'push'
+        run: |
+          az login --service-principal -u "${{ secrets.ARM_CLIENT_ID }}" -p "${{ secrets.ARM_CLIENT_SECRET }}" --tenant "${{ secrets.ARM_TENANT_ID }}"
+
+          cd infra/terraform/bootstrap
+          terraform apply -auto-approve \
+            -var 'client_object_id=${{ secrets.ARM_CLIENT_OBJECT_ID }}' \
+            -var 'prefix=${{ secrets.PREFIX }}' \
+            -var 'environment=${{ secrets.ENVIRONMENT }}' \
+            -var 'omop_password=${{ secrets.OMOP_PASSWORD }}' \
+            -var 'ado_pat=${{ secrets.ADO_PAT }}' \
+            -var 'admin_user_jumpbox=${{ secrets.ADMIN_USER_JUMPBOX }}' \
+            -var 'admin_password_jumpbox=${{ secrets.ADMIN_PASSWORD_JUMPBOX }}' \
+            -var 'admin_user=${{ secrets.ADMIN_USER }}' \
+            -var 'admin_password=${{ secrets.ADMIN_PASSWORD }}'
+          cd -
+
+      # find all terraform folders and run validate to catch
+      # configuration errors
+      - name: Terraform OMOP Init
+        id: terraform_omop_init
+        run: |
+          echo "***** Validating: infra/terraform/omop *****"
+          terraform -chdir=infra/terraform/omop init -backend=false
+
+      - name: Terraform OMOP Validate
+        id: terraform_omop_validate
+        run: |
+          echo "***** Validating: infra/terraform/omop *****"
+          terraform -chdir=infra/terraform/omop validate

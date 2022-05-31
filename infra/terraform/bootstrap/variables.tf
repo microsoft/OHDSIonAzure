@@ -21,19 +21,23 @@ variable "tags" {
 variable "admin_user_jumpbox" {
   description = "User name to use as the admin account on the Azure VM Jumpbox"
   default     = "azureuser"
+  sensitive   = true
 }
 
 variable "admin_password_jumpbox" {
   description = "Default password for admin account for the Azure VM Jumpbox"
+  sensitive   = true
 }
 
 variable "admin_user" {
   description = "User name to use as the admin account on the VMs that will be part of the VM scale set"
   default     = "azureuser"
+  sensitive   = true
 }
 
 variable "admin_password" {
   description = "Default password for admin account"
+  sensitive   = true
 }
 
 variable "omop_password" {
@@ -41,8 +45,15 @@ variable "omop_password" {
   sensitive   = true
 }
 
+variable "client_object_id" {
+  description = "Logged in User / Service Principal Object Id"
+  sensitive   = true
+  default     = null
+}
+
 variable "ado_org_service_url" {
   description = "Azure DevOps Organization URL e.g. https://dev.azure.com/my-org"
+  sensitive   = true
 }
 
 variable "ado_project_name" {
@@ -102,15 +113,25 @@ variable "ado_windows_vmss_agent_pool_settings" {
 
 variable "azure_subscription_name" {
   description = "This is your Azure Subscription Name for your Azure Service Connection"
+  sensitive   = true
 }
 
-variable "environment_pipeline_path" {
-  description = "Azure DevOps Environment Pipeline path e.g. /pipelines/environments/TF-OMOP.yaml"
+variable "tf_apply_environment_pipeline_path" {
+  description = "Azure DevOps Environment Pipeline path e.g. /pipelines/environments/omop-terraform-apply.yaml"
 }
 
-variable "tf_environment_build_pipeline_name" {
-  default     = "TF OMOP Environment Pipeline"
-  description = "Terraform Environment Build Pipeline Name"
+variable "tf_destroy_environment_pipeline_path" {
+  description = "Azure DevOps Environment Pipeline path e.g. /pipelines/environments/omop-terraform-destroy.yaml"
+}
+
+variable "tf_apply_environment_pipeline_name" {
+  default     = "TF Apply OMOP Environment Pipeline"
+  description = "Terraform Apply Environment Build Pipeline Name"
+}
+
+variable "tf_destroy_environment_pipeline_name" {
+  default     = "TF Destroy OMOP Environment Pipeline"
+  description = "Terraform Destroy Environment Build Pipeline Name"
 }
 
 variable "vocabulary_build_pipeline_name" {

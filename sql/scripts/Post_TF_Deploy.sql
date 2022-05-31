@@ -1,5 +1,5 @@
 -- This is a one time script that will setup Azure SQL Access for your Managed Identities
-BEGIN TRY
+BEGIN TRY -- noqa: PRS
     CREATE DATABASE SCOPED CREDENTIAL DSCAzureSqlServerMI
     WITH IDENTITY = 'Managed Identity'
 
@@ -42,7 +42,7 @@ END CATCH
 
 /* Add in Azure VMSS builder MI User */
 BEGIN TRY
-    /* Get the ADO Build Agent VMSS Name 
+    /* Get the ADO Build Agent VMSS Name
     This should come from the Variable Group through /infra/terraform/bootstrap/main.tf
     The ADO builder should have MI enabled */
     -- Grant access to your Azure VMSS MI used for the Agent Pool in Azure SQL

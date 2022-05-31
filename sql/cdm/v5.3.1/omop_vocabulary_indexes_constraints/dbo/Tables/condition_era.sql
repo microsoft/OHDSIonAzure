@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[condition_era] (
+CREATE TABLE [dbo].[condition_era] (
     [condition_era_id]           INT  NOT NULL,
     [person_id]                  INT  NOT NULL,
     [condition_concept_id]       INT  NOT NULL,
@@ -19,4 +19,3 @@ CREATE NONCLUSTERED INDEX [idx_condition_era_concept_id]
 GO
 CREATE CLUSTERED INDEX [idx_condition_era_person_id]
     ON [dbo].[condition_era]([person_id] ASC);
-

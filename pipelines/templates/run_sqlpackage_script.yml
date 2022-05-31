@@ -27,7 +27,7 @@ steps:
     azureSubscription: ${{ parameters.serviceConnection }}
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
-    addSpnToEnvironment: True
+    addSpnToEnvironment: true
     inlineScript: |
       # https://docs.microsoft.com/en-us/azure/azure-sql/database/database-export#sqlpackage-utility
       export PATH="$PATH:/sqlpackage"

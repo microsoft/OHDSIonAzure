@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[visit_detail] (
+CREATE TABLE [dbo].[visit_detail] (
     [visit_detail_id]                INT           NOT NULL,
     [person_id]                      INT           NOT NULL,
     [visit_detail_concept_id]        INT           NOT NULL,
@@ -19,4 +19,3 @@
     [visit_detail_parent_id]         INT           NULL,
     [visit_occurrence_id]            INT           NOT NULL
 );
-

@@ -1,4 +1,6 @@
 terraform {
+  backend "azurerm" {
+  }
   required_version = ">=0.12"
 
   required_providers {
@@ -6,12 +8,11 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~>2.0"
     }
-    # Using 0.1.8 provider for variable groups until fix is pushed for
+    # Using 0.2.1 provider for variable groups to use fix
     # https://github.com/microsoft/terraform-provider-azuredevops/issues/541
     azuredevops = {
-      source = "microsoft/azuredevops"
-      #   version = ">=0.2.0"
-      version = "~>0.1.8"
+      source  = "microsoft/azuredevops"
+      version = "~>0.2.1"
     }
   }
 }
@@ -27,6 +28,7 @@ provider "azuredevops" {
 
 data "azuread_client_config" "current" {}
 data "azurerm_client_config" "current" {}
+data "azurerm_subscription" "primary" {}
 
 resource "azurerm_resource_group" "adobootstrap" {
   name     = "${var.prefix}-${var.environment}-ado-bootstrap-omop-rg"
@@ -51,7 +53,7 @@ resource "azurerm_key_vault" "keyvault" {
   location                    = var.location
   resource_group_name         = azurerm_resource_group.adobootstrap.name
   enabled_for_disk_encryption = true
-  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  tenant_id                   = sensitive(data.azurerm_client_config.current.tenant_id)
   soft_delete_retention_days  = 7
   purge_protection_enabled    = false
 
@@ -59,8 +61,8 @@ resource "azurerm_key_vault" "keyvault" {
 
   access_policy = [
     {
-      tenant_id      = data.azurerm_client_config.current.tenant_id
-      object_id      = data.azurerm_client_config.current.object_id
+      tenant_id      = sensitive(data.azurerm_client_config.current.tenant_id)
+      object_id      = coalesce("${var.client_object_id}", data.azurerm_client_config.current.object_id)
       application_id = null
 
       secret_permissions = [
@@ -100,8 +102,8 @@ resource "azurerm_key_vault" "keyvault" {
     },
     ## Grant SP permissions
     {
-      tenant_id      = data.azurerm_client_config.current.tenant_id
-      object_id      = azuread_service_principal.spomop.object_id
+      tenant_id      = sensitive(data.azurerm_client_config.current.tenant_id)
+      object_id      = sensitive(azuread_service_principal.spomop.object_id)
       application_id = null
       secret_permissions = [
         "Get",
@@ -142,6 +144,12 @@ resource "azurerm_key_vault_secret" "vmssManagedIdentityObjectId" {
   key_vault_id = azurerm_key_vault.keyvault.id
   name         = "vmssManagedIdentityObjectId"
   value        = azurerm_linux_virtual_machine_scale_set.vmss.identity[0].principal_id
+}
+
+resource "azurerm_key_vault_secret" "storageAccountKey" {
+  key_vault_id = azurerm_key_vault.keyvault.id
+  name         = "storageAccountKey"
+  value        = azurerm_storage_account.tfstatesa.primary_access_key
 }
 
 #############################

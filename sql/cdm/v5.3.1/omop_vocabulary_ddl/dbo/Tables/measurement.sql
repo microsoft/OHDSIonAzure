@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[measurement] (
+CREATE TABLE [dbo].[measurement] (
     [measurement_id]                INT           NOT NULL,
     [person_id]                     INT           NOT NULL,
     [measurement_concept_id]        INT           NOT NULL,
@@ -20,4 +20,3 @@
     [unit_source_value]             VARCHAR (50)  NULL,
     [value_source_value]            VARCHAR (50)  NULL
 );
-

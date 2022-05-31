@@ -120,6 +120,9 @@ stages:
         deploy:
           steps:
 
+          # Run test suite validation
+          - template: templates/test_suite/sql_test_suite_pipeline.yaml
+
           # Install sqlcmd
           - ${{ if eq(variables.PublishPostTFDeploy, 'true') }}:
             - template: templates/install_sqlcmd.yml
@@ -146,7 +149,7 @@ stages:
                 sourceFolderPath: artifacts/${{ parameters.buildArtifactNamePostTFDeploy }}
                 scriptFileName: ${{ parameters.scriptFileNamePostTFDeploy }}
                 sqlcmdCommandLineParameters: '-v StorageAccountName="$(storageAccount)" -v BroadseaAppServiceName="$(appSvcName)" -v ADOAgentPoolVMSSName="$(adoAgentPoolVMSSName)"'
-            
+
           - ${{ if eq(variables.PublishVocabularyDDL, 'true') }}:
             # Run Smoke test for vocabulary files
             - template: templates/smoke_test/smoke_test_vocabulary_files.yaml
@@ -173,7 +176,7 @@ stages:
                 sourceFolderPath: 'artifacts/${{ parameters.buildArtifactNameVocabularyIndexesConstraints }}'
                 scriptFileName: ${{ parameters.dacpacFileNameVocabularyIndexesConstraints }}
                 sqlPackageCommandLineParameters: ''
-          
+
           - template: templates/cleanup_working_directory.yml
             parameters:
               enableCleanup: '$(enableCleanup)'

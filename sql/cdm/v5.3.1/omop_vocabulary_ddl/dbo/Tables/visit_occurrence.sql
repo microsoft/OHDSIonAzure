@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[visit_occurrence] (
+CREATE TABLE [dbo].[visit_occurrence] (
     [visit_occurrence_id]           INT           NOT NULL,
     [person_id]                     INT           NOT NULL,
     [visit_concept_id]              INT           NOT NULL,
@@ -17,4 +17,3 @@
     [discharge_to_source_value]     VARCHAR (50)  NULL,
     [preceding_visit_occurrence_id] INT           NULL
 );
-

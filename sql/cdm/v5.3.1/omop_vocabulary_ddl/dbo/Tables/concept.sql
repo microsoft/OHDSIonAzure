@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[concept] (
+CREATE TABLE [dbo].[concept] (
     [concept_id]       INT           NOT NULL,
     [concept_name]     VARCHAR (2000) NOT NULL, -- OMOP Expansion for vocabulary
     [domain_id]        VARCHAR (20)  NOT NULL,
@@ -10,4 +10,3 @@
     [valid_end_date]   VARCHAR (8)   NOT NULL,
     [invalid_reason]   VARCHAR (1)   NULL
 );
-

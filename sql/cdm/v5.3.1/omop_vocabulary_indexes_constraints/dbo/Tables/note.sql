@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[note] (
+CREATE TABLE [dbo].[note] (
     [note_id]               INT           NOT NULL,
     [person_id]             INT           NOT NULL,
     [note_date]             DATE          NOT NULL,
@@ -37,4 +37,3 @@ CREATE NONCLUSTERED INDEX [idx_note_concept_id]
 GO
 CREATE CLUSTERED INDEX [idx_note_person_id]
     ON [dbo].[note]([person_id] ASC);
-

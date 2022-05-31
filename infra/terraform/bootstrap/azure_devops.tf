@@ -24,18 +24,18 @@ resource "azuredevops_project" "project" {
   }
 }
 
-# you can import the repo 
+# you can import the repo
 # terraform import azuredevops_git_repository.repo projectName/repoName
 # e.g. terraform import azuredevops_git_repository.repo OHDSIonAzure/OHDSIonAzure
 resource "azuredevops_git_repository" "repo" {
   project_id = azuredevops_project.project.id
   name       = "OHDSIonAzure" # keep this if you are just importing an existing repository according to the name
   # name       = "${var.prefix}-${var.environment}-OHDSIonAzure" # you have an option to rename the repository
-  
+
   # Comment this out if you want to make a new repo
-  initialization {
-    init_type = "Uninitialized"
-  }
+  # initialization {
+  #   init_type = "Uninitialized"
+  # }
   # Use Terraform import instead, otherwise this resource will destroy the existing repository.
   lifecycle {
     prevent_destroy = true # prevent destroying the repo
@@ -47,17 +47,20 @@ resource "azuredevops_git_repository" "repo" {
     ]
   }
 
-  ## This section will let you import the contents of another git repo into this repo
-  # initialization {
-  #   init_type             = "Import"
-  #   source_type           = "Git"
-  #   # comes from public repo
-  #   source_url            = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}"
-  #   service_connection_id = azuredevops_serviceendpoint_generic_git.serviceendpoint.id
-  # }
+  ## Uncomment this section to import the contents of another git repo into this repo
+  initialization {
+    init_type   = "Import"
+    source_type = "Git"
+    # you can import from an existing ADO repository
+    # source_url            = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}" # you can import from an existing ADO repository
+    # service_connection_id = azuredevops_serviceendpoint_generic_git.serviceendpoint.id
+
+    # You can import from a public repository
+    source_url = "https://github.com/microsoft/OHDSIonAzure.git"
+  }
 }
 
-# Include if you want to import from an existing repository
+# Include if you want to import from an existing repository using a service endpoint to authenticate to the repo
 resource "azuredevops_serviceendpoint_generic_git" "serviceendpoint" {
   project_id            = azuredevops_project.project.id
   repository_url        = "${var.ado_org_service_url}/${var.ado_project_name}/_git/${var.ado_repo_name}"
@@ -173,7 +176,7 @@ module "azure_devops_environment_tf_plan_pipeline_assignment" {
   ado_pat             = var.ado_pat
   ado_project_name    = azuredevops_project.project.name
   ado_environment_id  = module.azure_devops_environment_tf_plan.azure_devops_environment_id
-  ado_pipeline_id     = azuredevops_build_definition.environmentpipeline.id
+  ado_pipeline_id     = azuredevops_build_definition.tfapplyenvironmentpipeline.id
 }
 
 module "azure_devops_environment_tf_apply_pipeline_assignment" {
@@ -183,7 +186,18 @@ module "azure_devops_environment_tf_apply_pipeline_assignment" {
   ado_pat             = var.ado_pat
   ado_project_name    = azuredevops_project.project.name
   ado_environment_id  = module.azure_devops_environment_tf_apply.azure_devops_environment_id
-  ado_pipeline_id     = azuredevops_build_definition.environmentpipeline.id
+  ado_pipeline_id     = azuredevops_build_definition.tfapplyenvironmentpipeline.id
+}
+
+module "azure_devops_environment_tf_destroy_pipeline_assignment" {
+  source              = "../modules/azure_devops_environment_pipeline_assignment"
+  authorized          = true
+  ado_org_service_url = var.ado_org_service_url
+  ado_pat             = var.ado_pat
+  ado_project_name    = azuredevops_project.project.name
+  # Should the ado_environment_id be something else?
+  ado_environment_id = module.azure_devops_environment_tf_apply.azure_devops_environment_id
+  ado_pipeline_id    = azuredevops_build_definition.tfdestroyenvironmentpipeline.id
 }
 
 module "azure_devops_environment_vocabulary_build_pipeline_assignment" {
@@ -233,24 +247,23 @@ module "azure_devops_environment_broadsea_release_pipeline_assignment" {
 
 resource "azuread_application" "spomop" {
   display_name = "sp-for-${var.prefix}-${var.environment}-omop-service-connection"
-  owners       = [data.azuread_client_config.current.object_id]
+  owners       = [sensitive(data.azuread_client_config.current.object_id)]
 }
 
 resource "azuread_service_principal" "spomop" {
   application_id = azuread_application.spomop.application_id
-  owners         = [data.azuread_client_config.current.object_id]
+  owners         = [sensitive(data.azuread_client_config.current.object_id)]
 }
 
 resource "azuread_service_principal_password" "spomop" {
-  service_principal_id = azuread_service_principal.spomop.id
+  service_principal_id = sensitive(azuread_service_principal.spomop.id)
 }
 
 resource "azurerm_role_assignment" "main" {
-  principal_id         = azuread_service_principal.spomop.id
-  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
+  principal_id         = sensitive(azuread_service_principal.spomop.id)
+  scope                = sensitive("/subscriptions/${data.azurerm_client_config.current.subscription_id}")
   role_definition_name = "Owner"
 }
-
 
 #############################
 # Azure Service Connection
@@ -264,8 +277,8 @@ resource "azuredevops_serviceendpoint_azurerm" "endpointazure" {
     serviceprincipalid  = azuread_service_principal.spomop.application_id
     serviceprincipalkey = azuread_service_principal_password.spomop.value
   }
-  azurerm_spn_tenantid      = data.azurerm_client_config.current.tenant_id
-  azurerm_subscription_id   = data.azurerm_client_config.current.subscription_id
+  azurerm_spn_tenantid      = sensitive(data.azurerm_client_config.current.tenant_id)
+  azurerm_subscription_id   = sensitive(data.azurerm_client_config.current.subscription_id)
   azurerm_subscription_name = var.azure_subscription_name
 }
 
@@ -274,4 +287,24 @@ resource "azuredevops_resource_authorization" "auth" {
   project_id  = azuredevops_project.project.id
   resource_id = azuredevops_serviceendpoint_azurerm.endpointazure.id
   authorized  = true
+}
+
+#############################
+# Azure DevOps Extensions
+#############################
+
+resource "null_resource" "install_tf_ext" {
+  triggers = {
+    ado_pat             = var.ado_pat
+    ado_org_service_url = var.ado_org_service_url
+    ado_project_name    = var.ado_project_name
+  }
+  provisioner "local-exec" {
+    command = "./scripts/install_azdo_ext.sh"
+    environment = {
+      PAT                 = self.triggers.ado_pat
+      ADO_ORG_SERVICE_URL = self.triggers.ado_org_service_url
+      ADO_PROJECT_NAME    = self.triggers.ado_project_name
+    }
+  }
 }

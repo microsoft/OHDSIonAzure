@@ -16,7 +16,7 @@ parameters:
   displayName: Common Data Model Configuration for Dacpac Build
   values:
   - v5.3.1
-  
+
 - name: sourceFolder
   type: string
   default: sql

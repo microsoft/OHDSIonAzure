@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[concept_relationship] (
+CREATE TABLE [dbo].[concept_relationship] (
     [concept_id_1]     INT          NOT NULL,
     [concept_id_2]     INT          NOT NULL,
     [relationship_id]  VARCHAR (20) NOT NULL,
@@ -25,4 +25,3 @@ CREATE NONCLUSTERED INDEX [idx_concept_relationship_id_2]
 GO
 CREATE NONCLUSTERED INDEX [idx_concept_relationship_id_1]
     ON [dbo].[concept_relationship]([concept_id_1] ASC);
-
