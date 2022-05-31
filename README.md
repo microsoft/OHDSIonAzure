@@ -1,8 +1,26 @@
 # Introduction 
 
-The goal of this project is to ease running OHDSI projects in Azure.
+OHDSI on Azure GitHub repository is designed to ease deployment of tools provided by the Observational Health Data Sciences and Informatics (OHDSI, pronounced "Odyssey") community on to Azure. We are guided by our Hypothesis and core objectives.
 
-Some of the OHDSI projects include:
+**Hypothesis -** “OHDSI on Azure will empower IT department and operations teams to support researchers, thus increasing researchers' motivation to act on new ideas”
+
+## Objectives
+
+1. Decreased Deployment challenges
+2. Increased access to funding
+3. Simplified adoption strategy
+
+OHDSI on Azure is a set of scripts, templates, and DevOps pipelines designed to automate the deployment of the OHDSI in the Microsoft Azure cloud using Terraform & PaaS services. It is designed to facilitate standardized scalable deployments within customer managed Azure subscriptions. Provide best practices for running OHDSI on Azure. Ease the burden of management and cost monitoring of research projects.
+
+OHDSI on Azure has taken a container-based approach to operating OHDSI tools. Therefore, OHDSI on Azure does it’s best to not host code developed by the [OHDSI community](https://github.com/OHDSI). Our deployment templates pull containers from Docker Hub.
+
+We encourage customers to perform their due diligence as part of the pipeline deployments. CI/CD pipelines can be modified to fit your organization’s requirements. Our goal is to get a Sandbox environment setup and provide starter tools for deploying to other environments (DEV/Test, Staging, and Production).
+
+We invite you and your organization to participate in the continued feature expansion of OHDSI on Azure.
+
+This repository assumes the end user is familiar with the OHDSI/ OMOP community, Azure, and Terraform.
+
+Some of the OHDSI projects included:
 
 * [Common Data Model (CDM)](https://github.com/OHDSI/CommonDataModel), including [Vocabulary](https://github.com/OHDSI/Vocabulary-v5.0)
 * [Atlas](https://github.com/OHDSI/Atlas)
