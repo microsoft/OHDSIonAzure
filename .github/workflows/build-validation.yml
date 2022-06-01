@@ -213,7 +213,9 @@ jobs:
       - name: Add Terraform Plan Comment
         id: comment
         uses: actions/github-script@v3
-        if: github.event_name == 'pull_request'
+        if: |
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -232,7 +234,7 @@ jobs:
 
             </details>
 
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`, Source repo: \`${{ github.event.pull_request.head.repo.full_name }}\`, Target repo: \`${{ github.event.pull_request.base.repo.full_name  }}\` *`;
 
             // Get the existing comments.
             const {data: comments} = await github.issues.listComments({
