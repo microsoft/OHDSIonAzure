@@ -1,0 +1,164 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+TODO",
+  "name": "parameters",
+  "created": "2022-05-24T23:12:02.8858-07:00",
+  "modified": "2022-05-24T23:12:02.8858-07:00",
+  "parameters": [
+    {
+      "name": "ado_organization_name",
+      "source": {
+        "env": "ADO_ORGANIZATION_NAME"
+      }
+    },
+    {
+      "name": "ado_organization_url",
+      "source": {
+        "env": "ADO_ORGANIZATION_URL"
+      }
+    },
+    {
+      "name": "ado_project_url",
+      "source": {
+        "env": "ADO_PROJECT_URL"
+      }
+    },
+    {
+      "name": "broadsea_build_pipeline_name",
+      "source": {
+        "env": "BROADSEA_BUILD_PIPELINE_NAME"
+      }
+    },
+    {
+      "name": "broadsea_release_pipeline_name",
+      "source": {
+        "env": "BROADSEA_RELEASE_PIPELINE_NAME"
+      }
+    },
+    {
+      "name": "check_retry_count",
+      "source": {
+        "env": "CHECK_RETRY_COUNT"
+      }
+    },
+    {
+      "name": "check_seconds",
+      "source": {
+        "env": "CHECK_SECONDS"
+      }
+    },
+    {
+      "name": "environment",
+      "source": {
+        "env": "ENVIRONMENT"
+      }
+    },
+    {
+      "name": "environment_destroy_pipeline_name",
+      "source": {
+        "env": "ENVIRONMENT_DESTROY_PIPELINE_NAME"
+      }
+    },
+    {
+      "name": "environment_pipeline_name",
+      "source": {
+        "env": "ENVIRONMENT_PIPELINE_NAME"
+      }
+    },
+    {
+      "name": "include_debugging_output",
+      "source": {
+        "env": "INCLUDE_DEBUGGING_OUTPUT"
+      }
+    },
+    {
+      "name": "log_search_pattern",
+      "source": {
+        "env": "LOG_SEARCH_PATTERN"
+      }
+    },
+    {
+      "name": "pipeline_branch_name",
+      "source": {
+        "env": "PIPELINE_BRANCH_NAME"
+      }
+    },
+    {
+      "name": "prefix",
+      "source": {
+        "env": "PREFIX"
+      }
+    },
+    {
+      "name": "source_vocabularies_storage_account_container",
+      "source": {
+        "env": "SOURCE_VOCABULARIES_STORAGE_ACCOUNT_CONTAINER"
+      }
+    },
+    {
+      "name": "source_vocabularies_storage_account_name",
+      "source": {
+        "env": "SOURCE_VOCABULARIES_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TFSTATE_CONTAINER_NAME"
+      }
+    },
+    {
+      "name": "tfstate_file_name",
+      "source": {
+        "env": "TFSTATE_FILE_NAME"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "TFSTATE_RESOURCE_GROUP_NAME"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "TFSTATE_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "vocabularies_container_name",
+      "source": {
+        "env": "VOCABULARIES_CONTAINER_NAME"
+      }
+    },
+    {
+      "name": "vocabularies_container_path",
+      "source": {
+        "env": "VOCABULARIES_CONTAINER_PATH"
+      }
+    },
+    {
+      "name": "vocabularies_search_pattern",
+      "source": {
+        "env": "VOCABULARIES_SEARCH_PATTERN"
+      }
+    },
+    {
+      "name": "vocabularies_storage_account_name",
+      "source": {
+        "env": "VOCABULARIES_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "vocabulary_build_pipeline_name",
+      "source": {
+        "env": "VOCABULARY_BUILD_PIPELINE_NAME"
+      }
+    },
+    {
+      "name": "vocabulary_release_pipeline_name",
+      "source": {
+        "env": "VOCABULARY_RELEASE_PIPELINE_NAME"
+      }
+    }
+  ]
+}

@@ -45,7 +45,7 @@ To get started, first clone the repository.
 git clone https://github.com/microsoft/OHDSIonAzure
 ```
 
-You can work through the notes on [creating your environment](/docs/creating_your_environment.md) which will walk through how to set up OHDSI on Azure.
+You can work through the notes on [creating your environment quickstart](/docs/creating_your_environment_quickstart.md) which will walk through how to set up OHDSI on Azure.
 
 ## Contributing
 

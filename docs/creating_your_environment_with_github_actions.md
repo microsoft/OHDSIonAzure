@@ -1,4 +1,4 @@
-# Creating your Environment Notes
+# Creating your Environment with Github Actions Notes
 
 This guide will let you work through the E2E for setting up your environment in your Azure subscription and Azure DevOps project.
 
@@ -84,7 +84,7 @@ You can also retrieve your Service Principal objectId using Azure CLI:
 
 ```bash
 SP_APP_ID="some-guid" # you can retrieve this value from the appId when running `az ad sp create-for-rbac`
-az ad sp show --id $SP_APP_ID --query "objectId" -o tsv
+az ad sp show --id $SP_APP_ID --query "id" -o tsv
 ```
 
 You can save this value for later as well, and this will be used for your `ARM_CLIENT_OBJECT_ID` for your environment secrets.
@@ -92,6 +92,8 @@ You can save this value for later as well, and this will be used for your `ARM_C
 ### Step 2. Grant roles to your Azure Service Principal
 
 You can assign the following roles to your [Service Principal using the portal](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-users-assign-role-azure-portal):
+
+> These roles should be assigned for you as part of the OHDSI on Azure [porter setup](/local_development_setup.md/#setup-porter).
 
 * [Application Administrator](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#application-administrator)
 * [Groups Administrator](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#groups-administrator)
@@ -119,7 +121,7 @@ You can setup your [Environment Secrets](https://docs.github.com/en/actions/depl
 | ADMIN_USER | string | `azureuser` | This is your Azure VMSS user name. |
 | ADMIN_PASSWORD | string | `replaceP@SSW0RD` | This is your Azure VMSS password. |
 | ADO_PAT | string | `my-PAT` | This is your Azure [DevOps PAT](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=Windows).  You should use the Azure DevOps PAT which is setup as part of the [prerequisites steps](/infra/terraform/bootstrap/README.md/#ado-pat-notes). |
-| ADO_PROJECT_URL | string | `https://dev.azure.com/<my-org>/<my-project>` | This is your Azure DevOps [organization url](https://docs.microsoft.com/en-us/azure/devops/extend/develop/work-with-urls?view=azure-devops&tabs=http#how-the-primary-url-is-used) including your [Project Name](https://docs.microsoft.com/en-us/azure/devops/organizations/projects/create-project?view=azure-devops&tabs=preview-page). |
+| ADO_ORGANIZATION_NAME | string | `my-org` | This is your Azure DevOps [organization name](https://docs.microsoft.com/en-us/azure/devops/extend/develop/work-with-urls), so assuming your Azure DevOps URL is: `https://dev.azure.com/<my-org>`, you would specify `my-org`. |
 | ARM_CLIENT_ID | string | `some-guid` | This is your Azure Service Principal `appId`.  You can get this from [Step 1](/docs/creating_your_environment_with_github_actions.md/#step-1-setup-an-azure-service-principal-for-your-environment). |
 | ARM_CLIENT_OBJECT_ID | string | `some-guid` | This is your Azure Service Principal `objectId`.  You can get this from [Step 1](/docs/creating_your_environment_with_github_actions.md/#step-1-setup-an-azure-service-principal-for-your-environment). |
 | ARM_CLIENT_SECRET | string | `some-password` | This is your Azure Service Principal `password`.  You can get this from [Step 1](/docs/creating_your_environment_with_github_actions.md/#step-1-setup-an-azure-service-principal-for-your-environment). |
@@ -129,40 +131,39 @@ You can setup your [Environment Secrets](https://docs.github.com/en/actions/depl
 | BOOTSTRAP_TF_STATE_FILE_NAME | string | `terraform.tfstate` | This is the name of your Bootstrap Terraform State File Azure Storage Blob name.  This is the default name for your [remote backend for the bootstrap Terraform project](/infra/terraform/bootstrap/README.md#using-an-azure-storage-account-for-your-remote-backend) |
 | BOOTSTRAP_TF_STATE_RG | string | `some-bootstrap-rg` | This is the resource group name which has your Azure Storage account for your [remote backend for the bootstrap Terraform project](/infra/terraform/bootstrap/README.md#using-an-azure-storage-account-for-your-remote-backend) |
 | BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT | string | `bootstraptfstate` | This is the Azure Storage Account name for your [remote backend for the bootstrap Terraform project](/infra/terraform/bootstrap/README.md#using-an-azure-storage-account-for-your-remote-backend) |
-| BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY | string | `some-key` | This is the Azure Storage Account Key for your [remote backend for the bootstrap Terraform project](/infra/terraform/bootstrap/README.md#using-an-azure-storage-account-for-your-remote-backend) |
-| BROADSEA_BUILD_PIPELINE_NAME | string | `Broadsea Build Pipeline` | This is the name of your [Broadsea Build Pipeline](/pipelines/README.md#broadsea-build-pipeline) in your Azure DevOps project.  The default is `Broadsea Build Pipeline`. |
-| BROADSEA_RELEASE_PIPELINE_NAME | string | `Broadsea Release Pipeline` | This is the name of your [Broadsea Release Pipeline](/pipelines/README.md#broadsea-release-pipeline) in your Azure DevOps project.  The default is `Broadsea Release Pipeline`. |
+| BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT | string | `bootstraptfstate` | This is the Azure Storage Account name for your [remote backend for the bootstrap Terraform project](/infra/terraform/bootstrap/README.md#using-an-azure-storage-account-for-your-remote-backend) |
+| CREATE_NEW_AZURE_SERVICE_PRINCIPAL | string | `1` | Indicate whether to create a new Azure Service Principal for your porter bootstrap setup, and this value defaults to `1`.  If you would like to bring your own Service principal, set this value to `0` and be sure to specify `ARM_CLIENT_ID`, `ARM_CLIENT_OBJECT_ID`, `ARM_CLIENT_SECRET`, `ARM_SUBSCRIPTION_ID`, and `ARM_TENANT_ID`. |
 | ENVIRONMENT | string | `demo` | Use this to designate your TF environment for your [bootstrap Terraform variables](/infra/terraform/bootstrap/README.md#step-1-update-your-variables) and will be populated in your [Variable Group](/docs/update_your_variables.md/#2-bootstrap-settings-vg). |
-| ENVIRONMENT_PIPELINE_NAME | string | `Broadsea Release Pipeline` | This is the name of your [Environment Pipeline](/pipelines/README.md#environment-pipeline) in your Azure DevOps project.  The default is `TF Apply OMOP Environment Pipeline`. |
+| INCLUDE_KEY_VAULT_PORTER_SECRETS | string | `1` | Indicate whether to use Azure Key Vault for your porter bootstrap setup, this value defaults to `1`.  If you set it to `0` you will instead rely on environment variables. |
 | OMOP_PASSWORD | sensitive string | `some-password` | This is your Azure SQL DB Admin password for your [Environment](/infra/terraform/omop/README.md) which will be populated in your [Key Vault linked Variable Group](/docs/update_your_variables.md/#1-bootstrap-vg).  This is user supplied for your [bootstrap Terraform variables](/infra/terraform/bootstrap/README. |
 | PREFIX | string | `sharing` | This is the prefix for your environment (from your [bootstrap Terraform project](/infra/terraform/bootstrap/README.md/#step-1-update-terraformtfvars)), see the notes for [more details](/infra/terraform/bootstrap/README.md#prefix). |
 | SOURCE_VOCABULARIES_STORAGE_ACCOUNT_CONTAINER | string | `vocabularies` | This is your source vocabularies Azure Storage Account container name.  The default is `vocabularies`.  You can review this value from [confirming access to your vocabulary storage account](/docs/creating_your_environment_with_github_actions.md/#step-4-confirm-access-to-your-vocabulary-storage-account). |
 | SOURCE_VOCABULARIES_STORAGE_ACCOUNT_NAME | string | `demovocabohdsionazure` | This is your source vocabularies Azure Storage Account container name.  The default is `demovocabohdsionazure`.  You can review this value from [confirming access to your vocabulary storage account](/docs/creating_your_environment_with_github_actions.md/#step-4-confirm-access-to-your-vocabulary-storage-account). |
-| STORAGE_ACCOUNT_KEY | string | `your-environment-storage-account-key` | This is your destination vocabularies Azure Storage Account container name.  The Azure Storage account will be available once you are able to run the bootstrap deployment (e.g. `.github/workflows/deploy.yml`) and the OMOP deployment (e.g. `.github/workflows/deploy-omop.yml`). |
-| STORAGE_ACCOUNT_NAME | string | `<prefix><environment>omopsa` | This is your destination vocabularies Azure Storage Account name.  The Azure Storage account will be available once you are able to run the bootstrap deployment (e.g. `.github/workflows/deploy.yml`) and the OMOP deployment (e.g. `.github/workflows/deploy-omop.yml`). |
-| VOCABULARIES_CONTAINER_PATH | string | `vocabularies/19-AUG-2021` | This is your destination vocabularies Azure Storage Account container path.  The Azure Storage account will be available once you are able to run the bootstrap deployment (e.g. `.github/workflows/deploy.yml`) and the OMOP deployment (e.g. `.github/workflows/deploy-omop.yml`). |
+| VOCABULARIES_CONTAINER_NAME | string | `vocabularies` | This is your destination vocabularies Azure Storage Account container name.  The Azure Storage account will be available as part of deployment (e.g. `.github/workflows/deploy.yml`). |
+| VOCABULARIES_CONTAINER_PATH | string | `vocabularies/19-AUG-2021` | This is your destination vocabularies Azure Storage Account container path.  The Azure Storage account will be available as part of deployment (e.g. `.github/workflows/deploy.yml`). |
 | VOCABULARIES_SEARCH_PATTERN | string | `19-AUG-2021/*.csv` | This is your search pattern to use to find the vocabulary files in your source vocabularies Azure Storage Account container path. |
-| VOCABULARY_BUILD_PIPELINE_NAME | string | `Vocabulary Build Pipeline` | This is the name of your [Vocabulary Build Pipeline](/pipelines/README.md#vocabulary-build-pipeline) in your Azure DevOps project.  The default is `Vocabulary Build Pipeline`. |
-| VOCABULARY_RELEASE_PIPELINE_NAME | string | `Vocabulary Release Pipeline` | This is the name of your [Vocabulary Release Pipeline](/pipelines/README.md#vocabulary-release-pipeline) in your Azure DevOps project.  The default is `Vocabulary Release Pipeline`. |
 
 ### Step 5. Deploying with github actions workflows
 
-Currently the deployment workflows (under `.github/workflows/deploy.yml`, `.github/workflows/deploy-omop.yml`, `.github/workflows/deploy-vocabulary.yml`, `.github/workflows/deploy-broadsea.yml`) run on a schedule and on PR to the `main` branch based on your `demo` environment settings.
+Currently the deployment workflows (under `.github/workflows/deploy.yml`) run on a schedule and on PR to the `main` branch based on your `demo` environment settings.
 
+> This approach is wrapped with an OHDSI on Azure [Porter bundle](/local_development_setup.md#setup-porter) to manage installing, running your deployment for your environment, vocabulary, and broadsea, and also uninstalling workflows.
 > This approach also relies on using an [Azure Storage remote backend](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli) for both the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md) and the [omop Terraform project](/infra/terraform/omop/README.md).
 > The demo environment uses [environment secrets](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#environment-secrets) to manage settings required for setting up the OHDSI on Azure demo environment.
 > This approach further assumes that the `main` branch is the default branch, as the [azure devops pipeline github action](https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/github-actions?#branch-considerations) relies on calling the default branch when calling a pipeline.  Currently you cannot set the default branch when importing a project through the [Azure DevOps provider](https://github.com/microsoft/terraform-provider-azuredevops/issues/297).
 
-1. `deploy.yml` will deploy the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md).
+The `deploy.yml` workflow covers the following:
+
+1. Deploy the [bootstrap Terraform project](/infra/terraform/bootstrap/README.md).
 
 * This deployment will also include setting up your Azure DevOps VMSS agent pools.
   * You will need to ensure that the Azure DevOps VMSS agent pools are ready so the following deployment pipelines can run.  If you are running into issues with your Azure DevOps VMSS Agent Pools, you can review the [troubleshooting notes](/docs/troubleshooting/troubleshooting_azure_vmss_agent_pool.md).
 
-2. `deploy-omop.yml` will deploy the [omop Terraform project](/infra/terraform/omop/README.md)
+2. Deploy the [omop Terraform project](/infra/terraform/omop/README.md)
 
 * This deployment will stand up your OHDSI on Azure OMOP Resource Group.
   * You (or your administrator) will also need to run through the [post Terraform deployment steps](/infra/terraform/omop/README.md#step-3-run-post-terraform-deployment-steps) prior to setting up your vocabualry.
 
-3. `deploy-vocabulary.yml` will setup your [vocabulary in your OHDSI on Azure environment](/docs/setup/setup_vocabulary.md) by ensuring your [vocabulary files are populated](/docs/setup/setup_vocabulary.md) in your vocabulary Azure Storage Account and triggering your [vocabulary pipelines](/pipelines/README.md#vocabulary-pipelines).  If the vocabulary files are not available, the workflow will attempt to copy the vocabulary files from the [demo Vocabulary Azure Storage account](/docs/creating_your_environment_with_github_actions.md#step-4-confirm-access-to-your-vocabulary-storage-account) into your vocabulary Azure Storage Account.
+3. Setup your [vocabulary in your OHDSI on Azure environment](/docs/setup/setup_vocabulary.md) by ensuring your [vocabulary files are populated](/docs/setup/setup_vocabulary.md) in your vocabulary Azure Storage Account and triggering your [vocabulary pipelines](/pipelines/README.md#vocabulary-pipelines).  If the vocabulary files are not available, the workflow will attempt to copy the vocabulary files from the [demo Vocabulary Azure Storage account](/docs/creating_your_environment_with_github_actions.md#step-4-confirm-access-to-your-vocabulary-storage-account) into your vocabulary Azure Storage Account.
 
-4. `deploy-broadsea.yml` will deploy [Broadsea](/apps/README.md) to your OHDSI on Azure Environment by triggering the [broadsea pipelines](/pipelines/README.md#broadsea-pipelines)
+4. Deploy [Broadsea](/apps/README.md) to your OHDSI on Azure Environment by triggering the [broadsea pipelines](/pipelines/README.md#broadsea-pipelines)
