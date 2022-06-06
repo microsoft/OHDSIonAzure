@@ -277,6 +277,63 @@ deploy-environment:
         CHECK_SECONDS: "{{ bundle.parameters.check_seconds }}"
         CHECK_RETRY_COUNT: "{{ bundle.parameters.check_retry_count }}"
 
+  # Update Environment pipeline permissions
+  - exec:
+      description: "Update tf plan Environment Pipeline permissions"
+      command: ./porter-scripts/update_environment_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Terraform"
+        PIPELINE_NAME: '"{{ bundle.parameters.environment_pipeline_name }}"'
+        ADO_ENVIRONMENT_NAME: '"{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-omop-tf-plan-environment"'
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
+  # Update Environment pipeline permissions
+  - exec:
+      description: "Update tf apply Environment Pipeline permissions"
+      command: ./porter-scripts/update_environment_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Terraform"
+        PIPELINE_NAME: '"{{ bundle.parameters.environment_pipeline_name }}"'
+        ADO_ENVIRONMENT_NAME: '"{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-omop-tf-apply-environment"'
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
+  # Update Environment pipeline queue permissions
+  - exec:
+      description: "Update tf apply Environment Pipeline permissions"
+      command: ./porter-scripts/update_elastic_pool_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Terraform"
+        PIPELINE_NAME: '"{{ bundle.parameters.environment_pipeline_name }}"'
+        ADO_QUEUE_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-ado-build-linux-vmss-agent-pool"
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
   # Run Terraform Environment Pipeline
   - exec:
       description: "Run Environment Terraform Pipeline"
@@ -358,6 +415,63 @@ run-add-members-after-environment-pipeline:
 #################################
 
 run-environment-destroy-pipeline:
+  # Update Destroy Environment pipeline permissions
+  - exec:
+      description: "Update tf plan Destroy Environment Pipeline permissions"
+      command: ./porter-scripts/update_environment_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Terraform"
+        PIPELINE_NAME: '"{{ bundle.parameters.environment_destroy_pipeline_name }}"'
+        ADO_ENVIRONMENT_NAME: '"{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-omop-tf-plan-environment"'
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
+  # Update Destroy Environment pipeline permissions
+  - exec:
+      description: "Update tf apply Destroy Environment Pipeline permissions"
+      command: ./porter-scripts/update_environment_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Terraform"
+        PIPELINE_NAME: '"{{ bundle.parameters.environment_destroy_pipeline_name }}"'
+        ADO_ENVIRONMENT_NAME: '"{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-omop-tf-apply-environment"'
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
+  # Update Destroy Environment pipeline queue permissions
+  - exec:
+      description: "Update tf apply Destroy Environment Pipeline permissions"
+      command: ./porter-scripts/update_elastic_pool_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Terraform"
+        PIPELINE_NAME: '"{{ bundle.parameters.environment_destroy_pipeline_name }}"'
+        ADO_QUEUE_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-ado-build-linux-vmss-agent-pool"
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
   # Run Terraform Environment Destroy Pipeline
   # Need a teardown script e.g. wait until tf destroy pipeline completes
   - exec:
@@ -415,6 +529,82 @@ deploy-vocabulary:
         ADO_PAT: "{{ bundle.credentials.ado_pat }}"
         CHECK_SECONDS: "{{ bundle.parameters.check_seconds }}"
         CHECK_RETRY_COUNT: "{{ bundle.parameters.check_retry_count }}"
+
+  # Update Vocabulary Build Environment pipeline permissions
+  - exec:
+      description: "Update Vocabulary Build Environment Pipeline permissions"
+      command: ./porter-scripts/update_environment_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Vocabulary"
+        PIPELINE_NAME: '"{{ bundle.parameters.vocabulary_build_pipeline_name }}"'
+        ADO_ENVIRONMENT_NAME: '"{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-vocabulary-build-environment"'
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
+  # Update Vocabulary Release Environment pipeline permissions
+  - exec:
+      description: "Update Vocabulary Release Environment Pipeline permissions"
+      command: ./porter-scripts/update_environment_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Vocabulary"
+        PIPELINE_NAME: '"{{ bundle.parameters.vocabulary_release_pipeline_name }}"'
+        ADO_ENVIRONMENT_NAME: '"{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-vocabulary-build-environment"'
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
+  # Update Vocabulary Build pipeline queue permissions
+  - exec:
+      description: "Update Vocabulary Build Pipeline permissions"
+      command: ./porter-scripts/update_elastic_pool_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Vocabulary"
+        PIPELINE_NAME: '"{{ bundle.parameters.vocabulary_build_pipeline_name }}"'
+        ADO_QUEUE_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-ado-build-windows-vmss-agent-pool"
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
+  # Update Vocabulary Release pipeline queue permissions
+  - exec:
+      description: "Update Vocabulary Release Pipeline permissions"
+      command: ./porter-scripts/update_elastic_pool_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Vocabulary"
+        PIPELINE_NAME: '"{{ bundle.parameters.vocabulary_release_pipeline_name }}"'
+        ADO_QUEUE_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-ado-build-linux-vmss-agent-pool"
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
 
   # Run Vocabulary Build Pipeline and wait for completion
   - exec:
@@ -567,6 +757,82 @@ deploy-broadsea:
         CHECK_SECONDS: "{{ bundle.parameters.check_seconds }}"
         CHECK_RETRY_COUNT: "{{ bundle.parameters.check_retry_count }}"
 
+  # Update Broadsea Build Environment pipeline permissions
+  - exec:
+      description: "Update Broadsea Build Environment Pipeline permissions"
+      command: ./porter-scripts/update_environment_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Broadsea"
+        PIPELINE_NAME: '"{{ bundle.parameters.broadsea_build_pipeline_name }}"'
+        ADO_ENVIRONMENT_NAME: '"{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-broadsea-build-environment"'
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
+  # Update Broadsea Release Environment pipeline permissions
+  - exec:
+      description: "Update Broadsea Release Environment Pipeline permissions"
+      command: ./porter-scripts/update_environment_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Broadsea"
+        PIPELINE_NAME: '"{{ bundle.parameters.broadsea_release_pipeline_name }}"'
+        ADO_ENVIRONMENT_NAME: '"{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-broadsea-release-environment"'
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
+  # Update Broadsea Build pipeline queue permissions
+  - exec:
+      description: "Update Broadsea Build Pipeline permissions"
+      command: ./porter-scripts/update_elastic_pool_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Broadsea"
+        PIPELINE_NAME: '"{{ bundle.parameters.broadsea_build_pipeline_name }}"'
+        ADO_QUEUE_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-ado-build-linux-vmss-agent-pool"
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
+  # Update Broadsea Release pipeline queue permissions
+  - exec:
+      description: "Update Broadsea Release Pipeline permissions"
+      command: ./porter-scripts/update_elastic_pool_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Broadsea"
+        PIPELINE_NAME: '"{{ bundle.parameters.broadsea_release_pipeline_name }}"'
+        ADO_QUEUE_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-ado-build-linux-vmss-agent-pool"
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
   # Run Broadsea Build Pipeline and wait for completion
   - exec:
       description: "Run Broadsea Build Pipeline and wait for completion"
@@ -706,6 +972,63 @@ upgrade:
 #######################
 
 uninstall:
+  # Update Destroy Environment pipeline permissions
+  - exec:
+      description: "Update tf plan Destroy Environment Pipeline permissions"
+      command: ./porter-scripts/update_environment_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Terraform"
+        PIPELINE_NAME: '"{{ bundle.parameters.environment_destroy_pipeline_name }}"'
+        ADO_ENVIRONMENT_NAME: '"{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-omop-tf-plan-environment"'
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
+  # Update Destroy Environment pipeline permissions
+  - exec:
+      description: "Update tf apply Destroy Environment Pipeline permissions"
+      command: ./porter-scripts/update_environment_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Terraform"
+        PIPELINE_NAME: '"{{ bundle.parameters.environment_destroy_pipeline_name }}"'
+        ADO_ENVIRONMENT_NAME: '"{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-omop-tf-apply-environment"'
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
+  # Update Destroy Environment pipeline queue permissions
+  - exec:
+      description: "Update tf apply Destroy Environment Pipeline permissions"
+      command: ./porter-scripts/update_elastic_pool_pipeline_assignment.sh
+      arguments:
+        - '"$@"'
+      flags:
+        ARM_CLIENT_ID: "{{ bundle.credentials.azure_client_id }}"
+        ARM_CLIENT_SECRET: "{{ bundle.credentials.azure_client_secret }}"
+        ARM_TENANT_ID: "{{ bundle.credentials.azure_tenant_id }}"
+        ARM_SUBSCRIPTION_ID: "{{ bundle.credentials.azure_subscription_id }}"
+        FOLDER_PATH: "OHDSIOnAzure\\{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}\\Terraform"
+        PIPELINE_NAME: '"{{ bundle.parameters.environment_destroy_pipeline_name }}"'
+        ADO_QUEUE_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-ado-build-linux-vmss-agent-pool"
+        ADO_ORGANIZATION_NAME: "{{ bundle.parameters.ado_organization_url }}"
+        ADO_PROJECT_NAME: "{{ bundle.parameters.prefix }}-{{ bundle.parameters.environment }}-OHDSIonAzure"
+        ADO_PAT: "{{ bundle.credentials.ado_pat }}"
+        INCLUDE_DEBUGGING_OUTPUT: "{{ bundle.parameters.include_debugging_output }}"
+
   # Run Terraform Environment Destroy Pipeline
   # Need a teardown script e.g. wait until tf destroy pipeline completes
   - exec:

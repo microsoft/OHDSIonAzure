@@ -51,6 +51,31 @@ terraform init \
      -backend-config="container_name=$CONTAINER_NAME" \
      -backend-config="key=$TFSTATE_FILE_NAME"
 
+BLOB_HAS_LEASE=$(az storage blob show --account-name "$STORAGE_ACCOUNT_NAME" -c "$CONTAINER_NAME" --name "$TFSTATE_FILE_NAME" --query 'properties.lease.status' -o tsv)
+
+if [ "$BLOB_HAS_LEASE" = "locked" ]
+then
+     echo "Blob has lease, so will look to break it"
+     az storage blob lease break -b "$TFSTATE_FILE_NAME" -c "$CONTAINER_NAME" --account-name "$STORAGE_ACCOUNT_NAME" --account-key "$STORAGE_ACCOUNT_ACCESS_KEY"
+else
+     echo "Blob does not have a lease."
+fi
+
+echo "Bootstrap Terraform refresh"
+(
+     terraform refresh \
+          -var "client_object_id=$ARM_CLIENT_OBJECT_ID" \
+          -var "prefix=$PREFIX" \
+          -var "environment=$ENVIRONMENT" \
+          -var "omop_password=$OMOP_PASSWORD" \
+          -var "ado_pat=$ADO_PAT" \
+          -var "admin_user_jumpbox=$ADMIN_USER_JUMPBOX" \
+          -var "admin_password_jumpbox=$ADMIN_PASSWORD_JUMPBOX" \
+          -var "admin_user=$ADMIN_USER" \
+          -var "admin_password=$ADMIN_PASSWORD" || \
+     echo "Terraform refresh failed"
+)
+
 # TODO: Check if the lease needs to be acquired
 
 echo 'Bootstrap Terraform Apply'
