@@ -162,7 +162,7 @@ The `deploy.yml` workflow covers the following:
 2. Deploy the [omop Terraform project](/infra/terraform/omop/README.md)
 
 * This deployment will stand up your OHDSI on Azure OMOP Resource Group.
-  * You (or your administrator) will also need to run through the [post Terraform deployment steps](/infra/terraform/omop/README.md#step-3-run-post-terraform-deployment-steps) prior to setting up your vocabualry.
+  * You (or your administrator) can confirm the [post Terraform deployment steps](/infra/terraform/omop/README.md#step-3-run-post-terraform-deployment-steps) prior to setting up your vocabualry.  This step is handled through the porter action but you can review the changes manually if desired.
 
 3. Setup your [vocabulary in your OHDSI on Azure environment](/docs/setup/setup_vocabulary.md) by ensuring your [vocabulary files are populated](/docs/setup/setup_vocabulary.md) in your vocabulary Azure Storage Account and triggering your [vocabulary pipelines](/pipelines/README.md#vocabulary-pipelines).  If the vocabulary files are not available, the workflow will attempt to copy the vocabulary files from the [demo Vocabulary Azure Storage account](/docs/creating_your_environment_with_github_actions.md#step-4-confirm-access-to-your-vocabulary-storage-account) into your vocabulary Azure Storage Account.
 

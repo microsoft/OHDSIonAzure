@@ -21,7 +21,7 @@ You will need to work with your administrator to ensure you can setup the follow
 
   * Ensure you are using `jq` version >= `1.6`, and you can check the version you have installed with `jq --version`.
 
-* Install [docker](https://docs.docker.com/get-docker/)
+* Install [docker](https://docs.docker.com/get-docker/).  You can type `docker` in your shell to confirm that you have `docker` installed.
 
 2. Ensure you and your Administrator have access to your Azure Subscription
     * Make sure you have [logged in](https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli) to your Azure Subscription to confirm access
@@ -201,7 +201,7 @@ porter invoke --action deploy-broadsea \
 
 You can navigate to your OHDSI on Azure environment at `http://<prefix>-<environment>-omop-broadsea.azurewebsites.net/atlas`.
 
-For example, you can go to http://ohdsi-dev01-omop-broadsea.azurewebsites.net/atlas if you used `ohdsi` and `dev01` as your `prefix` and `environment` values.
+For example, you can go to http://ohdsi-dev01-omop-broadsea.azurewebsites.net/atlas if you used `ohdsi` and `dev01` as your `prefix` and `environment` values respectively.
 
 If you're finished working with OHDSI on Azure, you can use the `uninstall` command to clean up your Azure deployment:
 
