@@ -1,6 +1,1 @@
-*.tfvars
-*.tfstate
-*.tfstate.backup
-*.backup
-*.terraform*
-*.lock.hcl
+.cnab/

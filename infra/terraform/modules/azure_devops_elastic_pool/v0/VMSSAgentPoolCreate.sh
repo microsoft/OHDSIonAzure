@@ -26,13 +26,23 @@ generate_request_body()
 EOF
 }
 
+# create b64 encoded PAT
 B64_PAT=$(printf "%s"":$PAT" | base64)
 
-createVMSSJson=$(curl -X POST "$ADO_ORG_SERVICE_URL/_apis/distributedtask/elasticpools?api-version=6.1-preview.1&poolName=$POOLNAME&authorizeAllPipelines=false&autoProvisionProjectPools=false&projectId=$PROJECT_ID" \
+createVMSSResult=$(curl -X POST "$ADO_ORG_SERVICE_URL/_apis/distributedtask/elasticpools?api-version=6.1-preview.1&poolName=$POOLNAME&authorizeAllPipelines=false&autoProvisionProjectPools=false&projectId=$PROJECT_ID" \
 -H "Content-Type: application/json" \
 -H "Authorization: Basic $B64_PAT" \
---data "$(generate_request_body)" | jq )
+--data "$(generate_request_body)")
+
+cat << EOF > "$POOLNAME-$OS_TYPE-RESULT.txt"
+  $createVMSSResult
+EOF
+
+createVMSSJson=$(jq . "$POOLNAME-$OS_TYPE-RESULT.txt")
+cat << EOF > "$POOLNAME-$OS_TYPE-RESULT.json"
+  $createVMSSJson
+EOF
 
 # extract values for use later
 echo "$createVMSSJson" | \
-   jq '(.agentQueue.id|tostring) as $agentQueueId | (.agentPool.id|tostring) as $agentPoolId |(.elasticPool.poolId|tostring) as $elasticPoolId | { "elastic_pool_id": $elasticPoolId, "agent_queue_id": $agentQueueId, "agent_pool_id": $agentPoolId }'
+  jq '(.agentQueue.id|tostring) as $agentQueueId | (.agentPool.id|tostring) as $agentPoolId |(.elasticPool.poolId|tostring) as $elasticPoolId | { "elastic_pool_id": $elasticPoolId, "agent_queue_id": $agentQueueId, "agent_pool_id": $agentPoolId }'

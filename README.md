@@ -23,10 +23,10 @@ This repository assumes the end user is familiar with the OHDSI/ OMOP community,
 Some of the OHDSI projects included:
 
 * [Common Data Model (CDM)](https://github.com/OHDSI/CommonDataModel), including [Vocabulary](https://github.com/OHDSI/Vocabulary-v5.0)
-* [Atlas](https://github.com/OHDSI/Atlas)
-* [WebApi](https://github.com/OHDSI/WebAPI)
-* [Achilles](https://github.com/OHDSI/Achilles)
-* [ETL-Synthea](https://github.com/OHDSI/ETL-Synthea)
+* [Atlas](https://github.com/OHDSI/Atlas) - OSS tool used to conduct analyses on standardized observational data converted to the OMOP Common Data Model V5
+* [WebApi](https://github.com/OHDSI/WebAPI) - contains all OHDSI RESTful services that can be called from OHDSI applications
+* [Achilles](https://github.com/OHDSI/Achilles) - provides descriptive statistics on an OMOP CDM database
+* [ETL-Synthea](https://github.com/OHDSI/ETL-Synthea) - Conversion from Synthea CSV to OMOP CDM
 
 ## Overview
 
@@ -63,7 +63,7 @@ To get started, first clone the repository.
 git clone https://github.com/microsoft/OHDSIonAzure
 ```
 
-You can work through the notes on [creating your environment](/docs/creating_your_environment.md) which will walk through how to set up OHDSI on Azure.
+You can work through the notes on [creating your environment quickstart](/docs/creating_your_environment_quickstart.md) which will walk through how to set up OHDSI on Azure.
 
 ## Contributing
 

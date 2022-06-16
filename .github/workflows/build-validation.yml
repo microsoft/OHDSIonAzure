@@ -4,6 +4,7 @@
 ## GitHub Actions ###############
 ## lint #########################
 ## Check Terraform ##############
+## Run CI Terraform #############
 ## Test SQL #####################
 #################################
 name: Build Validation
@@ -197,23 +198,13 @@ jobs:
           echo "***** Validating: infra/terraform/omop *****"
           terraform -chdir=infra/terraform/omop validate
 
-      # - name: Terraform OMOP Plan
-      #   id: terraform_omop_plan
-      #   if: ${{ steps.filter.outputs.terraform == 'true' }}
-      #   env:
-      #     ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-      #     ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-      #     ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-      #     ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-      #   run: |
-      #     # TODO: Revisit after setting az login context
-      #     # echo "***** Checking plan for infra/terraform/omop *****"
-      #     # terraform -chdir=infra/terraform/omop plan
-
       - name: Add Terraform Plan Comment
         id: comment
         uses: actions/github-script@v3
-        if: github.event_name == 'pull_request'
+        # Skip adding a comment if the PR is coming from a forked repo
+        if: |
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -232,7 +223,7 @@ jobs:
 
             </details>
 
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`, Source repo: \`${{ github.event.pull_request.head.repo.full_name }}\`, Target repo: \`${{ github.event.pull_request.base.repo.full_name  }}\`*`;
 
             // Get the existing comments.
             const {data: comments} = await github.issues.listComments({
@@ -259,6 +250,165 @@ jobs:
                 body: output
               })
             }
+
+  run_ci_terraform:
+    needs: check_terraform # job dependency
+    # Name the Job
+    name: Run CI Terraform
+    # Set the agent to run on
+    runs-on: ubuntu-latest
+    environment: ci-validation
+
+    ##################
+    # Load all steps #
+    ##################
+    steps:
+      ##########################
+      # Checkout the code base #
+      ##########################
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup CI Validation Context with Porter
+        id: setup_ci_validation_context_with_porter
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
+        run: |
+          sha=${{ github.sha }}
+          run_id=${{ github.run_id }}
+          prefix="ci${sha::5}"
+          environment=${run_id::4}
+
+          ado_project_url="https://dev.azure.com/${{ secrets.ADO_ORGANIZATION_NAME }}/$prefix-$environment-OHDSIonAzure"
+
+          # Set environment variables for use with ci validation
+          # shellcheck disable=SC2086,SC2129
+          echo "prefix=$prefix" >> $GITHUB_ENV
+
+          # shellcheck disable=SC2086,SC2129
+          echo "environment=$environment" >> $GITHUB_ENV
+
+          # shellcheck disable=SC2086,SC2129
+          echo "ado_project_url=$ado_project_url" >> $GITHUB_ENV
+
+          CONTAINER_NAME="$prefix-$environment-tfstate"
+
+          az login --service-principal -u "${{ secrets.ARM_CLIENT_ID }}" -p "${{ secrets.ARM_CLIENT_SECRET }}" --tenant "${{ secrets.ARM_TENANT_ID }}"
+
+          chmod +x "${PWD}/setup.sh"
+          chmod 775 "${PWD}/setup-porter.sh"
+          chmod -R +x "${PWD}/porter-scripts"
+
+          chmod +w "${PWD}/infra/terraform/bootstrap/azure_devops.tf"
+
+          AZURE_SERVICE_PRINCIPAL_NAME="$prefix-$environment-CI-Validation-SP"
+
+          ./setup.sh \
+            --AZURE_SERVICE_PRINCIPAL_NAME "$AZURE_SERVICE_PRINCIPAL_NAME" \
+            --BOOTSTRAP_TF_BACKEND_STORAGE_ACCOUNT_NAME "${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT }}" \
+            --BOOTSTRAP_TF_BACKEND_RESOURCE_GROUP_NAME "${{ secrets.BOOTSTRAP_TF_STATE_RG }}" \
+            --BOOTSTRAP_TF_BACKEND_STORAGE_ACCOUNT_CONTAINER_NAME "$CONTAINER_NAME" \
+            --ADO_PAT "${{ secrets.ADO_PAT }}" \
+            --OMOP_PASSWORD "${{ secrets.OMOP_PASSWORD }}" \
+            --ADMIN_USER_JUMPBOX "${{ secrets.ADMIN_USER_JUMPBOX }}" \
+            --ADMIN_PASSWORD_JUMPBOX "${{ secrets.ADMIN_PASSWORD_JUMPBOX }}" \
+            --ADMIN_USER "${{ secrets.ADMIN_USER }}" \
+            --ADMIN_PASSWORD "${{ secrets.ADMIN_PASSWORD }}" \
+            --PREFIX "$prefix" \
+            --ENVIRONMENT "$environment" \
+            --ADO_ORGANIZATION_NAME "${{ secrets.ADO_ORGANIZATION_NAME }}"
+
+          chmod +x "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+      - name: Run Porter Build
+        id: run_porter_build
+        run: |
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+          porter build --debug
+
+      - name: Run Porter Install
+        id: run_porter_install
+        run: |
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+          porter install \
+            --cred ./creds.json \
+            -p ./parameters.json
+
+      - name: Run Porter Deploy Environment
+        id: run_porter_deploy_environment
+        run: |
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+          porter invoke \
+            --action deploy-environment \
+            --cred ./creds.json \
+            -p ./parameters.json
+
+      - name: Run Porter Deploy Vocabulary
+        id: run_porter_deploy_vocabulary
+        run: |
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+          porter invoke \
+            --action deploy-vocabulary \
+            --cred ./creds.json \
+            -p ./parameters.json
+
+      - name: Run Porter Deploy Broadsea
+        id: run_porter_deploy_broadsea
+        run: |
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+          porter invoke \
+            --action deploy-broadsea \
+            --cred ./creds.json \
+            -p ./parameters.json
+
+      - name: Run Porter Uninstall
+        id: run_porter_uninstall
+        if: always()
+        run: |
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+          sha=${{ github.sha }}
+          run_id=${{ github.run_id }}
+          prefix="ci${sha::5}"
+          environment=${run_id::4}
+
+          porter uninstall \
+            --cred ./creds.json \
+            -p ./parameters.json \
+            --param prefix="$prefix" \
+            --param environment="$environment"
+
+      - name: Clean up
+        id: clean_up
+        if: always()
+        run: |
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+          az ad sp delete --id "$AZURE_CLIENT_OBJECT_ID"
+
+          rm "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
 
   test_sql:
     needs: lint # job dependency
