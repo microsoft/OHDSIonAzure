@@ -12,7 +12,7 @@ OHDSI on Azure GitHub repository is designed to ease deployment of tools provide
 
 OHDSI on Azure is a set of scripts, templates, and DevOps pipelines designed to automate the deployment of the OHDSI in the Microsoft Azure cloud using Terraform & PaaS services. It is designed to facilitate standardized scalable deployments within customer managed Azure subscriptions. Provide best practices for running OHDSI on Azure. Ease the burden of management and cost monitoring of research projects.
 
-OHDSI on Azure has taken a container-based approach to operating OHDSI tools. Therefore, OHDSI on Azure does it’s best to not host code developed by the [OHDSI community](https://github.com/OHDSI). Our deployment templates pull containers from Docker Hub.
+OHDSI on Azure has taken a container-based approach to operating OHDSI tools. Therefore, OHDSI on Azure does its best to not host code developed by the [OHDSI community](https://github.com/OHDSI). Our deployment templates pull containers from Docker Hub.
 
 We encourage customers to perform their due diligence as part of the pipeline deployments. CI/CD pipelines can be modified to fit your organization’s requirements. Our goal is to get a Sandbox environment setup and provide starter tools for deploying to other environments (DEV/Test, Staging, and Production).
 
