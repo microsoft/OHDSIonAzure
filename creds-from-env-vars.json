@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+b6c701f",
+  "name": "creds",
+  "created": "2022-05-20T15:38:10.5558117-07:00",
+  "modified": "2022-05-20T15:38:10.5558117-07:00",
+  "credentials": [
+    {
+      "name": "admin_password",
+      "source": {
+        "env": "ADMIN_PASSWORD"
+      }
+    },
+    {
+      "name": "admin_password_jumpbox",
+      "source": {
+        "env": "ADMIN_PASSWORD_JUMPBOX"
+      }
+    },
+    {
+      "name": "admin_user",
+      "source": {
+        "env": "ADMIN_USER"
+      }
+    },
+    {
+      "name": "admin_user_jumpbox",
+      "source": {
+        "env": "ADMIN_USER_JUMPBOX"
+      }
+    },
+    {
+      "name": "ado_pat",
+      "source": {
+        "env": "ADO_PAT"
+      }
+    },
+    {
+      "name": "azure_client_id",
+      "source": {
+        "env": "AZURE_CLIENT_ID"
+      }
+    },
+    {
+      "name": "azure_client_object_id",
+      "source": {
+        "env": "AZURE_CLIENT_OBJECT_ID"
+      }
+    },
+    {
+      "name": "azure_client_secret",
+      "source": {
+        "env": "AZURE_CLIENT_SECRET"
+      }
+    },
+    {
+      "name": "azure_storage_account_key",
+      "source": {
+        "env": "AZURE_STORAGE_ACCOUNT_KEY"
+      }
+    },
+    {
+      "name": "azure_subscription_id",
+      "source": {
+        "env": "AZURE_SUBSCRIPTION_ID"
+      }
+    },
+    {
+      "name": "azure_tenant_id",
+      "source": {
+        "env": "AZURE_TENANT_ID"
+      }
+    },
+    {
+      "name": "omop_password",
+      "source": {
+        "env": "OMOP_PASSWORD"
+      }
+    }
+  ]
+}

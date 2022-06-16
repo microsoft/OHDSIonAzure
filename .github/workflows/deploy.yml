@@ -1,5 +1,5 @@
 ---
-name: Deploy Bootstrap OHDSI on Azure in Demo Environment
+name: Deploy OHDSI on Azure in Demo Environment
 # This workflow is the integration build run for pushes to the main branch
 # It also runs on a schedule, serving as the nightly build
 
@@ -21,9 +21,9 @@ concurrency: "${{ github.workflow }}-${{ github.ref }}"
 # Set the Job #
 ###############
 jobs:
-  run_terraform:
+  deploy_demo_environment:
     # Name the Job
-    name: Run Bootstrap Terraform
+    name: Deploy OHDSI On Azure in Demo Environment
     # Set the agent to run on
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
@@ -44,7 +44,6 @@ jobs:
           persist-credentials: false
 
       - name: Setup Terraform
-        if: github.ref == 'refs/heads/main'
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: 1.1.4
@@ -53,10 +52,8 @@ jobs:
         id: terraform_fmt
         run: terraform fmt -check -recursive
 
-      # find all terraform folders and run validate to catch
-      # configuration errors
-      - name: Terraform Bootstrap Init
-        id: terraform_bootstrap_init
+      - name: Setup Porter
+        id: setup_porter
         env:
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
@@ -64,72 +61,101 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
         run: |
-          echo "***** Initialize: infra/terraform/bootstrap *****"
-          terraform -chdir=infra/terraform/bootstrap init \
-            -force-copy \
-            -backend-config='resource_group_name=${{ secrets.BOOTSTRAP_TF_STATE_RG }}' \
-            -backend-config='storage_account_name=${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT }}' \
-            -backend-config='container_name=${{ secrets.BOOTSTRAP_TF_STATE_CONTAINER_NAME }}' \
-            -backend-config='key=${{ secrets.BOOTSTRAP_TF_STATE_FILE_NAME }}'
+          prefix="${{ secrets.PREFIX }}"
+          environment=${{ secrets.ENVIRONMENT }}
 
-      - name: Terraform Bootstrap Validate
-        id: terraform_bootstrap_validate
-        env:
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-          ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
-        run: |
-          terraform -chdir=infra/terraform/bootstrap validate
+          # Set environment variables for use with demo environment
+          # shellcheck disable=SC2086,SC2129
+          echo "prefix=$prefix" >> $GITHUB_ENV
 
-      - name: Terraform Bootstrap Plan
-        id: terraform_bootstrap_plan
-        env:
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-          ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
-        run: |
-          terraform -chdir=infra/terraform/bootstrap plan -no-color -var 'prefix=${{ secrets.PREFIX }}' -var 'environment=${{ secrets.ENVIRONMENT }}' -var 'omop_password=${{ secrets.OMOP_PASSWORD }}' -var 'ado_pat=${{ secrets.ADO_PAT }}' -out=tfplan
-          terraform -chdir=infra/terraform/bootstrap show -no-color tfplan
+          # shellcheck disable=SC2086,SC2129
+          echo "environment=$environment" >> $GITHUB_ENV
 
-      - name: Terraform Bootstrap Apply
-        id: terraform_bootstrap_apply
-        env:
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-          ARM_ACCESS_KEY: ${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT_KEY }}
-        if: github.event_name == 'push'
-        run: |
+          CONTAINER_NAME="$prefix-$environment-tfstate"
+
           az login --service-principal -u "${{ secrets.ARM_CLIENT_ID }}" -p "${{ secrets.ARM_CLIENT_SECRET }}" --tenant "${{ secrets.ARM_TENANT_ID }}"
 
-          cd infra/terraform/bootstrap
-          terraform apply -auto-approve \
-            -var 'client_object_id=${{ secrets.ARM_CLIENT_OBJECT_ID }}' \
-            -var 'prefix=${{ secrets.PREFIX }}' \
-            -var 'environment=${{ secrets.ENVIRONMENT }}' \
-            -var 'omop_password=${{ secrets.OMOP_PASSWORD }}' \
-            -var 'ado_pat=${{ secrets.ADO_PAT }}' \
-            -var 'admin_user_jumpbox=${{ secrets.ADMIN_USER_JUMPBOX }}' \
-            -var 'admin_password_jumpbox=${{ secrets.ADMIN_PASSWORD_JUMPBOX }}' \
-            -var 'admin_user=${{ secrets.ADMIN_USER }}' \
-            -var 'admin_password=${{ secrets.ADMIN_PASSWORD }}'
-          cd -
+          chmod +x "${PWD}/setup.sh"
+          chmod 775 "${PWD}/setup-porter.sh"
+          chmod -R +x "${PWD}/porter-scripts"
 
-      # find all terraform folders and run validate to catch
-      # configuration errors
-      - name: Terraform OMOP Init
-        id: terraform_omop_init
-        run: |
-          echo "***** Validating: infra/terraform/omop *****"
-          terraform -chdir=infra/terraform/omop init -backend=false
+          # Use an existing Azure Demo SP
+          ./setup.sh \
+            --AZURE_CLIENT_ID "${{ secrets.ARM_CLIENT_ID }}" \
+            --AZURE_CLIENT_OBJECT_ID "${{ secrets.ARM_CLIENT_OBJECT_ID }}" \
+            --AZURE_CLIENT_SECRET "${{ secrets.ARM_CLIENT_SECRET }}" \
+            --AZURE_TENANT_ID "${{ secrets.ARM_TENANT_ID }}" \
+            --AZURE_SUBSCRIPTION_ID "${{ secrets.ARM_SUBSCRIPTION_ID }}" \
+            --BOOTSTRAP_TF_BACKEND_STORAGE_ACCOUNT_NAME "${{ secrets.BOOTSTRAP_TF_STATE_STORAGE_ACCOUNT }}" \
+            --BOOTSTRAP_TF_BACKEND_RESOURCE_GROUP_NAME "${{ secrets.BOOTSTRAP_TF_STATE_RG }}" \
+            --BOOTSTRAP_TF_BACKEND_STORAGE_ACCOUNT_CONTAINER_NAME "$CONTAINER_NAME" \
+            --ADO_PAT "${{ secrets.ADO_PAT }}" \
+            --OMOP_PASSWORD "${{ secrets.OMOP_PASSWORD }}" \
+            --ADMIN_USER_JUMPBOX "${{ secrets.ADMIN_USER_JUMPBOX }}" \
+            --ADMIN_PASSWORD_JUMPBOX "${{ secrets.ADMIN_PASSWORD_JUMPBOX }}" \
+            --ADMIN_USER "${{ secrets.ADMIN_USER }}" \
+            --ADMIN_PASSWORD "${{ secrets.ADMIN_PASSWORD }}" \
+            --PREFIX "$prefix" \
+            --ENVIRONMENT "$environment" \
+            --ADO_ORGANIZATION_NAME "${{ secrets.ADO_ORGANIZATION_NAME }}" \
+            --CREATE_NEW_AZURE_SERVICE_PRINCIPAL "${{ secrets.CREATE_NEW_AZURE_SERVICE_PRINCIPAL }}" \
+            --INCLUDE_KEY_VAULT_PORTER_SECRETS "${{ secrets.INCLUDE_KEY_VAULT_PORTER_SECRETS }}"
 
-      - name: Terraform OMOP Validate
-        id: terraform_omop_validate
+          chmod +x "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+      - name: Run Porter Build
+        id: run_porter_build
         run: |
-          echo "***** Validating: infra/terraform/omop *****"
-          terraform -chdir=infra/terraform/omop validate
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+          porter build --debug
+
+      - name: Run Porter Install
+        id: run_porter_install
+        run: |
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+          # TODO: link creds to kv
+          porter install \
+            --cred ./creds-from-env-vars.json \
+            -p ./parameters.json
+
+      - name: Run Porter Deploy Environment
+        id: run_porter_deploy_environment
+        run: |
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+          # TODO: link creds to kv
+          porter invoke \
+            --action deploy-environment \
+            --cred ./creds-from-env-vars.json \
+            -p ./parameters.json
+
+      - name: Run Porter Deploy Vocabulary
+        id: run_porter_deploy_vocabulary
+        run: |
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+          # TODO: link creds to kv
+          porter invoke \
+            --action deploy-vocabulary \
+            --cred ./creds-from-env-vars.json \
+            -p ./parameters.json
+
+      - name: Run Porter Deploy Broadsea
+        id: run_porter_deploy_broadsea
+        run: |
+          # shellcheck disable=SC1090
+          source "${PWD}/$prefix-$environment-OHDSIOnAzure.env"
+
+          # TODO: link creds to kv
+          porter invoke \
+            --action deploy-broadsea \
+            --cred ./creds-from-env-vars.json \
+            -p ./parameters.json

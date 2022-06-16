@@ -15,7 +15,9 @@ These notes cover how you can setup a local development environment.
     > You can use SQL Server Management Studio to connect to your Azure SQL [CDM](/sql/cdm/v5.3.1/)
 
 * Install [Azure cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
-    > You can use this to manage your Azure Subscription
+  * Ensure you are using Azure CLI version >= `2.37`, you can check the version you have installed with `az --version`.
+
+  * You can use Azure CLI to manage your Azure Subscription
 
   * You will need to ensure your Azure CLI also has the [Azure DevOps extension](https://docs.microsoft.com/en-us/azure/devops/cli/?view=azure-devops) installed
 
@@ -50,6 +52,8 @@ These notes cover how you can setup a local development environment.
     sudo apt-get install jq
     ```
 
+  * Ensure you are using `jq` version >= `1.6`, and you can check the version you have installed with `jq --version`.
+
 * Install [python3](https://docs.microsoft.com/en-us/learn/modules/python-install-vscode/3-exercise-install-python3?pivots=linux)
 
 * Install [docker](https://docs.docker.com/get-docker/)
@@ -62,6 +66,147 @@ These notes cover how you can setup a local development environment.
 
 ```bash
 git clone https://github.com/microsoft/OHDSIonAzure
+```
+
+* Install [porter](https://porter.sh/install/)
+
+## Setup Porter
+
+You can install [porter](https://porter.sh/install/) per the docs.
+
+For convenience, call the [setup](./setup.sh) script to install porter and configure it for your OHDSI on Azure environment.
+
+> This setup script assumes you have `docker`, `az` (Azure CLI), and administrative access to your Azure subscription and to your Azure DevOps organization.  Your Azure Service Principal should be unique per environment.  You should also ensure you have permissions to execute the script which you can set through `chmod +x setup.sh`.
+
+```shell
+./setup.sh \
+    --AZURE_SERVICE_PRINCIPAL_NAME "myOHDSIOnAzureSP" \
+    --BOOTSTRAP_TF_BACKEND_STORAGE_ACCOUNT_NAME "mybootstraptfstatesa" \
+    --BOOTSTRAP_TF_BACKEND_RESOURCE_GROUP_NAME "my-bootstrap-rg" \
+    --BOOTSTRAP_TF_BACKEND_STORAGE_ACCOUNT_CONTAINER_NAME "my-tfstate" \
+    --ADO_PAT "my-Azure-DevOps-PAT" \
+    --OMOP_PASSWORD "replaceMyP@SSW0RD" \
+    --ADMIN_USER_JUMPBOX "azureuser" \
+    --ADMIN_PASSWORD_JUMPBOX "replaceMyP@SSW0RD@ls0" \
+    --ADMIN_USER "azureuser" \
+    --ADMIN_PASSWORD "replaceMyP@SSW0RDT00" \
+    --PREFIX "ohdsi" \
+    --ENVIRONMENT "dev01" \
+    --ADO_ORGANIZATION_NAME "my-ADO-organization-name"
+```
+
+The setup script should setup your backend Azure Storage account for your bootstrap, install porter, and setup an OHDSI on Azure environment configuration file, which you can pull into your local environment with the following command:
+
+```shell
+# This command should be an output from the setup.sh call
+source "ohdsi-dev01-OHDSIOnAzure.env"
+```
+
+### Install Mixins
+
+The setup script will include installing [mixins](https://release-v1.porter.sh/mixins/) for your OHDSI on Azure environment.  If you need to install one, you can use the following `porter` command:
+
+```shell
+# Install the az mixin
+porter mixin install az
+```
+
+### Install Plugins
+
+The setup script will include installing the [azure plugin](https://porter.sh/plugins/azure/) for your OHDSI on Azure environment, which is covered with the following command:
+
+```shell
+porter plugin install azure
+```
+
+### Build your bundle
+
+OHDSI on Azure uses [Porter](https://porter.sh/docs/) to have a build environment wrapped in an OCI container to capture dependencies and setup steps in a [CNAB (Cloud Native Application Bundle)](https://github.com/cnabio/cnab-spec) bundle manifest.  Using a bundle will provide a consistent build and deployment experience for OHDSI on Azure.
+
+You can perform a local build for porter with the following command:
+
+```shell
+porter build
+```
+
+### Configure your Credentials and Parameters
+
+If desired, you can configure your porter credentials for your environment (e.g. you'd like to more variables to pull from environment variables or other sources, see the included [creds.json](./creds.json)):
+
+```shell
+# Fill in credentials with environment variables
+porter credentials generate creds
+porter credentials show creds --output json > creds.json
+```
+
+Similarly, you can also configure your porter parameters if you need to adjust from the default mapping (see the included [parameters.json](./parameters.json)).
+
+```shell
+porter parameters generate parameters
+porter parameters show parameters --output json > parameters.json
+```
+
+### Using Porter commands
+
+For a full view of the bundle, you can use `porter explain`.
+
+#### Install
+
+You can `install` your bootstrap:
+
+```shell
+porter install \
+    --cred ./creds.json \
+    -p ./parameters.json
+```
+
+#### Invoke Actions
+
+You can invoke actions after you have installed successfully.
+
+For example, you can call the deployment actions:
+
+1. You can call the action `deploy-environment` to deploy your environment:
+
+```shell
+porter invoke --action deploy-environment \
+    --cred ./creds.json \
+    -p ./parameters.json
+```
+
+2. You can call the action `deploy-vocabulary` to deploy your vocabulary:
+
+```shell
+porter invoke --action deploy-vocabulary \
+    --cred ./creds.json \
+    -p ./parameters.json
+```
+
+3. You can call the action `deploy-broadsea` to deploy broadsea:
+
+```shell
+porter invoke --action deploy-broadsea \
+    --cred ./creds.json \
+    -p ./parameters.json
+```
+
+And you can check your pipeline status with `check-pipeline-run`:
+
+```shell
+porter invoke --action check-pipeline-run \
+    --cred ./creds.json \
+    -p ./parameters.json \
+    --param build_id=13
+```
+
+#### Uninstall
+
+You can also `uninstall` your OHDSI on Azure environment:
+
+```shell
+porter uninstall \
+    --cred ./creds.json \
+    -p ./parameters.json
 ```
 
 ## Setup a Python Virtual Environment

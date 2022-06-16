@@ -34,7 +34,7 @@ do
  shift
 done
 
-B64_PAT=$(printf "%s"":$PAT" | base64)
+B64_PAT=$(printf "%s" ":$PAT" | base64)
 
 poolContentJson=$(curl -X GET \
 "$ADO_ORG_SERVICE_URL/_apis/distributedtask/pools/?poolName=$POOLNAME&api-version=6.1-preview.1" \
