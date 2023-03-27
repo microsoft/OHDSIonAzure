@@ -66,11 +66,11 @@ resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2
 // Create a OHDSI users and groupss
 param utcValue string = utcNow()
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = { 
-    name: 'id-deploy-script' 
+    name: 'deploy-script-identity' 
     location: location 
 } 
-resource runBashWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10-01' = { 
-    name: 'runBashWithOutputs' 
+resource runSQLscriptsWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10-01' = { 
+    name: 'runSQLscriptsWithOutputs' 
     location: location 
     kind: 'AzureCLI' 
     identity: { 
