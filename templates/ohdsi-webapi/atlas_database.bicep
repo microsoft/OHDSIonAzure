@@ -2,6 +2,12 @@ param location string
 param suffix string
 param odhsiWebApiName string
 param branchName string = 'v2'
+@secure()
+param postgresAdminPassword string
+@secure()
+param postgresWebapiAdminPassword string
+@secure()
+param postgresWebapiAppPassword string
 
 var postgresAdminUsername = 'postgres_admin'
 var postgresWebapiAdminUsername = 'ohdsi_admin_user'
@@ -10,14 +16,6 @@ var postgresWebapiAppUsername = 'ohdsi_app_user'
 var postgresWebapiAppRole = 'ohdsi_app'
 var postgresWebApiDatabaseName = 'atlas_webapi_db'
 var postgresSchemaName = 'webapi'
-
-@secure()
-param postgresAdminPassword string
-@secure()
-param postgresWebapiAdminPassword string
-@secure()
-param postgresWebapiAppPassword string
-
 var postgresVersion = '14'
 
 
@@ -125,13 +123,13 @@ resource runSQLscriptsWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10
               value: postgresWebapiAppRole
             }
         ] 
-        scriptContent: loadTextContent('scripts/atlas-db-init.sh')
+        scriptContent: loadTextContent('scripts/atlas_db_init.sh')
         supportingScriptUris: [
-          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/atlas-create-roles-users.sql'
-          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/atlas-create-schema.sql'
+          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/atlas_create_roles_users.sql'
+          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/atlas_create_schema.sql'
         ]
         cleanupPreference: 'OnSuccess' 
-        retentionInterval: 'P1D' 
+        retentionInterval: 'P10M' 
         
     } 
     dependsOn: [ 
