@@ -1,12 +1,18 @@
 #!bin/bash
 
-apk --update add postgresql-client
+apk --update add postgresql-client gettext
 admin_user_password="${OHDSI_ADMIN_PASSWORD}${OHDSI_ADMIN_USERNAME}"
 app_user_password="${OHDSI_APP_PASSWORD}${OHDSI_APP_USERNAME}"
-admin_md5="'md5$(echo -n $admin_user_password | md5sum | awk '{ print $1 }')'"
-app_md5="'md5$(echo -n $app_user_password | md5sum | awk '{ print $1 }')'"
+export admin_md5="'md5$(echo -n $admin_user_password | md5sum | awk '{ print $1 }')'"
+export app_md5="'md5$(echo -n $app_user_password | md5sum | awk '{ print $1 }')'"
 
-psql "$MAIN_CONNECTION_STRING" -f 
-psql "$OHDSI_ADMIN_CONNECTION_STRING" -f 
+atlas_create_roles_users_script=$(envsubst < atlas-create-roles-users.sql)
+atlas_create_schema_script=$(envsubst < atlas-create-schema.sql)
+
+printf 'Creating roles and users'
+echo "$atlas_create_roles_users_script" | psql "$MAIN_CONNECTION_STRING"
+
+printf 'Creating schema'
+echo "$atlas_create_schema_script" | psql "$OHDSI_ADMIN_CONNECTION_STRING"
 
 printf 'Done'

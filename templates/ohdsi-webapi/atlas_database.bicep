@@ -1,6 +1,7 @@
 param location string
 param suffix string
 param odhsiWebApiName string
+param branchName string = 'v2'
 
 var postgresAdminUsername = 'postgres_admin'
 var postgresWebapiAdminUsername = 'ohdsi_admin_user'
@@ -64,7 +65,6 @@ resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2
 }
 
 // Create a OHDSI users and groupss
-param utcValue string = utcNow()
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = { 
     name: 'deploy-script-identity' 
     location: location 
@@ -79,8 +79,7 @@ resource runSQLscriptsWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10
             '${managedIdentity.id}': {} 
         } 
     } 
-    properties: { 
-        forceUpdateTag: utcValue 
+    properties: {
         azCliVersion: '2.42.0' 
         timeout: 'PT30M'
          environmentVariables: [ 
@@ -128,7 +127,8 @@ resource runSQLscriptsWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10
         ] 
         scriptContent: loadTextContent('scripts/atlas-db-init.sh')
         supportingScriptUris: [
-          
+          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/atlas-create-roles-users.sql'
+          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/atlas-create-schema.sql'
         ]
         cleanupPreference: 'OnSuccess' 
         retentionInterval: 'P1D' 
