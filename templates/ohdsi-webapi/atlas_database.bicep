@@ -2,20 +2,20 @@ param location string
 param suffix string
 param odhsiWebApiName string
 
-var databaseAdminUsername = 'postgres_admin'
-var databaseWebapiAdminUsername = 'ohdsi_admin_user'
-var databaseWebapiAdminRole = 'ohdsi_admin'
-var databaseWebapiAppUsername = 'ohdsi_app_user'
-var databaseWebapiAppRole = 'ohdsi_app'
-var databaseWebApiDatabaseName = 'atlas_webapi_db'
-var databaseSchemaName = 'webapi'
+var postgresAdminUsername = 'postgres_admin'
+var postgresWebapiAdminUsername = 'ohdsi_admin_user'
+var postgresWebapiAdminRole = 'ohdsi_admin'
+var postgresWebapiAppUsername = 'ohdsi_app_user'
+var postgresWebapiAppRole = 'ohdsi_app'
+var postgresWebApiDatabaseName = 'atlas_webapi_db'
+var postgresSchemaName = 'webapi'
 
 @secure()
-param databaseAdminPassword string
+param postgresAdminPassword string
 @secure()
-param databaseWebapiAdminPassword string
+param postgresWebapiAdminPassword string
 @secure()
-param databaseWebapiAppPassword string
+param postgresWebapiAppPassword string
 
 var postgresVersion = '14'
 
@@ -30,8 +30,8 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' =
   }
   properties: {
     version: postgresVersion
-    administratorLogin: databaseAdminUsername
-    administratorLoginPassword: databaseAdminPassword
+    administratorLogin: postgresAdminUsername
+    administratorLoginPassword: postgresAdminPassword
     storage: {
       storageSizeGB: 32
     }
@@ -55,7 +55,7 @@ resource allowAccessToAzureServices 'Microsoft.DBforPostgreSQL/flexibleServers/f
 
 // Create a new PostgreSQL database
 resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2022-12-01' = {
-  name: databaseWebApiDatabaseName
+  name: postgresWebApiDatabaseName
   parent: postgresServer
   properties: {
     charset: 'utf8'
@@ -86,59 +86,50 @@ resource runBashWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10-01' =
          environmentVariables: [ 
             { 
                 name: 'MAIN_CONNECTION_STRING' 
-                secureValue: 'host=${postgresServer.properties.fullyQualifiedDomainName} port=5432 dbname=${databaseWebApiDatabaseName} user=${databaseAdminUsername} password=${databaseAdminPassword} sslmode=require'
+                secureValue: 'host=${postgresServer.properties.fullyQualifiedDomainName} port=5432 dbname=${postgresWebApiDatabaseName} user=${postgresAdminUsername} password=${postgresAdminPassword} sslmode=require'
             }
             { 
               name: 'OHDSI_ADMIN_CONNECTION_STRING' 
-              secureValue: 'host=${postgresServer.properties.fullyQualifiedDomainName} port=5432 dbname=${databaseWebApiDatabaseName} user=${databaseWebapiAdminUsername} password=${databaseWebapiAdminPassword} sslmode=require'
+              secureValue: 'host=${postgresServer.properties.fullyQualifiedDomainName} port=5432 dbname=${postgresWebApiDatabaseName} user=${postgresWebapiAdminUsername} password=${postgresWebapiAdminPassword} sslmode=require'
             }
             {
               name: 'DATABASE_NAME'
-              value: databaseWebApiDatabaseName
+              value: postgresWebApiDatabaseName
             }
             {
               name: 'SCHEMA_NAME'
-              value: databaseSchemaName
+              value: postgresSchemaName
             }
             {
               name: 'OHDSI_ADMIN_PASSWORD'
-              secureValue: databaseWebapiAdminPassword
+              secureValue: postgresWebapiAdminPassword
             }
             {
               name: 'OHDSI_APP_PASSWORD'
-              secureValue: databaseWebapiAppPassword
+              secureValue: postgresWebapiAppPassword
             }
             {
               name: 'OHDSI_APP_USERNAME'
-              value: databaseWebapiAppUsername
+              value: postgresWebapiAppUsername
             }
             {
               name: 'OHDSI_ADMIN_USERNAME'
-              value: databaseWebapiAdminUsername
+              value: postgresWebapiAdminUsername
             }
             {
               name: 'OHDSI_ADMIN_ROLE'
-              value: databaseWebapiAdminRole
+              value: postgresWebapiAdminRole
 
             }
             {
               name: 'OHDSI_APP_ROLE'
-              value: databaseWebapiAppRole
+              value: postgresWebapiAppRole
             }
         ] 
-        scriptContent: ''' 
-            apk --update add postgresql-client
-            ADMIN_USER_PASSWORD="${OHDSI_ADMIN_PASSWORD}${OHDSI_ADMIN_USERNAME}"
-            APP_USER_PASSWORD="${OHDSI_APP_PASSWORD}${OHDSI_APP_USERNAME}"
-            ADMIN_MD5="'md5$(echo -n $ADMIN_USER_PASSWORD | md5sum | awk '{ print $1 }')'"
-            APP_MD5="'md5$(echo -n $APP_USER_PASSWORD | md5sum | awk '{ print $1 }')'"
-    
-            echo "CREATE ROLE ${OHDSI_ADMIN_ROLE} CREATEDB REPLICATION VALID UNTIL 'infinity'; COMMENT ON ROLE ${OHDSI_ADMIN_ROLE} IS 'Administration group for OHDSI applications'; CREATE ROLE ${OHDSI_APP_ROLE} VALID UNTIL 'infinity'; COMMENT ON ROLE ${OHDSI_APP_ROLE} IS 'Application groupfor OHDSI applications'; GRANT ${OHDSI_ADMIN_ROLE} TO ${OHDSI_ADMIN_USERNAME}; COMMENT ON ROLE ${OHDSI_ADMIN_ROLE} IS 'Admin user account for OHDSI applications'; CREATE ROLE ${OHDSI_ADMIN_USERNAME} LOGIN ENCRYPTED PASSWORD ${ADMIN_MD5} VALID UNTIL 'infinity'; GRANT ${OHDSI_ADMIN_ROLE} TO ${OHDSI_ADMIN_USERNAME}; COMMENT ON ROLE ${OHDSI_ADMIN_USERNAME} IS 'Admin user account for OHDSI applications'; CREATE ROLE ${OHDSI_APP_USERNAME} LOGIN ENCRYPTED PASSWORD ${APP_MD5} VALID UNTIL 'infinity'; GRANT ${OHDSI_APP_ROLE} TO ${OHDSI_APP_USERNAME}; COMMENT ON ROLE ${OHDSI_APP_USERNAME} IS 'Application user account for OHDSI applications'; GRANT ALL ON DATABASE ${DATABASE_NAME} TO GROUP ${OHDSI_ADMIN_ROLE}; GRANT CONNECT, TEMPORARY ON DATABASE ${DATABASE_NAME} TO GROUP ${OHDSI_APP_ROLE};" > ohdsi-part1.sql
-            echo "CREATE SCHEMA ${SCHEMA_NAME} AUTHORIZATION ${OHDSI_ADMIN_ROLE}; COMMENT ON SCHEMA ${SCHEMA_NAME} IS 'Schema containing tables to support WebAPI functionality'; GRANT USAGE ON SCHEMA ${SCHEMA_NAME} TO PUBLIC; GRANT ALL ON SCHEMA ${SCHEMA_NAME} TO GROUP ${OHDSI_ADMIN_ROLE}; GRANT USAGE ON SCHEMA ${SCHEMA_NAME} TO GROUP ${OHDSI_APP_ROLE}; ALTER DEFAULT PRIVILEGES IN SCHEMA ${SCHEMA_NAME} GRANT INSERT, SELECT, UPDATE, DELETE, REFERENCES, TRIGGER ON TABLES TO ${OHDSI_APP_ROLE}; ALTER DEFAULT PRIVILEGES IN SCHEMA ${SCHEMA_NAME} GRANT SELECT, USAGE ON SEQUENCES TO ${OHDSI_APP_ROLE}; ALTER DEFAULT PRIVILEGES IN SCHEMA ${SCHEMA_NAME} GRANT EXECUTE ON FUNCTIONS TO ${OHDSI_APP_ROLE}; ALTER DEFAULT PRIVILEGES IN SCHEMA ${SCHEMA_NAME} GRANT USAGE ON TYPES TO ${OHDSI_APP_ROLE};" > ohdsi-part2.sql
-            psql "$MAIN_CONNECTION_STRING" -f ohdsi-part1.sql
-            psql "$OHDSI_ADMIN_CONNECTION_STRING" -f ohdsi-part2.sql
-            printf 'Done'
-            ''' 
+        scriptContent: loadTextContent('scripts/atlas-db-init.sh')
+        supportingScriptUris: [
+          
+        ]
         cleanupPreference: 'OnSuccess' 
         retentionInterval: 'P1D' 
         
@@ -148,9 +139,9 @@ resource runBashWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10-01' =
   ]
 }
 
-output databaseServerFullyQualifiedDomainName string = postgresServer.properties.fullyQualifiedDomainName
-output databaseSchemaName string = databaseSchemaName
-output databaseAdminUsername string = databaseAdminUsername
-output databaseWebapiAdminUsername string = databaseWebapiAdminUsername
-output databaseWebapiAppUsername string = databaseWebapiAppUsername
-output databaseWebApiDatabaseName string = databaseWebApiDatabaseName
+output postgresServerFullyQualifiedDomainName string = postgresServer.properties.fullyQualifiedDomainName
+output postgresSchemaName string = postgresSchemaName
+output postgresAdminUsername string = postgresAdminUsername
+output postgresWebapiAdminUsername string = postgresWebapiAdminUsername
+output postgresWebapiAppUsername string = postgresWebapiAppUsername
+output postgresWebApiDatabaseName string = postgresWebApiDatabaseName

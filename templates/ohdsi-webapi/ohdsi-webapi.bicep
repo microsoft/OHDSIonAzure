@@ -4,15 +4,15 @@ param userAssignedIdentityId string
 param odhsiWebApiName string
 param appServicePlanId string 
 param keyVaultName string
-param databaseWebApiSchemaName string
-param databaseWebapiAppUsername string
-param databaseWebapiAdminUsername string
+param postgresWebApiSchemaName string
+param postgresWebapiAppUsername string
+param postgresWebapiAdminUsername string
 @secure()
 param jdbcConnectionStringWebapiAdminSecret string
 @secure()
-param databaseWebapiAppSecret string
+param postgresWebapiAppSecret string
 @secure()
-param databaseWebapiAdminSecret string
+param postgresWebapiAdminSecret string
 
 
 var dockerRegistryServer = 'https://index.docker.io/v1'
@@ -41,15 +41,15 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
       }
       {
         name: 'DATASOURCE_OHDSI_SCHEMA'
-        value: databaseWebApiSchemaName
+        value: postgresWebApiSchemaName
       }
       {
         name: 'DATASOURCE_USERNAME'
-        value: databaseWebapiAppUsername
+        value: postgresWebapiAppUsername
       }
       {
         name: 'DATASOURCE_PASSWORD'
-        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${databaseWebapiAppSecret})'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${postgresWebapiAppSecret})'
       }
       {
         name: 'DATASOURCE_URL'
@@ -73,11 +73,11 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
       }
       {
         name: 'FLYWAY_DATASOURCE_USERNAME'
-        value: databaseWebapiAdminUsername
+        value: postgresWebapiAdminUsername
       }
       {
        name: 'FLYWAY_DATASOURCE_PASSWORD'
-       value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${databaseWebapiAdminSecret})'
+       value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${postgresWebapiAdminSecret})'
       }
       {
         name: 'FLYWAY_DATASOURCE_URL'
@@ -89,11 +89,11 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
       }
       {
         name: 'FLYWAY_PLACEHOLDERS_OHDSISCHEMA'
-        value: databaseWebApiSchemaName
+        value: postgresWebApiSchemaName
       }
       {
         name: 'FLYWAY_SCHEMAS'
-        value: databaseWebApiSchemaName
+        value: postgresWebApiSchemaName
       }
       {
         name: 'FLYWAY_TABLE'
@@ -110,7 +110,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
       }
       {
         name: 'SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA'
-        value: databaseWebApiSchemaName
+        value: postgresWebApiSchemaName
       }
       {
         name: 'SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT'
@@ -149,4 +149,4 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
 }
 
 
-output webAppUrl string = webApp.properties.defaultHostName
+output webAppUrl string = '${webApp.properties.defaultHostName}/WebAPI'

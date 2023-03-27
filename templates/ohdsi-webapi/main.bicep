@@ -6,22 +6,22 @@ param utc string = utcNow()
 param odhsiWebApiName string = 'ohdsi-webapi'
 param suffix string = uniqueString(utc)
 @secure()
-param databaseAdminPassword string
+param postgresAdminPassword string
 @secure()
-param databaseWebapiAdminPassword string
+param postgresWebapiAdminPassword string
 @secure()
-param databaseWebapiAppPassword string
+param postgresWebapiAppPassword string
 
-@description('Creates the databases server, users and groups required for ohdsi webapi')
+@description('Creates the database server, users and groups required for ohdsi webapi')
 module atlasDatabase 'atlas_database.bicep' = {
   name: 'atlasDatabase'
   params: {
     location: location
     suffix: suffix
     odhsiWebApiName: odhsiWebApiName
-    databaseAdminPassword: databaseAdminPassword
-    databaseWebapiAdminPassword: databaseWebapiAdminPassword
-    databaseWebapiAppPassword: databaseWebapiAppPassword
+    postgresAdminPassword: postgresAdminPassword
+    postgresWebapiAdminPassword: postgresWebapiAdminPassword
+    postgresWebapiAppPassword: postgresWebapiAppPassword
   }
 }
 
@@ -43,10 +43,10 @@ module keyvault 'keyvault.bicep' = {
     suffix: suffix
     tenantId: tenantId
     odhsiWebApiName: odhsiWebApiName
-    databaseAdminPassword: databaseAdminPassword
-    databaseWebapiAdminPassword: databaseWebapiAdminPassword
-    databaseWebapiAppPassword: databaseWebapiAppPassword
-    jdbcConnectionStringWebapiAdmin: 'jdbc:databaseql://${atlasDatabase.outputs.databaseServerFullyQualifiedDomainName}:5432/${atlasDatabase.outputs.databaseWebApiDatabaseName}?user=${atlasDatabase.outputs.databaseWebapiAdminUsername}&password=${databaseWebapiAdminPassword}&sslmode=require'
+    postgresAdminPassword: postgresAdminPassword
+    postgresWebapiAdminPassword: postgresWebapiAdminPassword
+    postgresWebapiAppPassword: postgresWebapiAppPassword
+    jdbcConnectionStringWebapiAdmin: 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${atlasDatabase.outputs.postgresWebApiDatabaseName}?user=${atlasDatabase.outputs.postgresWebapiAdminUsername}&password=${postgresWebapiAdminPassword}&sslmode=require'
   }
   dependsOn: [
     atlasDatabase
@@ -64,11 +64,11 @@ module ohdsiWebApiWebapp 'ohdsi-webapi.bicep' = {
     keyVaultName: keyvault.outputs.keyVaultName
     userAssignedIdentityId: keyvault.outputs.userAssignedIdentityId
     jdbcConnectionStringWebapiAdminSecret: keyvault.outputs.jdbcConnectionStringWebapiAdminSecretName
-    databaseWebapiAdminSecret: keyvault.outputs.databaseWebapiAdminSecretName
-    databaseWebapiAppSecret: keyvault.outputs.databaseWebapiAppSecretName
-    databaseWebapiAdminUsername: atlasDatabase.outputs.databaseWebapiAdminUsername
-    databaseWebapiAppUsername: atlasDatabase.outputs.databaseWebapiAppUsername
-    databaseWebApiSchemaName: atlasDatabase.outputs.databaseSchemaName
+    postgresWebapiAdminSecret: keyvault.outputs.postgresWebapiAdminSecretName
+    postgresWebapiAppSecret: keyvault.outputs.postgresWebapiAppSecretName
+    postgresWebapiAdminUsername: atlasDatabase.outputs.postgresWebapiAdminUsername
+    postgresWebapiAppUsername: atlasDatabase.outputs.postgresWebapiAppUsername
+    postgresWebApiSchemaName: atlasDatabase.outputs.postgresSchemaName
   }
   dependsOn: [
     appServicePlan

@@ -3,11 +3,11 @@ param odhsiWebApiName string
 param tenantId string
 param suffix string
 @secure()
-param databaseAdminPassword string
+param postgresAdminPassword string
 @secure()
-param databaseWebapiAdminPassword string
+param postgresWebapiAdminPassword string
 @secure()
-param databaseWebapiAppPassword string
+param postgresWebapiAppPassword string
 @secure()
 param jdbcConnectionStringWebapiAdmin string
 
@@ -46,27 +46,27 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
   }
 }
 
-resource databaseAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
-  name: 'database-admin-password'
+resource postgresAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+  name: 'postgres-admin-password'
   parent: keyVault
   properties: {
-    value: databaseAdminPassword
+    value: postgresAdminPassword
   }
 }
 
-resource databaseWebapiAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource postgresWebapiAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
   name: 'ohdsi-admin-password'
   parent: keyVault
   properties: {
-    value: databaseWebapiAdminPassword
+    value: postgresWebapiAdminPassword
   }
 }
 
-resource databaseWebapiAppSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource postgresWebapiAppSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
   name: 'ohdsi-app-password'
   parent: keyVault
   properties: {
-    value: databaseWebapiAppPassword
+    value: postgresWebapiAppPassword
   }
 }
 
@@ -81,7 +81,7 @@ resource jdbcConnectionStringWebapiAdminSecret 'Microsoft.KeyVault/vaults/secret
 output keyVaultName string = keyVault.name
 output keyVaultResourceId string = keyVault.id
 output userAssignedIdentityId string = identity.id
-output databaseAdminSecretName string = databaseAdminSecret.name
-output databaseWebapiAdminSecretName string = databaseWebapiAdminSecret.name
-output databaseWebapiAppSecretName string = databaseWebapiAppSecret.name
+output postgresAdminSecretName string = postgresAdminSecret.name
+output postgresWebapiAdminSecretName string = postgresWebapiAdminSecret.name
+output postgresWebapiAppSecretName string = postgresWebapiAppSecret.name
 output jdbcConnectionStringWebapiAdminSecretName string = jdbcConnectionStringWebapiAdminSecret.name
