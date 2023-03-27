@@ -5,12 +5,19 @@ param tenantId string = subscription().tenantId
 param utc string = utcNow()
 param odhsiWebApiName string = 'ohdsi-webapi'
 param suffix string = uniqueString(utc)
+param branchName string = 'v2'
+param cdmContainerUrl string
+param cdmSasToken string
+param pgCDMDatabaseName string
+
 @secure()
 param postgresAdminPassword string
 @secure()
 param postgresWebapiAdminPassword string
 @secure()
 param postgresWebapiAppPassword string
+@secure()
+param pgCDMpassword string
 
 @description('Creates the database server, users and groups required for ohdsi webapi')
 module atlasDatabase 'atlas_database.bicep' = {
@@ -22,6 +29,7 @@ module atlasDatabase 'atlas_database.bicep' = {
     postgresAdminPassword: postgresAdminPassword
     postgresWebapiAdminPassword: postgresWebapiAdminPassword
     postgresWebapiAppPassword: postgresWebapiAppPassword
+    branchName: branchName
   }
 }
 
@@ -75,4 +83,23 @@ module ohdsiWebApiWebapp 'ohdsi-webapi.bicep' = {
     keyvault
     atlasDatabase
   ]
+}
+
+@description('Creates OMOP CDM database')
+module omopCDM 'omop_cdm.bicep' = {
+  name: 'omopCDM'
+  params: {
+    branchName: branchName
+    location: location
+    keyVaultName: keyvault.outputs.keyVaultName
+    cdmContainerUrl: cdmContainerUrl
+    cdmSasToken: cdmSasToken
+    pgAtlasDatabaseName: atlasDatabase.outputs.postgresWebApiDatabaseName
+    pgCDMDatabaseName: pgCDMDatabaseName
+    pgAdminPassword: postgresAdminPassword
+    pgWebapiAdminPassword: postgresWebapiAdminPassword
+    pgCDMpassword: pgCDMpassword
+    pgServerName: atlasDatabase.outputs.postgresServerName
+
+  }
 }

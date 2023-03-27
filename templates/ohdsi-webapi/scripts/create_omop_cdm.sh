@@ -9,8 +9,8 @@ export pg_cdm_password="${PG_CDM_PASSWORD}${PG_CDM_USERNAME}"
 export cdm_md5="'md5$(echo -n $pg_cdm_password | md5sum | awk '{ print $1 }')'"
 
 printf 'Creating omp cdm schemas and user\n'
-create_omop_cdm_script=$(envsubst < create_omop_cdm.sql)
-echo "$create_omop_cdm_script" | psql "$OMOP_CONNECTION_STRING"
+create_omop_schemas_script=$(envsubst < create_omop_schemas.sql)
+echo "$create_omop_schemas_script" | psql "$OMOP_CONNECTION_STRING"
 
 # create OMOP CDM tables
 printf 'Creating OMOP CDM tables\n'

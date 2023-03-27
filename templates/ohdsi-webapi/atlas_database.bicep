@@ -1,7 +1,7 @@
 param location string
 param suffix string
 param odhsiWebApiName string
-param branchName string = 'v2'
+param branchName string
 @secure()
 param postgresAdminPassword string
 @secure()
@@ -129,7 +129,7 @@ resource runSQLscriptsWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10
           'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/atlas_create_schema.sql'
         ]
         cleanupPreference: 'OnSuccess' 
-        retentionInterval: 'P10M' 
+        retentionInterval: 'P1D' 
         
     } 
     dependsOn: [ 
@@ -137,6 +137,7 @@ resource runSQLscriptsWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10
   ]
 }
 
+output postgresServerName string = postgresServer.name
 output postgresServerFullyQualifiedDomainName string = postgresServer.properties.fullyQualifiedDomainName
 output postgresSchemaName string = postgresSchemaName
 output postgresAdminUsername string = postgresAdminUsername

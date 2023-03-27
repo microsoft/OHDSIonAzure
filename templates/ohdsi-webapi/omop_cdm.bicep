@@ -35,10 +35,12 @@ param pgWebapiAdminPassword string
 param pgCDMpassword string = newGuid()
 
 @secure()
+@description('The name of the postgres server')
 param pgServerName string
 
 @secure()
-param keyvaultName string
+@description('The name of the keyvault')
+param keyVaultName string
 
 var pgOMOPCDMSchemaName = 'cdm'
 var pgOMOPVocabularySchemaName = 'vocabulary'
@@ -51,12 +53,14 @@ var pgWebAPISchemaName = 'webapi'
 var pgWebapiAdminUsername = 'ohdsi_admin_user'
 var pgAdminUsername = 'postgres_admin'
 
+// Get the postgres server
 resource pgServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' existing = {
   name: pgServerName
 }
 
+// Get the keyvault
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
-  name: keyvaultName
+  name: keyVaultName
 }
 
 // Store cdm user password in keyvault
@@ -67,6 +71,7 @@ resource postgresAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
     value: pgCDMpassword
   }
 }
+
 // Create a new PostgreSQL database for the OMOP CDM
 resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2022-12-01' = {
   name: pgCDMDatabaseName
@@ -79,12 +84,12 @@ resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2
 
 // Create a managed identity for the deployment script
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: 'id-deploy-script'
+  name: 'managed-identity-omop-cdm'
   location: location
 }
 
-resource runBashWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'runBashWithOutputs'
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  name: 'deployment-script-omop-cdm'
   location: location
   kind: 'AzureCLI'
   identity: {
@@ -174,6 +179,6 @@ resource runBashWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10-01' =
       'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/add_omop_source.sql'
     ]
     cleanupPreference: 'OnSuccess'
-    retentionInterval: 'P10M'
+    retentionInterval: 'PT1H'
   }
 }
