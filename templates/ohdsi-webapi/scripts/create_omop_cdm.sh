@@ -12,12 +12,15 @@ printf 'Creating omp cdm schemas and user\n'
 create_omop_schemas_script=$(envsubst < create_omop_schemas.sql)
 echo "$create_omop_schemas_script" | psql "$OMOP_CONNECTION_STRING" -e
 
-# create OMOP CDM tables
+# create OMOP CDM (+ Vocabulary) tables
 printf 'Creating OMOP CDM tables\n'
 sed -i  s/@cdmDatabaseSchema/${POSTGRES_OMOP_CDM_SCHEMA_NAME}/g OMOPCDM_postgresql_5.4_ddl.sql OMOPCDM_postgresql_5.4_constraints.sql OMOPCDM_postgresql_5.4_primary_keys.sql OMOPCDM_postgresql_5.4_indices.sql
 psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_ddl.sql
 
-#TODO create and load OMOP Vocabulary & Results tables
+# create and load OMOP Results (Achilles) tables
+printf 'Creating OMOP Results tables\n'
+create_omop_results_script=$(envsubst < create_achilles_schema.sql)
+echo "$create_omop_results_script" | psql "$OMOP_CONNECTION_STRING" -e
 
 # skip foreign key constraints for now due to open bug - https://github.com/OHDSI/CommonDataModel/issues/452
 #psql "$OMOP_CONNECTION_STRING" -f OMOPCDM_postgresql_5.4_constraints.sql
@@ -27,10 +30,10 @@ printf 'Creating OMOP CDM primary keys\n'
 psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_primary_keys.sql
 
 # load OMOP CDM data
-#tables=("cdm.concept_ancestor" "cdm.concept_relationship" "cdm.source_to_source_vocab_map" "cdm.source_to_standard_vocab_map" "cdm.concept" "cdm.drug_strength" "cdm.concept_synonym" "cdm.measurement" "cdm.observation" "cdm.cost" "cdm.assign_all_visit_ids" "cdm.visit_detail" "cdm.visit_occurrence" "cdm.all_visits" "cdm.payer_plan_period" "cdm.drug_exposure" "cdm.procedure_occurrence" "cdm.final_visit_ids" "cdm.condition_occurrence" "cdm.condition_era" "cdm.provider" "cdm.drug_era" "cdm.person" "cdm.relationship" "cdm.observation_period" "cdm.concept_class" "cdm.device_exposure" "cdm.death" "cdm.cdm_source" "cdm.vocabulary" "cdm.domain")
+#tables=("cdm.concept_ancestor" "cdm.concept_relationship" "cdm.source_to_source_vocab_map" "cdm.source_to_standard_vocab_map" "cdm.concept" "cdm.drug_strength" "cdm.concept_synonym" "cdm.measurement" "cdm.observation" "cdm.cost" "cdm.assign_all_visit_ids" "cdm.visit_detail" "cdm.visit_occurrence" "cdm.all_visits" "cdm.payer_plan_period" "cdm.drug_exposure" "cdm.procedure_occurrence" "cdm.final_visit_ids" "cdm.condition_occurrence" "cdm.condition_era" "cdm.provider" "cdm.drug_era" "cdm.person" "cdm.relationship" "cdm.observation_period" "cdm.concept_class" "cdm.device_exposure" "cdm.death" "cdm.cdm_source" "cdm.vocabulary" "cdm.domain" "cdm_results.achilles_analysis" "cdm_results.achilles_results_dist" "cdm.drug_era" "cdm_results.achilles_results")
 #load subset of tables for now to speed up testing
 printf 'Loading OMOP CDM data\n'
-tables=("cdm.all_visits" "cdm.person" "cdm.drug_era" "cdm.death")
+tables=("cdm.all_visits" "cdm.person" "cdm.drug_era" "cdm.death" "cdm_results.achilles_analysis" "cdm_results.achilles_results_dist" "cdm.drug_era" "cdm_results.achilles_results")
 n=${#tables[@]}
 i=0
 for element in "${tables[@]}"; do

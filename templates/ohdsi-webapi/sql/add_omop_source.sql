@@ -6,8 +6,9 @@ SELECT nextval('${WEBAPI_SCHEMA_NAME}.source_daimon_sequence'), source_id, 0, '$
 FROM ${WEBAPI_SCHEMA_NAME}.source
 WHERE source_key = '${OMOP_CDM_DATABASE_NAME}';
 
+-- Vocabulary tables are in the same schema as the CDM tables
 INSERT INTO ${WEBAPI_SCHEMA_NAME}.source_daimon (source_daimon_id, source_id, daimon_type, table_qualifier, priority) 
-SELECT nextval('${WEBAPI_SCHEMA_NAME}.source_daimon_sequence'), source_id, 1, '${POSTGRES_OMOP_VOCABULARY_SCHEMA_NAME}', 1
+SELECT nextval('${WEBAPI_SCHEMA_NAME}.source_daimon_sequence'), source_id, 1, '${POSTGRES_OMOP_CDM_SCHEMA_NAME}', 1
 FROM ${WEBAPI_SCHEMA_NAME}.source
 WHERE source_key = '${OMOP_CDM_DATABASE_NAME}';
 

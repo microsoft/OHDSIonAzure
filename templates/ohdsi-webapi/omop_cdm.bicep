@@ -44,7 +44,7 @@ param keyVaultName string
 
 var postgresOMOPCDMSchemaName = 'cdm'
 var postgresOMOPVocabularySchemaName = 'vocabulary'
-var postgresOMOPResultsSchemaName = 'results'
+var postgresOMOPResultsSchemaName = 'cdm_results'
 var postgresOMOPTempSchemaName = 'temp'
 var postgresOMOPCDMRole = 'cdm_reader'
 var postgresOMOPCDMUsername = 'cdm_user'
