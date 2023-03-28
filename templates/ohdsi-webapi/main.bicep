@@ -1,23 +1,36 @@
 targetScope = 'resourceGroup'
 
+@description('The location for all resources.')
 param location string = resourceGroup().location
+
+@description('The tenant id of the subscription')
 param tenantId string = subscription().tenantId
-param utc string = utcNow()
+
+@description('The name of the ohdsi webapi webapp')
 param odhsiWebApiName string = 'ohdsi-webapi'
-param suffix string = uniqueString(utc)
+@description('Unique string to be used as a suffix for all resources')
+param suffix string = uniqueString(utcNow())
+@description('The name of the branch to use for downloading sql scripts')
 param branchName string = 'v2'
+@description('The url of the container where the cdm is stored')
 param cdmContainerUrl string
+@description('The sas token to access the cdm container')
 param cdmSasToken string
-param pgCDMDatabaseName string
+@description('The name of the database to create for the OMOP CDM')
+param postgresOMOPCDMDatabaseName string
 
 @secure()
-param postgresAdminPassword string
+@description('The password for the postgres admin user')
+param postgresAdminPassword string = uniqueString(newGuid())
 @secure()
-param postgresWebapiAdminPassword string
+@description('The password for the postgres webapi admin user')
+param postgresWebapiAdminPassword string = uniqueString(newGuid())
 @secure()
-param postgresWebapiAppPassword string
+@description('The password for the postgres webapi app user')
+param postgresWebapiAppPassword string = uniqueString(newGuid())
 @secure()
-param pgCDMpassword string
+@description('The password for the postgres OMOP CDM user')
+param postgresOMOPCDMpassword string = uniqueString(newGuid())
 
 @description('Creates the database server, users and groups required for ohdsi webapi')
 module atlasDatabase 'atlas_database.bicep' = {
@@ -25,16 +38,16 @@ module atlasDatabase 'atlas_database.bicep' = {
   params: {
     location: location
     suffix: suffix
+    branchName: branchName
     odhsiWebApiName: odhsiWebApiName
     postgresAdminPassword: postgresAdminPassword
     postgresWebapiAdminPassword: postgresWebapiAdminPassword
     postgresWebapiAppPassword: postgresWebapiAppPassword
-    branchName: branchName
   }
 }
 
 @description('Creates the app service plan')
-module appServicePlan 'appplan.bicep' = {
+module appServicePlan 'app_plan.bicep' = {
   name: 'appServicePlan'
   params: {
     location: location
@@ -94,12 +107,11 @@ module omopCDM 'omop_cdm.bicep' = {
     keyVaultName: keyvault.outputs.keyVaultName
     cdmContainerUrl: cdmContainerUrl
     cdmSasToken: cdmSasToken
-    pgAtlasDatabaseName: atlasDatabase.outputs.postgresWebApiDatabaseName
-    pgCDMDatabaseName: pgCDMDatabaseName
-    pgAdminPassword: postgresAdminPassword
-    pgWebapiAdminPassword: postgresWebapiAdminPassword
-    pgCDMpassword: pgCDMpassword
-    pgServerName: atlasDatabase.outputs.postgresServerName
-
+    postgresAtlasDatabaseName: atlasDatabase.outputs.postgresWebApiDatabaseName
+    postgresOMOPCDMDatabaseName: postgresOMOPCDMDatabaseName
+    postgresAdminPassword: postgresAdminPassword
+    postgresWebapiAdminPassword: postgresWebapiAdminPassword
+    postgresOMOPCDMpassword: postgresOMOPCDMpassword
+    postgresServerName: atlasDatabase.outputs.postgresServerName
   }
 }

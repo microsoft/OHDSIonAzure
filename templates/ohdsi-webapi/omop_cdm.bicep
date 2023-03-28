@@ -1,10 +1,18 @@
 targetScope = 'resourceGroup'
 
 param utcValue string = utcNow()
+
+@description('The location for all resources.')
 param location string = resourceGroup().location
 
+@description('The name of webapi CDM database')
+param postgresAtlasDatabaseName string
+
 @description('Used to download the sql scripts from the GitHub repository, this should point to the branch you want to use')
-param branchName string = 'v2'
+param branchName string
+
+@description('The name of the postgres server')
+param postgresServerName string
 
 @secure()
 @description('The URL of the container where the CDM data is stored')
@@ -15,47 +23,40 @@ param cdmContainerUrl string
 param cdmSasToken string
 
 @secure()
-@description('The name of webapi CDM database')
-param pgAtlasDatabaseName string
-
-@secure()
 @description('The name of the OMOP CDM database')
-param pgCDMDatabaseName string
+param postgresOMOPCDMDatabaseName string
 
 @secure()
 @description('Admin password for the postgres server')
-param pgAdminPassword string
+param postgresAdminPassword string
 
 @secure()
 @description('Admin password for the webapi database')
-param pgWebapiAdminPassword string
+param postgresWebapiAdminPassword string
 
 @secure()
 @description('Password for the cdm user')
-param pgCDMpassword string = uniqueString(newGuid())
-
-@secure()
-@description('The name of the postgres server')
-param pgServerName string
+param postgresOMOPCDMpassword string
 
 @secure()
 @description('The name of the keyvault')
 param keyVaultName string
 
-var pgOMOPCDMSchemaName = 'cdm'
-var pgOMOPVocabularySchemaName = 'vocabulary'
-var pgOMOPResultsSchemaName = 'results'
-var pgOMOPTempSchemaName = 'temp'
-var pgOMOPCDMRole = 'cdm_reader'
-var pgCDMUsername = 'cdm_user'
-var pgCDMUserSecretName = '${pgCDMDatabaseName}-cdm-user-password'
-var pgWebAPISchemaName = 'webapi'
-var pgWebapiAdminUsername = 'ohdsi_admin_user'
-var pgAdminUsername = 'postgres_admin'
+var postgresOMOPCDMSchemaName = 'cdm'
+var postgresOMOPVocabularySchemaName = 'vocabulary'
+var postgresOMOPResultsSchemaName = 'results'
+var postgresOMOPTempSchemaName = 'temp'
+var postgresOMOPCDMRole = 'cdm_reader'
+var postgresOMOPCDMUsername = 'cdm_user'
+var postgresOMOPCDMUserSecretName = '${postgresOMOPCDMDatabaseName}-cdm-user-password'
+var postgresWebAPISchemaName = 'webapi'
+var postgresWebapiAdminUsername = 'ohdsi_admin_user'
+var postgresAdminUsername = 'postgres_admin'
+var postgresOMOPCDMJDBCConnectionString = 'jdbc:postgresql://${postgresServer.properties.fullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=${postgresOMOPCDMUsername}&password=${postgresOMOPCDMpassword}&sslmode=require'
 
 // Get the postgres server
-resource pgServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' existing = {
-  name: pgServerName
+resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' existing = {
+  name: postgresServerName
 }
 
 // Get the keyvault
@@ -63,19 +64,28 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
   name: keyVaultName
 }
 
-// Store cdm user password in keyvault
+// Store OMOM CDM user password in keyvault
 resource postgresAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
-  name: pgCDMUserSecretName
+  name: postgresOMOPCDMUserSecretName
   parent: keyVault
   properties: {
-    value: pgCDMpassword
+    value: postgresOMOPCDMpassword
+  }
+}
+
+// Store the OMOP CDM JDBC connection string in keyvault
+resource postgresOMOPCDMJDBCConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+  name: postgresOMOPCDMUserSecretName
+  parent: keyVault
+  properties: {
+    value: postgresOMOPCDMJDBCConnectionString
   }
 }
 
 // Create a new PostgreSQL database for the OMOP CDM
 resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2022-12-01' = {
-  name: pgCDMDatabaseName
-  parent: pgServer
+  name: postgresOMOPCDMDatabaseName
+  parent: postgresServer
   properties: {
     charset: 'utf8'
     collation: 'en_US.utf8'
@@ -106,60 +116,63 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     environmentVariables: [
       {
         name: 'WEBAPI_SCHEMA_NAME'
-        value: pgWebAPISchemaName
+        value: postgresWebAPISchemaName
       }
       {
         name: 'ATLAS_DB_CONNECTION_STRING'
-        secureValue: 'host=${pgServer.properties.fullyQualifiedDomainName} port=5432 dbname=${pgAtlasDatabaseName} user=${pgWebapiAdminUsername} password=${pgWebapiAdminPassword} sslmode=require'
+        secureValue: 'host=${postgresServer.properties.fullyQualifiedDomainName} port=5432 dbname=${postgresAtlasDatabaseName} user=${postgresWebapiAdminUsername} password=${postgresWebapiAdminPassword} sslmode=require'
       }
       {
         name: 'OMOP_CONNECTION_STRING'
-        secureValue: 'host=${pgServer.properties.fullyQualifiedDomainName} port=5432 dbname=${pgCDMDatabaseName} user=${pgAdminUsername} password=${pgAdminPassword} sslmode=require'
+        secureValue: 'host=${postgresServer.properties.fullyQualifiedDomainName} port=5432 dbname=${postgresOMOPCDMDatabaseName} user=${postgresAdminUsername} password=${postgresAdminPassword} sslmode=require'
       }
       {
         name: 'OMOP_JDBC_CONNECTION_STRING'
-        secureValue: 'jdbc:postgresql://${pgServer.properties.fullyQualifiedDomainName}:5432/${pgCDMDatabaseName}?user=${pgCDMUsername}&password=${pgCDMpassword}&sslmode=require'
+        secureValue: postgresOMOPCDMJDBCConnectionString
       }
       {
         name: 'OMOP_CDM_DATABASE_NAME'
-        value: pgCDMDatabaseName
+        value: postgresOMOPCDMDatabaseName
       }
-
       {
         name: 'OMOP_CDM_CONTAINER_URL'
         value: cdmContainerUrl
       }
       {
-        name: 'PG_CDM_USERNAME'
-        value: pgCDMUsername
+        name: 'POSTGRES_ADMIN_USERNAME'
+        value: postgresAdminUsername
       }
       {
-        name: 'OMOP_CDM_ROLE'
-        value: pgOMOPCDMRole
+        name: 'POSTGRES_CDM_USERNAME'
+        value: postgresOMOPCDMUsername
       }
       {
-        name: 'PG_CDM_PASSWORD'
-        secureValue: pgCDMpassword
+        name: 'POSTGRES_OMOP_CDM_ROLE'
+        value: postgresOMOPCDMRole
+      }
+      {
+        name: 'POSTGRES_OMOP_CDM_PASSWORD'
+        secureValue: postgresOMOPCDMpassword
       }      
       {
         name: 'OMOP_CDM_SAS_TOKEN'
         value: cdmSasToken
       }
       {
-        name: 'OMOP_CDM_SCHEMA_NAME'
-        value: pgOMOPCDMSchemaName
+        name: 'POSTGRES_OMOP_CDM_SCHEMA_NAME'
+        value: postgresOMOPCDMSchemaName
       }
       {
-        name: 'OMOP_VOCABULARY_SCHEMA_NAME'
-        value: pgOMOPVocabularySchemaName
+        name: 'POSTGRES_OMOP_VOCABULARY_SCHEMA_NAME'
+        value: postgresOMOPVocabularySchemaName
       }
       {
-        name: 'OMOP_RESULTS_SCHEMA_NAME'
-        value: pgOMOPResultsSchemaName
+        name: 'POSTGRES_OMOP_RESULTS_SCHEMA_NAME'
+        value: postgresOMOPResultsSchemaName
       }
       {
-        name: 'OMOP_TEMP_SCHEMA_NAME'
-        value: pgOMOPTempSchemaName
+        name: 'POSTGRES_OMOP_TEMP_SCHEMA_NAME'
+        value: postgresOMOPTempSchemaName
       }
 
     ]
