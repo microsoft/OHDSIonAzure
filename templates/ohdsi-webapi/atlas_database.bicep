@@ -1,7 +1,7 @@
 param location string
 param suffix string
 param odhsiWebApiName string
-param branchName string = 'v2'
+param branchName string
 @secure()
 param postgresAdminPassword string
 @secure()
@@ -64,11 +64,11 @@ resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2
 
 // Create a OHDSI users and groupss
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = { 
-    name: 'deploy-script-identity' 
+    name: 'atlas-init-script-identity' 
     location: location 
 } 
-resource runSQLscriptsWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10-01' = { 
-    name: 'runSQLscriptsWithOutputs' 
+resource deploymentAtlasInitscriptsWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10-01' = { 
+    name: 'deployment-atlas-init-scripts-with-outputs' 
     location: location 
     kind: 'AzureCLI' 
     identity: { 
@@ -129,7 +129,7 @@ resource runSQLscriptsWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10
           'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/atlas_create_schema.sql'
         ]
         cleanupPreference: 'OnSuccess' 
-        retentionInterval: 'P10M' 
+        retentionInterval: 'PT1H' 
         
     } 
     dependsOn: [ 

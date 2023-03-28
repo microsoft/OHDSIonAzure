@@ -37,7 +37,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
       }
       {
         name: 'DATASOURCE_DRIVERCLASSNAME'
-        value: 'org.databaseql.Driver'
+        value: 'org.postgresql.Driver'
       }
       {
         name: 'DATASOURCE_OHDSI_SCHEMA'
@@ -69,7 +69,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
       }
       {
         name: 'FLYWAY_DATASOURCE_DRIVERCLASSNAME'
-        value: 'org.databaseql.Driver'
+        value: 'org.postgresql.Driver'
       }
       {
         name: 'FLYWAY_DATASOURCE_USERNAME'
@@ -85,7 +85,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
       }
       {
         name: 'FLYWAY_LOCATIONS'
-        value: 'classpath:db/migration/databaseql'
+        value: 'classpath:db/migration/postgresql'
       }
       {
         name: 'FLYWAY_PLACEHOLDERS_OHDSISCHEMA'
@@ -114,7 +114,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
       }
       {
         name: 'SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT'
-        value: 'org.hibernate.dialect.databaseQLDialect'
+        value: 'org.hibernate.dialect.PostgreSQLDialect'
       }
       {
         name: 'WEBSITE_HEALTHCHECK_MAXPINGFAILURES'

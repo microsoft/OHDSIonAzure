@@ -5,12 +5,14 @@ param tenantId string = subscription().tenantId
 param utc string = utcNow()
 param odhsiWebApiName string = 'ohdsi-webapi'
 param suffix string = uniqueString(utc)
+param branchName string = 'v2'
+
 @secure()
-param postgresAdminPassword string
+param postgresAdminPassword string = uniqueString(newGuid())
 @secure()
-param postgresWebapiAdminPassword string
+param postgresWebapiAdminPassword string = uniqueString(newGuid())
 @secure()
-param postgresWebapiAppPassword string
+param postgresWebapiAppPassword string = uniqueString(newGuid())
 
 @description('Creates the database server, users and groups required for ohdsi webapi')
 module atlasDatabase 'atlas_database.bicep' = {
@@ -18,6 +20,7 @@ module atlasDatabase 'atlas_database.bicep' = {
   params: {
     location: location
     suffix: suffix
+    branchName: branchName
     odhsiWebApiName: odhsiWebApiName
     postgresAdminPassword: postgresAdminPassword
     postgresWebapiAdminPassword: postgresWebapiAdminPassword
@@ -26,7 +29,7 @@ module atlasDatabase 'atlas_database.bicep' = {
 }
 
 @description('Creates the app service plan')
-module appServicePlan 'appplan.bicep' = {
+module appServicePlan 'app_plan.bicep' = {
   name: 'appServicePlan'
   params: {
     location: location
