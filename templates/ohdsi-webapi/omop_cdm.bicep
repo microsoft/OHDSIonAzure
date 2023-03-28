@@ -49,6 +49,7 @@ var postgresOMOPTempSchemaName = 'temp'
 var postgresOMOPCDMRole = 'cdm_reader'
 var postgresOMOPCDMUsername = 'cdm_user'
 var postgresOMOPCDMUserSecretName = '${postgresOMOPCDMDatabaseName}-cdm-user-password'
+var postgresOMOPCDMJDBCConnectionStringSecretName = '${postgresOMOPCDMDatabaseName}-cdm-jdbc-connection-string'
 var postgresWebAPISchemaName = 'webapi'
 var postgresWebapiAdminUsername = 'ohdsi_admin_user'
 var postgresAdminUsername = 'postgres_admin'
@@ -75,7 +76,7 @@ resource postgresAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
 
 // Store the OMOP CDM JDBC connection string in keyvault
 resource postgresOMOPCDMJDBCConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
-  name: postgresOMOPCDMUserSecretName
+  name: postgresOMOPCDMJDBCConnectionStringSecretName
   parent: keyVault
   properties: {
     value: postgresOMOPCDMJDBCConnectionString
