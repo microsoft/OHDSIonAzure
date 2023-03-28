@@ -8,26 +8,34 @@ param tenantId string = subscription().tenantId
 
 @description('The name of the ohdsi webapi webapp')
 param odhsiWebApiName string = 'ohdsi-webapi'
+
 @description('Unique string to be used as a suffix for all resources')
 param suffix string = uniqueString(utcNow())
+
 @description('The name of the branch to use for downloading sql scripts')
 param branchName string = 'v2'
+
 @description('The url of the container where the cdm is stored')
 param cdmContainerUrl string
+
 @description('The sas token to access the cdm container')
 param cdmSasToken string
+
 @description('The name of the database to create for the OMOP CDM')
 param postgresOMOPCDMDatabaseName string
 
 @secure()
 @description('The password for the postgres admin user')
 param postgresAdminPassword string = uniqueString(newGuid())
+
 @secure()
 @description('The password for the postgres webapi admin user')
 param postgresWebapiAdminPassword string = uniqueString(newGuid())
+
 @secure()
 @description('The password for the postgres webapi app user')
 param postgresWebapiAppPassword string = uniqueString(newGuid())
+
 @secure()
 @description('The password for the postgres OMOP CDM user')
 param postgresOMOPCDMpassword string = uniqueString(newGuid())
@@ -114,4 +122,11 @@ module omopCDM 'omop_cdm.bicep' = {
     postgresOMOPCDMpassword: postgresOMOPCDMpassword
     postgresServerName: atlasDatabase.outputs.postgresServerName
   }
+
+  dependsOn: [
+    ohdsiWebApiWebapp
+    appServicePlan
+    keyvault
+    atlasDatabase
+  ]
 }
