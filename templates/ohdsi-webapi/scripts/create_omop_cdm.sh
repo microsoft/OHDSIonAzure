@@ -5,12 +5,12 @@ echo 'installing psql...'
 apk --update add postgresql-client gettext
 
 # create OMOP CDM schema and user
-export pg_cdm_password="${PG_CDM_PASSWORD}${PG_CDM_USERNAME}"
-export cdm_md5="'md5$(echo -n $pg_cdm_password | md5sum | awk '{ print $1 }')'"
+pg_cdm_password="${PG_CDM_PASSWORD}${PG_CDM_USERNAME}"
+export CDM_MD5="'md5$(echo -n $pg_cdm_password | md5sum | awk '{ print $1 }')'"
 
 printf 'Creating omp cdm schemas and user\n'
 create_omop_schemas_script=$(envsubst < create_omop_schemas.sql)
-echo "$create_omop_schemas_script" | psql "$OMOP_CONNECTION_STRING"
+echo "$create_omop_schemas_script" | psql "$OMOP_CONNECTION_STRING" -e
 
 # create OMOP CDM tables
 printf 'Creating OMOP CDM tables\n'
@@ -36,7 +36,7 @@ i=0
 for element in "${tables[@]}"; do
     ((i++));
     printf "Downloading and extracting: %s (%s)\n" "$element.csv.gz" "$i/$n"
-    curl "${CDM_CONTAINER_URL}$element.csv.gz${CDM_SAS_TOKEN}" | gunzip > $element.csv
+    curl "${OMOP_CDM_CONTAINER_URL}$element.csv.gz${OMOP_CDM_SAS_TOKEN}" | gunzip > $element.csv
     num_of_records=$(wc -l $element.csv | awk '{print $1}')
     printf "Copying %s to table: %s\n" "$num_of_records" "$element"
     psql "$OMOP_CONNECTION_STRING" -c "\COPY $element FROM '$element.csv' WITH CSV;"

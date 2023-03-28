@@ -32,7 +32,7 @@ param pgWebapiAdminPassword string
 
 @secure()
 @description('Password for the cdm user')
-param pgCDMpassword string = newGuid()
+param pgCDMpassword string = uniqueString(newGuid())
 
 @secure()
 @description('The name of the postgres server')
@@ -105,6 +105,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     timeout: 'PT60M'
     environmentVariables: [
       {
+        name: 'WEBAPI_SCHEMA_NAME'
+        value: pgWebAPISchemaName
+      }
+      {
         name: 'ATLAS_DB_CONNECTION_STRING'
         secureValue: 'host=${pgServer.properties.fullyQualifiedDomainName} port=5432 dbname=${pgAtlasDatabaseName} user=${pgWebapiAdminUsername} password=${pgWebapiAdminPassword} sslmode=require'
       }
@@ -113,40 +117,33 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         secureValue: 'host=${pgServer.properties.fullyQualifiedDomainName} port=5432 dbname=${pgCDMDatabaseName} user=${pgAdminUsername} password=${pgAdminPassword} sslmode=require'
       }
       {
-        name: 'ATLAS_DATABASE_NAME'
-        value: pgAtlasDatabaseName
+        name: 'OMOP_JDBC_CONNECTION_STRING'
+        secureValue: 'jdbc:postgresql://${pgServer.properties.fullyQualifiedDomainName}:5432/${pgCDMDatabaseName}?user=${pgCDMUsername}&password=${pgCDMpassword}&sslmode=require'
       }
       {
-        name: 'CDM_DATABASE_NAME'
+        name: 'OMOP_CDM_DATABASE_NAME'
         value: pgCDMDatabaseName
       }
+
       {
-        name: 'PG_ADMIN_USERNAME'
-        value: pgAdminUsername
-      }
-      {
-        name: 'PG_ADMIN_PASSWORD'
-        secureValue: pgAdminPassword
+        name: 'OMOP_CDM_CONTAINER_URL'
+        value: cdmContainerUrl
       }
       {
         name: 'PG_CDM_USERNAME'
         value: pgCDMUsername
       }
       {
+        name: 'OMOP_CDM_ROLE'
+        value: pgOMOPCDMRole
+      }
+      {
         name: 'PG_CDM_PASSWORD'
         secureValue: pgCDMpassword
-      }
+      }      
       {
-        name: 'CDM_CONTAINER_URL'
-        value: cdmContainerUrl
-      }
-      {
-        name: 'CDM_SAS_TOKEN'
+        name: 'OMOP_CDM_SAS_TOKEN'
         value: cdmSasToken
-      }
-      {
-        name: 'WEBAPI_SCHEMA_NAME'
-        value: pgWebAPISchemaName
       }
       {
         name: 'OMOP_CDM_SCHEMA_NAME'
@@ -164,10 +161,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         name: 'OMOP_TEMP_SCHEMA_NAME'
         value: pgOMOPTempSchemaName
       }
-      {
-        name: 'OMOP_CDM_ROLE'
-        value: pgOMOPCDMRole
-      }
+
     ]
     scriptContent: loadTextContent('scripts/create_omop_cdm.sh')
     supportingScriptUris: [
