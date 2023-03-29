@@ -187,6 +187,6 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/add_omop_source.sql'
     ]
     cleanupPreference: 'OnSuccess'
-    retentionInterval: 'PT1H'
+    retentionInterval: 'P1D'
   }
 }
