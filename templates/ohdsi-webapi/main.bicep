@@ -79,3 +79,5 @@ module ohdsiWebApiWebapp 'ohdsi-webapi.bicep' = {
     atlasDatabase
   ]
 }
+
+output ohdsiWebapiUrl string = ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
