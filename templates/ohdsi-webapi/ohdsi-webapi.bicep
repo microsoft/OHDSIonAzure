@@ -149,4 +149,4 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
 }
 
 
-output webAppUrl string = '${webApp.properties.defaultHostName}/WebAPI'
+output ohdsiWebapiUrl string = 'https://${webApp.properties.defaultHostName}/WebAPI'

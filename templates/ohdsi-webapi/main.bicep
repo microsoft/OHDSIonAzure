@@ -130,3 +130,5 @@ module omopCDM 'omop_cdm.bicep' = {
     atlasDatabase
   ]
 }
+
+output ohdsiWebapiUrl string = ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl

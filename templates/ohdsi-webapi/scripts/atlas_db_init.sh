@@ -10,9 +10,9 @@ atlas_create_roles_users_script=$(envsubst < atlas_create_roles_users.sql)
 atlas_create_schema_script=$(envsubst < atlas_create_schema.sql)
 
 printf 'Creating roles and users'
-echo "$atlas_create_roles_users_script" | psql "$MAIN_CONNECTION_STRING"
+echo "$atlas_create_roles_users_script" | psql -e "$MAIN_CONNECTION_STRING"
 
 printf 'Creating schema'
-echo "$atlas_create_schema_script" | psql "$OHDSI_ADMIN_CONNECTION_STRING"
+echo "$atlas_create_schema_script" | psql -e "$OHDSI_ADMIN_CONNECTION_STRING"
 
 printf 'Done'
