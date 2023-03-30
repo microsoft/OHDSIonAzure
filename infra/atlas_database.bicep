@@ -125,8 +125,8 @@ resource deploymentAtlasInitscriptsWithOutputs 'Microsoft.Resources/deploymentSc
         ] 
         scriptContent: loadTextContent('scripts/atlas_db_init.sh')
         supportingScriptUris: [
-          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/atlas_create_roles_users.sql'
-          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/atlas_create_schema.sql'
+          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/infra/sql/atlas_create_roles_users.sql'
+          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/infra/sql/atlas_create_schema.sql'
         ]
         cleanupPreference: 'OnSuccess' 
         retentionInterval: 'PT1H' 

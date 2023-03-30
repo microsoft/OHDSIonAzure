@@ -83,7 +83,7 @@ module keyvault 'keyvault.bicep' = {
 }
 
 @description('Creates the ohdsi webapi')
-module ohdsiWebApiWebapp 'ohdsi-webapi.bicep' = {
+module ohdsiWebApiWebapp 'ohdsi_webapi.bicep' = {
   name: 'ohdsiWebApiWebapp'
   params: {
     location: location
@@ -128,6 +128,21 @@ module omopCDM 'omop_cdm.bicep' = {
     appServicePlan
     keyvault
     atlasDatabase
+  ]
+}
+
+@description('Creates the ohdsi atlas UI')
+module atlasUI 'ohdsi_atlas_ui.bicep' = {
+  name: 'atlasUI'
+  params: {
+    location: location
+    suffix: suffix
+    appServicePlanId: appServicePlan.outputs.appServicePlanId
+    ohdsiWebApiUrl: ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
+  }
+  dependsOn: [
+    appServicePlan
+    ohdsiWebApiWebapp
   ]
 }
 
