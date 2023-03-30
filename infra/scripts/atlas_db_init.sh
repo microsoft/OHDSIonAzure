@@ -6,8 +6,8 @@ app_user_password="${OHDSI_APP_PASSWORD}${OHDSI_APP_USERNAME}"
 export admin_md5="'md5$(echo -n $admin_user_password | md5sum | awk '{ print $1 }')'"
 export app_md5="'md5$(echo -n $app_user_password | md5sum | awk '{ print $1 }')'"
 
-atlas_create_roles_users_script=$(envsubst < atlas_create_roles_users.sql)
-atlas_create_schema_script=$(envsubst < atlas_create_schema.sql)
+atlas_create_roles_users_script=$(echo $ATLAS_CREATE_ROLES_USERS | envsubst)
+atlas_create_schema_script=$(echo $ATLAS_CREATE_SCHEMA | envsubst)
 
 printf 'Creating roles and users'
 echo "$atlas_create_roles_users_script" | psql -e "$MAIN_CONNECTION_STRING"

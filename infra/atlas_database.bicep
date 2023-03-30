@@ -122,12 +122,16 @@ resource deploymentAtlasInitscriptsWithOutputs 'Microsoft.Resources/deploymentSc
               name: 'OHDSI_APP_ROLE'
               value: postgresWebapiAppRole
             }
+            {
+              name: 'ATLAS_CREATE_ROLES_USERS'
+              value: loadTextContent('sql/atlas_create_roles_users.sql')
+            }
+            {
+              name: 'ATLAS_CREATE_SCHEMA'
+              value: loadTextContent('sql/atlas_create_schema.sql')
+            }
         ] 
         scriptContent: loadTextContent('scripts/atlas_db_init.sh')
-        supportingScriptUris: [
-          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/infra/sql/atlas_create_roles_users.sql'
-          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/infra/sql/atlas_create_schema.sql'
-        ]
         cleanupPreference: 'OnSuccess' 
         retentionInterval: 'PT1H' 
     } 
