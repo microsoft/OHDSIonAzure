@@ -131,7 +131,7 @@ module omopCDM 'omop_cdm.bicep' = {
   ]
 }
 
-@description('Creates the ohdsi webapi')
+@description('Creates the ohdsi atlas UI')
 module atlasUI 'ohdsi_atlas_ui.bicep' = {
   name: 'atlasUI'
   params: {
