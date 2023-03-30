@@ -123,11 +123,11 @@ resource deploymentAtlasInitscriptsWithOutputs 'Microsoft.Resources/deploymentSc
               value: postgresWebapiAppRole
             }
             {
-              name: 'ATLAS_CREATE_ROLES_USERS'
+              name: 'ATLAS_CREATE_ROLES_USERS_SCRIPT'
               value: loadTextContent('sql/atlas_create_roles_users.sql')
             }
             {
-              name: 'ATLAS_CREATE_SCHEMA'
+              name: 'ATLAS_CREATE_SCHEMA_SCRIPT'
               value: loadTextContent('sql/atlas_create_schema.sql')
             }
         ] 
