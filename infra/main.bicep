@@ -1,18 +1,44 @@
 targetScope = 'resourceGroup'
 
+@description('The location for all resources.')
 param location string = resourceGroup().location
+
+@description('The tenant id of the subscription')
 param tenantId string = subscription().tenantId
-param utc string = utcNow()
+
+@description('The name of the ohdsi webapi webapp')
 param odhsiWebApiName string = 'ohdsi-webapi'
-param suffix string = uniqueString(utc)
+
+@description('Unique string to be used as a suffix for all resources')
+param suffix string = uniqueString(utcNow())
+
+@description('The name of the branch to use for downloading sql scripts')
 param branchName string = 'v2'
 
+@description('The url of the container where the cdm is stored')
+param cdmContainerUrl string
+
+@description('The sas token to access the cdm container')
+param cdmSasToken string
+
+@description('The name of the database to create for the OMOP CDM')
+param postgresOMOPCDMDatabaseName string
+
 @secure()
+@description('The password for the postgres admin user')
 param postgresAdminPassword string = uniqueString(newGuid())
+
 @secure()
+@description('The password for the postgres webapi admin user')
 param postgresWebapiAdminPassword string = uniqueString(newGuid())
+
 @secure()
+@description('The password for the postgres webapi app user')
 param postgresWebapiAppPassword string = uniqueString(newGuid())
+
+@secure()
+@description('The password for the postgres OMOP CDM user')
+param postgresOMOPCDMpassword string = uniqueString(newGuid())
 
 @description('Creates the database server, users and groups required for ohdsi webapi')
 module atlasDatabase 'atlas_database.bicep' = {
@@ -74,6 +100,31 @@ module ohdsiWebApiWebapp 'ohdsi_webapi.bicep' = {
     postgresWebApiSchemaName: atlasDatabase.outputs.postgresSchemaName
   }
   dependsOn: [
+    appServicePlan
+    keyvault
+    atlasDatabase
+  ]
+}
+
+@description('Creates OMOP CDM database')
+module omopCDM 'omop_cdm.bicep' = {
+  name: 'omopCDM'
+  params: {
+    branchName: branchName
+    location: location
+    keyVaultName: keyvault.outputs.keyVaultName
+    cdmContainerUrl: cdmContainerUrl
+    cdmSasToken: cdmSasToken
+    postgresAtlasDatabaseName: atlasDatabase.outputs.postgresWebApiDatabaseName
+    postgresOMOPCDMDatabaseName: postgresOMOPCDMDatabaseName
+    postgresAdminPassword: postgresAdminPassword
+    postgresWebapiAdminPassword: postgresWebapiAdminPassword
+    postgresOMOPCDMpassword: postgresOMOPCDMpassword
+    postgresServerName: atlasDatabase.outputs.postgresServerName
+  }
+
+  dependsOn: [
+    ohdsiWebApiWebapp
     appServicePlan
     keyvault
     atlasDatabase

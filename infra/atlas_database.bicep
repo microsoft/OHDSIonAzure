@@ -130,13 +130,13 @@ resource deploymentAtlasInitscriptsWithOutputs 'Microsoft.Resources/deploymentSc
         ]
         cleanupPreference: 'OnSuccess' 
         retentionInterval: 'PT1H' 
-        
     } 
     dependsOn: [ 
       postgresDatabase
   ]
 }
 
+output postgresServerName string = postgresServer.name
 output postgresServerFullyQualifiedDomainName string = postgresServer.properties.fullyQualifiedDomainName
 output postgresSchemaName string = postgresSchemaName
 output postgresAdminUsername string = postgresAdminUsername
