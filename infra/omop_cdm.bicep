@@ -1,7 +1,5 @@
 targetScope = 'resourceGroup'
 
-param utcValue string = utcNow()
-
 @description('The location for all resources.')
 param location string = resourceGroup().location
 
@@ -14,7 +12,6 @@ param branchName string
 @description('The name of the postgres server')
 param postgresServerName string
 
-@secure()
 @description('The URL of the container where the CDM data is stored')
 param cdmContainerUrl string
 
@@ -22,7 +19,6 @@ param cdmContainerUrl string
 @description('The SAS token to access the CDM data')
 param cdmSasToken string
 
-@secure()
 @description('The name of the OMOP CDM database')
 param postgresOMOPCDMDatabaseName string
 
@@ -38,7 +34,6 @@ param postgresWebapiAdminPassword string
 @description('Password for the cdm user')
 param postgresOMOPCDMpassword string
 
-@secure()
 @description('The name of the keyvault')
 param keyVaultName string
 
@@ -111,7 +106,6 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   }
 
   properties: {
-    forceUpdateTag: utcValue
     azCliVersion: '2.42.0'
     timeout: 'PT60M'
     environmentVariables: [
