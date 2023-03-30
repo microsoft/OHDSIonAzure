@@ -9,7 +9,7 @@ pg_cdm_password="${POSTGRES_OMOP_CDM_PASSWORD}${POSTGRES_CDM_USERNAME}"
 export CDM_MD5="'md5$(echo -n $pg_cdm_password | md5sum | awk '{ print $1 }')'"
 
 printf 'Creating omp cdm schemas and user\n'
-create_omop_schemas_script=$(envsubst < create_omop_schemas.sql)
+create_omop_schemas_script=$($CREATE_OMOP_SCHEMAS_SCRIPT | envsubst)
 echo "$create_omop_schemas_script" | psql "$OMOP_CONNECTION_STRING" -e
 
 # create OMOP CDM (+ Vocabulary) tables
@@ -19,7 +19,7 @@ psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_ddl.sql
 
 # create and load OMOP Results (Achilles) tables
 printf 'Creating OMOP Results tables\n'
-create_omop_results_script=$(envsubst < create_achilles_schema.sql)
+create_omop_results_script=$($CREATE_ACHILLES_SCHEMA_SCRIPT | envsubst)
 echo "$create_omop_results_script" | psql "$OMOP_CONNECTION_STRING" -e
 
 # skip foreign key constraints for now due to open bug - https://github.com/OHDSI/CommonDataModel/issues/452
@@ -52,5 +52,5 @@ psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_indices.sql;
 
 # add OMOP CDM source to WebAPI
 printf 'adding OMOP CDM source to WebAPI\n'
-add_omop_source_script=$(envsubst < add_omop_source.sql)
+add_omop_source_script=$($ADD_OMOP_SOURCE_SCRIPT | envsubst)
 echo "$add_omop_source_script" | psql "$ATLAS_DB_CONNECTION_STRING" -e

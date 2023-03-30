@@ -169,6 +169,18 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         name: 'POSTGRES_OMOP_TEMP_SCHEMA_NAME'
         value: postgresOMOPTempSchemaName
       }
+      {
+        name: 'CREATE_OMOP_SCHEMAS_SCRIPT'
+        value: loadTextContent('sql/create_omop_schemas.sql')
+      }
+      {
+        name: 'CREATE_ACHILLES_SCHEMA_SCRIPT'
+        value: loadTextContent('sql/create_achilles_schema.sql')
+      }
+      {
+        name: 'ADD_OMOP_SOURCE_SCRIPT'
+        value: loadTextContent('sql/add_omop_source.sql')
+      }
 
     ]
     scriptContent: loadTextContent('scripts/create_omop_cdm.sh')
@@ -177,8 +189,6 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       'https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_constraints.sql'
       'https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_primary_keys.sql'
       'https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_indices.sql'
-      'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/create_omop_schemas.sql'
-      'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/templates/ohdsi-webapi/sql/add_omop_source.sql'
     ]
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
