@@ -1,13 +1,15 @@
 param location string
 param suffix string
 param odhsiWebApiName string
-param branchName string
 @secure()
 param postgresAdminPassword string
 @secure()
 param postgresWebapiAdminPassword string
 @secure()
 param postgresWebapiAppPassword string
+
+@description('Enables local access for debugging.')
+param localDebug bool = false
 
 var postgresAdminUsername = 'postgres_admin'
 var postgresWebapiAdminUsername = 'ohdsi_admin_user'
@@ -37,19 +39,27 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' =
     backup: {
       backupRetentionDays: 7
       geoRedundantBackup: 'Disabled'
-    }
-    availabilityZone: '3'
+    }    
   }
 }
 
 // Allow public access from any Azure service within Azure to this server
-resource allowAccessToAzureServices 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2021-06-01' = {
-  name: 'AllowAllWindowsAzureIps' 
+resource allowAccessToAzureServices 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2022-12-01' = {
+  name: 'AllowAllAzureIps' 
   parent: postgresServer
   properties: {
     startIpAddress: '0.0.0.0'
     endIpAddress: '0.0.0.0'
-  }
+  }  
+}
+
+resource allowAccessToAll 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2022-12-01' = if (localDebug) {
+  name: 'AllowAllIps' 
+  parent: postgresServer
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '255.255.255.255'
+  }  
 }
 
 // Create a new PostgreSQL database
@@ -62,24 +72,16 @@ resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2
   }
 }
 
-// Create a OHDSI users and groupss
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = { 
-    name: 'atlas-init-script-identity' 
-    location: location 
-} 
-resource deploymentAtlasInitscriptsWithOutputs 'Microsoft.Resources/deploymentScripts@2020-10-01' = { 
-    name: 'deployment-atlas-init-scripts-with-outputs' 
+resource deploymentAtlasInitScripts 'Microsoft.Resources/deploymentScripts@2020-10-01' = { 
+    name: 'deployment-atlas-init' 
     location: location 
     kind: 'AzureCLI' 
-    identity: { 
-        type: 'UserAssigned' 
-        userAssignedIdentities: { 
-            '${managedIdentity.id}': {} 
-        } 
-    } 
     properties: {
         azCliVersion: '2.42.0' 
-        timeout: 'PT30M'
+        timeout: 'PT5M'
+        containerSettings: {
+          containerGroupName: 'deployment-atlas-init'
+        }
          environmentVariables: [ 
             { 
                 name: 'MAIN_CONNECTION_STRING' 
@@ -116,18 +118,21 @@ resource deploymentAtlasInitscriptsWithOutputs 'Microsoft.Resources/deploymentSc
             {
               name: 'OHDSI_ADMIN_ROLE'
               value: postgresWebapiAdminRole
-
             }
             {
               name: 'OHDSI_APP_ROLE'
               value: postgresWebapiAppRole
             }
+            {
+              name: 'SQL_ATLAS_USERS'
+              value: loadTextContent('sql/atlas_create_roles_users.sql')
+            }
+            {
+              name: 'SQL_ATLAS_SCHEMA'
+              value: loadTextContent('sql/atlas_create_schema.sql')
+            }
         ] 
         scriptContent: loadTextContent('scripts/atlas_db_init.sh')
-        supportingScriptUris: [
-          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/infra/sql/atlas_create_roles_users.sql'
-          'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/infra/sql/atlas_create_schema.sql'
-        ]
         cleanupPreference: 'OnSuccess' 
         retentionInterval: 'PT1H' 
     } 

@@ -1,18 +1,25 @@
-#!bin/bash
+#!/bin/bash
+set -o errexit
+set -o pipefail
+set -o nounset
+
+LOG_FILE=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/all.log
+
+exec >  >(tee -ia ${LOG_FILE})
+exec 2> >(tee -ia ${LOG_FILE} >&2)
 
 apk --update add postgresql-client gettext
 admin_user_password="${OHDSI_ADMIN_PASSWORD}${OHDSI_ADMIN_USERNAME}"
 app_user_password="${OHDSI_APP_PASSWORD}${OHDSI_APP_USERNAME}"
-export admin_md5="'md5$(echo -n $admin_user_password | md5sum | awk '{ print $1 }')'"
-export app_md5="'md5$(echo -n $app_user_password | md5sum | awk '{ print $1 }')'"
-
-atlas_create_roles_users_script=$(envsubst < atlas_create_roles_users.sql)
-atlas_create_schema_script=$(envsubst < atlas_create_schema.sql)
+export admin_md5="'md5$(echo -n "$admin_user_password" | md5sum | awk '{ print $1 }')'"
+export app_md5="'md5$(echo -n "$app_user_password" | md5sum | awk '{ print $1 }')'"
 
 printf 'Creating roles and users'
-echo "$atlas_create_roles_users_script" | psql -e "$MAIN_CONNECTION_STRING"
+echo "$SQL_ATLAS_USERS" | envsubst | psql -v ON_ERROR_STOP=0 -e "$MAIN_CONNECTION_STRING"
+printf 'Creating roles and users: done.'
 
 printf 'Creating schema'
-echo "$atlas_create_schema_script" | psql -e "$OHDSI_ADMIN_CONNECTION_STRING"
+echo "$SQL_ATLAS_SCHEMA" | envsubst | psql -v ON_ERROR_STOP=1 -e "$OHDSI_ADMIN_CONNECTION_STRING"
+printf 'Creating schema: done.'
 
 printf 'Done'
