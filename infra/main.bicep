@@ -140,7 +140,7 @@ module atlasUI 'ohdsi_atlas_ui.bicep' = {
 output ohdsiWebapiUrl string = ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
 
 
-resource deploymentAtlasSecurity1 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'deployment-atlas-security'
   location: location
   kind: 'AzureCLI'

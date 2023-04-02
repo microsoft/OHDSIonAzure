@@ -80,7 +80,7 @@ resource deploymentAtlasInitScripts 'Microsoft.Resources/deploymentScripts@2020-
         azCliVersion: '2.42.0' 
         timeout: 'PT5M'
         containerSettings: {
-          containerGroupName: 'deployment-atals-init'
+          containerGroupName: 'deployment-atlas-init'
         }
          environmentVariables: [ 
             { 
