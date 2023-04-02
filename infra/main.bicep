@@ -2,21 +2,11 @@ targetScope = 'resourceGroup'
 
 @description('The location for all resources.')
 param location string = resourceGroup().location
-
-@description('The tenant id of the subscription')
-param tenantId string = subscription().tenantId
-
-@description('The name of the ohdsi webapi webapp')
 param odhsiWebApiName string = 'ohdsi-webapi'
-
-@description('Unique string to be used as a suffix for all resources')
 param suffix string = uniqueString(utcNow())
 
-@description('The name of the branch to use for downloading sql scripts')
-param branchName string = 'v2'
-
 @description('The url of the container where the cdm is stored')
-param cdmContainerUrl string
+param cdmContainerUrl string = 'https://omoppublic.blob.core.windows.net/shared/synthea1k/'
 
 @description('The sas token to access the cdm container')
 param cdmSasToken string
@@ -40,17 +30,20 @@ param postgresWebapiAppPassword string = uniqueString(newGuid())
 @description('The password for the postgres OMOP CDM user')
 param postgresOMOPCDMpassword string = uniqueString(newGuid())
 
+@description('Enables local access for debugging.')
+param localDebug bool = false
+
 @description('Creates the database server, users and groups required for ohdsi webapi')
 module atlasDatabase 'atlas_database.bicep' = {
   name: 'atlasDatabase'
   params: {
     location: location
     suffix: suffix
-    branchName: branchName
     odhsiWebApiName: odhsiWebApiName
     postgresAdminPassword: postgresAdminPassword
     postgresWebapiAdminPassword: postgresWebapiAdminPassword
     postgresWebapiAppPassword: postgresWebapiAppPassword
+    localDebug: localDebug
   }
 }
 
@@ -70,7 +63,6 @@ module keyvault 'keyvault.bicep' = {
   params: {
     location: location
     suffix: suffix
-    tenantId: tenantId
     odhsiWebApiName: odhsiWebApiName
     postgresAdminPassword: postgresAdminPassword
     postgresWebapiAdminPassword: postgresWebapiAdminPassword
@@ -106,30 +98,29 @@ module ohdsiWebApiWebapp 'ohdsi_webapi.bicep' = {
   ]
 }
 
-@description('Creates OMOP CDM database')
-module omopCDM 'omop_cdm.bicep' = {
-  name: 'omopCDM'
-  params: {
-    branchName: branchName
-    location: location
-    keyVaultName: keyvault.outputs.keyVaultName
-    cdmContainerUrl: cdmContainerUrl
-    cdmSasToken: cdmSasToken
-    postgresAtlasDatabaseName: atlasDatabase.outputs.postgresWebApiDatabaseName
-    postgresOMOPCDMDatabaseName: postgresOMOPCDMDatabaseName
-    postgresAdminPassword: postgresAdminPassword
-    postgresWebapiAdminPassword: postgresWebapiAdminPassword
-    postgresOMOPCDMpassword: postgresOMOPCDMpassword
-    postgresServerName: atlasDatabase.outputs.postgresServerName
-  }
+// @description('Creates OMOP CDM database')
+// module omopCDM 'omop_cdm.bicep' = {
+//   name: 'omopCDM'
+//   params: {
+//     location: location
+//     keyVaultName: keyvault.outputs.keyVaultName
+//     cdmContainerUrl: cdmContainerUrl
+//     cdmSasToken: cdmSasToken
+//     postgresAtlasDatabaseName: atlasDatabase.outputs.postgresWebApiDatabaseName
+//     postgresOMOPCDMDatabaseName: postgresOMOPCDMDatabaseName
+//     postgresAdminPassword: postgresAdminPassword
+//     postgresWebapiAdminPassword: postgresWebapiAdminPassword
+//     postgresOMOPCDMpassword: postgresOMOPCDMpassword
+//     postgresServerName: atlasDatabase.outputs.postgresServerName
+//   }
 
-  dependsOn: [
-    ohdsiWebApiWebapp
-    appServicePlan
-    keyvault
-    atlasDatabase
-  ]
-}
+//   dependsOn: [
+//     ohdsiWebApiWebapp
+//     appServicePlan
+//     keyvault
+//     atlasDatabase
+//   ]
+// }
 
 @description('Creates the ohdsi atlas UI')
 module atlasUI 'ohdsi_atlas_ui.bicep' = {
@@ -147,3 +138,46 @@ module atlasUI 'ohdsi_atlas_ui.bicep' = {
 }
 
 output ohdsiWebapiUrl string = ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
+
+
+resource deploymentAtlasSecurity1 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  name: 'deployment-atlas-security'
+  location: location
+  kind: 'AzureCLI'
+  properties: {
+    azCliVersion: '2.42.0'
+    timeout: 'PT5M'
+    forceUpdateTag: '5'
+    containerSettings: {
+      containerGroupName: 'deployment-atlas-security'
+    }
+    retentionInterval: 'PT1H'
+    cleanupPreference: 'OnExpiration' 
+    environmentVariables: [
+      {
+        name: 'OHDSI_ADMIN_CONNECTION_STRING'
+        secureValue: 'host=${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName} port=5432 dbname=${atlasDatabase.outputs.postgresWebApiDatabaseName} user=${atlasDatabase.outputs.postgresWebapiAdminUsername} password=${postgresWebapiAdminPassword} sslmode=require'
+      }
+      {
+        name: 'SQL'
+        value: loadTextContent('sql/atlas_security.sql')
+      }
+    ]
+    scriptContent: '''
+      #!/bin/bash
+      set -o errexit
+      set -o pipefail
+      set -o nounset
+
+      LOG_FILE=/mnt/azscripts/azscriptoutput/all.log
+      exec >  >(tee -ia ${LOG_FILE})
+      exec 2> >(tee -ia ${LOG_FILE} >&2)
+
+      apk --update add postgresql-client
+      psql -v ON_ERROR_STOP=1 -e "$OHDSI_ADMIN_CONNECTION_STRING" -c "$SQL"
+    '''
+  }
+  dependsOn: [
+    atlasDatabase
+  ]
+}

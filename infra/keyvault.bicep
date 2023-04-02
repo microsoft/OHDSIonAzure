@@ -1,6 +1,5 @@
 param location string
 param odhsiWebApiName string
-param tenantId string
 param suffix string
 @secure()
 param postgresAdminPassword string
@@ -10,6 +9,8 @@ param postgresWebapiAdminPassword string
 param postgresWebapiAppPassword string
 @secure()
 param jdbcConnectionStringWebapiAdmin string
+
+var tenantId = subscription().tenantId
 
 // User Assigned Identity
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
@@ -22,7 +23,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: 'kv-${suffix}'
   location: location
   properties: {
-    accessPolicies:[
+    accessPolicies: [
       {
         objectId: identity.properties.principalId
         permissions: {

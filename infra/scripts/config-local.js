@@ -14,5 +14,13 @@ define([], function () {
 	configLocal.userAuthenticationEnabled = true;
 	configLocal.plpResultsEnabled = false;
 
+	configLocal.authProviders = [{
+		"name": "Local Security Test DB",
+		"url": "user/login/db",
+		"ajax": true,
+		"icon": "fa fa-database",
+		"isUseCredentialsForm": true
+	}];
+
 	return configLocal;
 });

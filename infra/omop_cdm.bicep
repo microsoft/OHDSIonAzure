@@ -6,9 +6,6 @@ param location string = resourceGroup().location
 @description('The name of webapi CDM database')
 param postgresAtlasDatabaseName string
 
-@description('Used to download the sql scripts from the GitHub repository, this should point to the branch you want to use')
-param branchName string
-
 @description('The name of the postgres server')
 param postgresServerName string
 
@@ -88,26 +85,14 @@ resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2
   }
 }
 
-// Create a managed identity for the deployment script
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: 'managed-identity-omop-cdm'
-  location: location
-}
-
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'deployment-script-omop-cdm'
   location: location
   kind: 'AzureCLI'
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${managedIdentity.id}': {}
-    }
-  }
-
   properties: {
     azCliVersion: '2.42.0'
     timeout: 'PT60M'
+    forceUpdateTag: '1'
     environmentVariables: [
       {
         name: 'WEBAPI_SCHEMA_NAME'
@@ -148,7 +133,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'POSTGRES_OMOP_CDM_PASSWORD'
         secureValue: postgresOMOPCDMpassword
-      }      
+      }
       {
         name: 'OMOP_CDM_SAS_TOKEN'
         value: cdmSasToken
@@ -177,10 +162,14 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       'https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_constraints.sql'
       'https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_primary_keys.sql'
       'https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_indices.sql'
-      'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/infra/sql/create_omop_schemas.sql'
-      'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/${branchName}/infra/sql/add_omop_source.sql'
+      'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/v2/infra/sql/create_omop_schemas.sql'
+      'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/v2/infra/sql/create_achilles_schema.sql'
+      'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/v2/infra/sql/add_omop_source.sql'
     ]
     cleanupPreference: 'OnSuccess'
-    retentionInterval: 'P1D'
+    retentionInterval: 'PT1H'
+    containerSettings: {
+      containerGroupName: 'deployment-omop'
+    }
   }
 }
