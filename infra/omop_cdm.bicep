@@ -154,7 +154,18 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         name: 'POSTGRES_OMOP_TEMP_SCHEMA_NAME'
         value: postgresOMOPTempSchemaName
       }
-
+      {
+        name: 'SQL_create_omop_schemas'
+        value: loadTextContent('sql/create_omop_schemas.sql')
+      }
+      {
+        name: 'SQL_create_achilles_schema'
+        value: loadTextContent('sql/create_achilles_schema.sql')
+      }
+      {
+        name: 'SQL_add_omop_source'
+        value: loadTextContent('sql/add_omop_source.sql')
+      }
     ]
     scriptContent: loadTextContent('scripts/create_omop_cdm.sh')
     supportingScriptUris: [
@@ -162,11 +173,8 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       'https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_constraints.sql'
       'https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_primary_keys.sql'
       'https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_indices.sql'
-      'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/v2/infra/sql/create_omop_schemas.sql'
-      'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/v2/infra/sql/create_achilles_schema.sql'
-      'https://raw.githubusercontent.com/microsoft/OHDSIonAzure/v2/infra/sql/add_omop_source.sql'
     ]
-    cleanupPreference: 'OnSuccess'
+    cleanupPreference: 'OnExpiration'
     retentionInterval: 'PT1H'
     containerSettings: {
       containerGroupName: 'deployment-omop'
