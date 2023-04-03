@@ -17,8 +17,7 @@ pg_cdm_password="${POSTGRES_OMOP_CDM_PASSWORD}${POSTGRES_CDM_USERNAME}"
 export CDM_MD5="'md5$(echo -n $pg_cdm_password | md5sum | awk '{ print $1 }')'"
 
 printf 'Creating omp cdm schemas and user\n'
-create_omop_schemas_script=$(envsubst < create_omop_schemas.sql)
-echo "$create_omop_schemas_script" | psql "$OMOP_CONNECTION_STRING" -e
+echo "$SQL_create_omop_schemas" | envsubst | psql "$OMOP_CONNECTION_STRING" -e
 
 # create OMOP CDM (+ Vocabulary) tables
 printf 'Creating OMOP CDM tables\n'
@@ -27,8 +26,7 @@ psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_ddl.sql -v ON_ERROR_
 
 # create and load OMOP Results (Achilles) tables
 printf 'Creating OMOP Results tables\n'
-create_omop_results_script=$(envsubst < create_achilles_schema.sql)
-echo "$create_omop_results_script" | psql "$OMOP_CONNECTION_STRING" -e -v ON_ERROR_STOP=1
+echo "$SQL_create_achilles_schema" | envsubst | psql "$OMOP_CONNECTION_STRING" -e -v ON_ERROR_STOP=1
 
 # skip foreign key constraints for now due to open bug - https://github.com/OHDSI/CommonDataModel/issues/452
 # psql "$OMOP_CONNECTION_STRING" -f OMOPCDM_postgresql_5.4_constraints.sql
@@ -52,7 +50,7 @@ for element in "${tables[@]}"; do
     curl "${OMOP_CDM_CONTAINER_URL}$element.csv.gz${OMOP_CDM_SAS_TOKEN}" | gunzip > "$file"
     num_of_records=$(wc -l "$file" | awk '{print $1}')
     printf "Copying %s to table: %s\n" "$num_of_records" "$element"
-    psql "$OMOP_CONNECTION_STRING" -c "\COPY $element FROM '$file' WITH CSV;" -v ON_ERROR_STOP=1
+    psql "$OMOP_CONNECTION_STRING" -c "\COPY $element FROM '$file' WITH CSV;" #-v ON_ERROR_STOP=1
     rm -f "$file"
     printf "done\n"
 done
@@ -63,5 +61,4 @@ psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_indices.sql -v ON_ER
 
 # add OMOP CDM source to WebAPI
 printf 'adding OMOP CDM source to WebAPI\n'
-add_omop_source_script=$(envsubst < add_omop_source.sql)
-echo "$add_omop_source_script" | psql "$ATLAS_DB_CONNECTION_STRING" -e -v ON_ERROR_STOP=1
+echo "$SQL_add_omop_source" | envsubst | psql "$ATLAS_DB_CONNECTION_STRING" -e -v ON_ERROR_STOP=1

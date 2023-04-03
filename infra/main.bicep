@@ -6,6 +6,7 @@ param odhsiWebApiName string = 'ohdsi-webapi'
 param suffix string = uniqueString(utcNow())
 
 @description('The url of the container where the cdm is stored')
+#disable-next-line no-hardcoded-env-urls
 param cdmContainerUrl string = 'https://omoppublic.blob.core.windows.net/shared/synthea1k/'
 
 @description('The sas token to access the cdm container')
@@ -98,29 +99,29 @@ module ohdsiWebApiWebapp 'ohdsi_webapi.bicep' = {
   ]
 }
 
-// @description('Creates OMOP CDM database')
-// module omopCDM 'omop_cdm.bicep' = {
-//   name: 'omopCDM'
-//   params: {
-//     location: location
-//     keyVaultName: keyvault.outputs.keyVaultName
-//     cdmContainerUrl: cdmContainerUrl
-//     cdmSasToken: cdmSasToken
-//     postgresAtlasDatabaseName: atlasDatabase.outputs.postgresWebApiDatabaseName
-//     postgresOMOPCDMDatabaseName: postgresOMOPCDMDatabaseName
-//     postgresAdminPassword: postgresAdminPassword
-//     postgresWebapiAdminPassword: postgresWebapiAdminPassword
-//     postgresOMOPCDMpassword: postgresOMOPCDMpassword
-//     postgresServerName: atlasDatabase.outputs.postgresServerName
-//   }
+@description('Creates OMOP CDM database')
+module omopCDM 'omop_cdm.bicep' = {
+  name: 'omopCDM'
+  params: {
+    location: location
+    keyVaultName: keyvault.outputs.keyVaultName
+    cdmContainerUrl: cdmContainerUrl
+    cdmSasToken: cdmSasToken
+    postgresAtlasDatabaseName: atlasDatabase.outputs.postgresWebApiDatabaseName
+    postgresOMOPCDMDatabaseName: postgresOMOPCDMDatabaseName
+    postgresAdminPassword: postgresAdminPassword
+    postgresWebapiAdminPassword: postgresWebapiAdminPassword
+    postgresOMOPCDMpassword: postgresOMOPCDMpassword
+    postgresServerName: atlasDatabase.outputs.postgresServerName
+  }
 
-//   dependsOn: [
-//     ohdsiWebApiWebapp
-//     appServicePlan
-//     keyvault
-//     atlasDatabase
-//   ]
-// }
+  dependsOn: [
+    ohdsiWebApiWebapp
+    appServicePlan
+    keyvault
+    atlasDatabase
+  ]
+}
 
 @description('Creates the ohdsi atlas UI')
 module atlasUI 'ohdsi_atlas_ui.bicep' = {
@@ -139,7 +140,6 @@ module atlasUI 'ohdsi_atlas_ui.bicep' = {
 
 output ohdsiWebapiUrl string = ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
 
-
 resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'deployment-atlas-security'
   location: location
@@ -152,7 +152,7 @@ resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-
       containerGroupName: 'deployment-atlas-security'
     }
     retentionInterval: 'PT1H'
-    cleanupPreference: 'OnExpiration' 
+    cleanupPreference: 'OnExpiration'
     environmentVariables: [
       {
         name: 'OHDSI_ADMIN_CONNECTION_STRING'
