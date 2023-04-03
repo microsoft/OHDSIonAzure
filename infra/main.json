@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.15.31.15270",
-      "templateHash": "7023303063637145421"
+      "templateHash": "15587170820561935737"
     }
   },
   "parameters": {
@@ -16,36 +16,13 @@
         "description": "The location for all resources."
       }
     },
-    "tenantId": {
-      "type": "string",
-      "defaultValue": "[subscription().tenantId]",
-      "metadata": {
-        "description": "The tenant id of the subscription"
-      }
-    },
-    "odhsiWebApiName": {
-      "type": "string",
-      "defaultValue": "ohdsi-webapi",
-      "metadata": {
-        "description": "The name of the ohdsi webapi webapp"
-      }
-    },
     "suffix": {
       "type": "string",
-      "defaultValue": "[uniqueString(utcNow())]",
-      "metadata": {
-        "description": "Unique string to be used as a suffix for all resources"
-      }
-    },
-    "branchName": {
-      "type": "string",
-      "defaultValue": "v2",
-      "metadata": {
-        "description": "The name of the branch to use for downloading sql scripts"
-      }
+      "defaultValue": "[uniqueString(utcNow())]"
     },
     "cdmContainerUrl": {
       "type": "string",
+      "defaultValue": "https://omoppublic.blob.core.windows.net/shared/synthea1k/",
       "metadata": {
         "description": "The url of the container where the cdm is stored"
       }
@@ -89,9 +66,88 @@
       "metadata": {
         "description": "The password for the postgres OMOP CDM user"
       }
+    },
+    "localDebug": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enables local access for debugging."
+      }
     }
   },
+  "variables": {
+    "$fxv#0": "create schema IF NOT EXISTS webapi_security;\r\n\r\nDROP TABLE IF EXISTS webapi_security.security;\r\n\r\nCREATE TABLE webapi_security.security\r\n(\r\n    email character varying(255),\r\n    password character varying(255)\r\n);\r\n\r\ninsert into webapi_security.security (email,password) values ('admin', '$2a$10$opEKwT32fEvoPfSbzE1Rx.p8QsCG0KryiA7VEguLP/V0M62aho6mC');\r\ninsert into webapi_security.security (email,password) values ('ohdsi', '$2a$04$Fg8TEiD2u/xnDzaUQFyiP.uoDu4Do/tsYkTUCWNV0zTCW3HgnbJjO');\r\n\r\nGRANT USAGE ON SCHEMA webapi_security TO PUBLIC;\r\nGRANT ALL ON SCHEMA webapi_security TO GROUP ohdsi_admin;\r\n\r\n\r\n\r\ndo $$\r\n\r\n\tdeclare tables_count integer := 0;\r\n\tdeclare roles_count integer := 0;\r\n\r\nbegin\r\n\t\r\n\twhile tables_count <> 3 loop\r\n\t\traise notice 'Waiting for application security tables to become ready...';\r\n\t \tPERFORM pg_sleep(10);\r\n\t  \ttables_count := (\r\n\t\t\tSELECT \tCOUNT(*) \r\n\t\t\tFROM \tpg_tables\r\n\t\t\tWHERE \tschemaname = 'webapi'\r\n\t\t\t\t\tAND tablename  in ('sec_user', 'sec_role', 'sec_user_role')\r\n\t\t);\r\n   \tend loop;\r\n\r\n\traise notice 'All tables are ready.';\r\n\r\n\twhile roles_count <> 3 loop\r\n\t\traise notice 'Waiting for application security roles to become ready...';\r\n\t \tPERFORM pg_sleep(10);\r\n\t  \troles_count := (\r\n\t\t\tSELECT \tCOUNT(*) \r\n\t\t\tFROM \twebapi.sec_role\r\n\t\t\tWHERE \tid in (1, 2, 10)\r\n\t\t);\r\n   \tend loop;\r\n\t\r\n\traise notice 'All roles are ready.';\r\n\t\r\n\tinsert into webapi.sec_user (id, login, name) values (1000, 'admin', 'admin') ON CONFLICT DO NOTHING;\r\n\tinsert into webapi.sec_user_role (user_id, role_id) values (1000, 2); -- admin role\r\n\tinsert into webapi.sec_user_role (user_id, role_id) values (1000, 1); -- public role\r\n\r\n\tinsert into webapi.sec_user (id, login, name) values (1001, 'ohdsi', 'ohdsi') ON CONFLICT DO NOTHING;\r\n\tinsert into webapi.sec_user_role (user_id, role_id) values (1001, 10); -- atlas user role\r\n\tinsert into webapi.sec_user_role (user_id, role_id) values (1001, 1); -- public role\r\n\r\n   \traise notice 'Done.';\r\n\r\nend$$;\r\n",
+    "tenantId": "[subscription().tenantId]"
+  },
   "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[format('asp-{0}', parameters('suffix'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "S1"
+      },
+      "kind": "linux",
+      "properties": {
+        "reserved": true
+      },
+      "metadata": {
+        "description": "Creates the app service plan"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2022-07-01",
+      "name": "[format('kv-{0}', parameters('suffix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accessPolicies": [],
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[variables('tenantId')]",
+        "networkAcls": {
+          "defaultAction": "Allow",
+          "bypass": "AzureServices"
+        }
+      },
+      "metadata": {
+        "description": "Creates the key vault"
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2020-10-01",
+      "name": "deployment-atlas-security",
+      "location": "[parameters('location')]",
+      "kind": "AzureCLI",
+      "properties": {
+        "azCliVersion": "2.42.0",
+        "timeout": "PT5M",
+        "forceUpdateTag": "5",
+        "containerSettings": {
+          "containerGroupName": "deployment-atlas-security"
+        },
+        "retentionInterval": "PT1H",
+        "cleanupPreference": "OnExpiration",
+        "environmentVariables": [
+          {
+            "name": "OHDSI_ADMIN_CONNECTION_STRING",
+            "secureValue": "[format('host={0} port=5432 dbname={1} user={2} password={3} sslmode=require', reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2020-10-01').outputs.postgresServerFullyQualifiedDomainName.value, reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2020-10-01').outputs.postgresWebApiDatabaseName.value, reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2020-10-01').outputs.postgresWebapiAdminUsername.value, parameters('postgresWebapiAdminPassword'))]"
+          },
+          {
+            "name": "SQL",
+            "value": "[variables('$fxv#0')]"
+          }
+        ],
+        "scriptContent": "      #!/bin/bash\r\n      set -o errexit\r\n      set -o pipefail\r\n      set -o nounset\r\n\r\n      LOG_FILE=/mnt/azscripts/azscriptoutput/all.log\r\n      exec >  >(tee -ia ${LOG_FILE})\r\n      exec 2> >(tee -ia ${LOG_FILE} >&2)\r\n\r\n      apk --update add postgresql-client\r\n      psql -v ON_ERROR_STOP=1 -e \"$OHDSI_ADMIN_CONNECTION_STRING\" -c \"$SQL\"\r\n    "
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'atlasDatabase')]"
+      ]
+    },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-10-01",
@@ -108,11 +164,8 @@
           "suffix": {
             "value": "[parameters('suffix')]"
           },
-          "branchName": {
-            "value": "[parameters('branchName')]"
-          },
-          "odhsiWebApiName": {
-            "value": "[parameters('odhsiWebApiName')]"
+          "keyVaultName": {
+            "value": "[format('kv-{0}', parameters('suffix'))]"
           },
           "postgresAdminPassword": {
             "value": "[parameters('postgresAdminPassword')]"
@@ -122,6 +175,9 @@
           },
           "postgresWebapiAppPassword": {
             "value": "[parameters('postgresWebapiAppPassword')]"
+          },
+          "localDebug": {
+            "value": "[parameters('localDebug')]"
           }
         },
         "template": {
@@ -131,7 +187,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.15.31.15270",
-              "templateHash": "5810087179081620641"
+              "templateHash": "18035862639070826940"
             }
           },
           "parameters": {
@@ -141,10 +197,7 @@
             "suffix": {
               "type": "string"
             },
-            "odhsiWebApiName": {
-              "type": "string"
-            },
-            "branchName": {
+            "keyVaultName": {
               "type": "string"
             },
             "postgresAdminPassword": {
@@ -155,10 +208,19 @@
             },
             "postgresWebapiAppPassword": {
               "type": "securestring"
+            },
+            "localDebug": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Enables local access for debugging."
+              }
             }
           },
           "variables": {
-            "$fxv#0": "#!bin/bash\n\napk --update add postgresql-client gettext\nadmin_user_password=\"${OHDSI_ADMIN_PASSWORD}${OHDSI_ADMIN_USERNAME}\"\napp_user_password=\"${OHDSI_APP_PASSWORD}${OHDSI_APP_USERNAME}\"\nexport admin_md5=\"'md5$(echo -n $admin_user_password | md5sum | awk '{ print $1 }')'\"\nexport app_md5=\"'md5$(echo -n $app_user_password | md5sum | awk '{ print $1 }')'\"\n\natlas_create_roles_users_script=$(envsubst < atlas_create_roles_users.sql)\natlas_create_schema_script=$(envsubst < atlas_create_schema.sql)\n\nprintf 'Creating roles and users'\necho \"$atlas_create_roles_users_script\" | psql -e \"$MAIN_CONNECTION_STRING\"\n\nprintf 'Creating schema'\necho \"$atlas_create_schema_script\" | psql -e \"$OHDSI_ADMIN_CONNECTION_STRING\"\n\nprintf 'Done'\n",
+            "$fxv#0": "CREATE ROLE ${OHDSI_ADMIN_ROLE} CREATEDB REPLICATION VALID UNTIL 'infinity';\r\n\r\nCOMMENT ON ROLE ${OHDSI_ADMIN_ROLE} IS 'Administration group for OHDSI applications';\r\n\r\nCREATE ROLE ${OHDSI_APP_ROLE} VALID UNTIL 'infinity';\r\n\r\nCOMMENT ON ROLE ${OHDSI_APP_ROLE} IS 'Application groupfor OHDSI applications';\r\n\r\nCREATE ROLE ${OHDSI_ADMIN_USERNAME} LOGIN ENCRYPTED PASSWORD ${admin_md5} VALID UNTIL 'infinity';\r\n\r\nGRANT ${OHDSI_ADMIN_ROLE} TO ${OHDSI_ADMIN_USERNAME};\r\n\r\nCOMMENT ON ROLE ${OHDSI_ADMIN_USERNAME} IS 'Admin user account for OHDSI applications';\r\n\r\nCREATE ROLE ${OHDSI_APP_USERNAME} LOGIN ENCRYPTED PASSWORD ${app_md5} VALID UNTIL 'infinity';\r\n\r\nGRANT ${OHDSI_APP_ROLE} TO ${OHDSI_APP_USERNAME};\r\n\r\nCOMMENT ON ROLE ${OHDSI_APP_USERNAME} IS 'Application user account for OHDSI applications';\r\n\r\nGRANT ALL ON DATABASE ${DATABASE_NAME} TO GROUP ${OHDSI_ADMIN_ROLE};\r\n\r\nGRANT CONNECT, TEMPORARY ON DATABASE ${DATABASE_NAME} TO GROUP ${OHDSI_APP_ROLE};",
+            "$fxv#1": "CREATE SCHEMA ${SCHEMA_NAME}\r\nAUTHORIZATION ${OHDSI_ADMIN_ROLE};\r\n\r\nCOMMENT ON SCHEMA ${SCHEMA_NAME} IS 'Schema containing tables to support WebAPI functionality';\r\n\r\nGRANT USAGE ON SCHEMA ${SCHEMA_NAME} TO PUBLIC;\r\n\r\nGRANT ALL ON SCHEMA ${SCHEMA_NAME} TO GROUP ${OHDSI_ADMIN_ROLE};\r\n\r\nGRANT USAGE ON SCHEMA ${SCHEMA_NAME} TO GROUP ${OHDSI_APP_ROLE};\r\n\r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${SCHEMA_NAME} GRANT\r\nINSERT,\r\nSELECT,\r\nUPDATE,\r\nDELETE, REFERENCES,\r\n        TRIGGER ON TABLES TO ${OHDSI_APP_ROLE};\r\n\r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${SCHEMA_NAME} GRANT\r\nSELECT, USAGE ON SEQUENCES TO ${OHDSI_APP_ROLE};\r\n\r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${SCHEMA_NAME} GRANT EXECUTE ON FUNCTIONS TO ${OHDSI_APP_ROLE};\r\n\r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${SCHEMA_NAME} GRANT USAGE ON TYPES TO ${OHDSI_APP_ROLE};",
+            "$fxv#2": "#!/bin/bash\r\nset -o errexit\r\nset -o pipefail\r\nset -o nounset\r\n\r\nLOG_FILE=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/all.log\r\n\r\nexec >  >(tee -ia ${LOG_FILE})\r\nexec 2> >(tee -ia ${LOG_FILE} >&2)\r\n\r\napk --update add postgresql-client gettext\r\nadmin_user_password=\"${OHDSI_ADMIN_PASSWORD}${OHDSI_ADMIN_USERNAME}\"\r\napp_user_password=\"${OHDSI_APP_PASSWORD}${OHDSI_APP_USERNAME}\"\r\nexport admin_md5=\"'md5$(echo -n \"$admin_user_password\" | md5sum | awk '{ print $1 }')'\"\r\nexport app_md5=\"'md5$(echo -n \"$app_user_password\" | md5sum | awk '{ print $1 }')'\"\r\n\r\nprintf 'Creating roles and users'\r\necho \"$SQL_ATLAS_USERS\" | envsubst | psql -v ON_ERROR_STOP=0 -e \"$MAIN_CONNECTION_STRING\"\r\nprintf 'Creating roles and users: done.'\r\n\r\nprintf 'Creating schema'\r\necho \"$SQL_ATLAS_SCHEMA\" | envsubst | psql -v ON_ERROR_STOP=1 -e \"$OHDSI_ADMIN_CONNECTION_STRING\"\r\nprintf 'Creating schema: done.'\r\n\r\nprintf 'Done'\r\n",
             "postgresAdminUsername": "postgres_admin",
             "postgresWebapiAdminUsername": "ohdsi_admin_user",
             "postgresWebapiAdminRole": "ohdsi_admin",
@@ -170,9 +232,33 @@
           },
           "resources": [
             {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2022-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'postgres-admin-password')]",
+              "properties": {
+                "value": "[parameters('postgresAdminPassword')]"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2022-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'ohdsi-admin-password')]",
+              "properties": {
+                "value": "[parameters('postgresWebapiAdminPassword')]"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2022-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'ohdsi-app-password')]",
+              "properties": {
+                "value": "[parameters('postgresWebapiAppPassword')]"
+              }
+            },
+            {
               "type": "Microsoft.DBforPostgreSQL/flexibleServers",
               "apiVersion": "2022-12-01",
-              "name": "[format('postgresql-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix'))]",
+              "name": "[format('psql-{0}', parameters('suffix'))]",
               "location": "[parameters('location')]",
               "sku": {
                 "name": "Standard_D2s_v3",
@@ -188,63 +274,66 @@
                 "backup": {
                   "backupRetentionDays": 7,
                   "geoRedundantBackup": "Disabled"
-                },
-                "availabilityZone": "3"
+                }
               }
             },
             {
               "type": "Microsoft.DBforPostgreSQL/flexibleServers/firewallRules",
-              "apiVersion": "2021-06-01",
-              "name": "[format('{0}/{1}', format('postgresql-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix')), 'AllowAllWindowsAzureIps')]",
+              "apiVersion": "2022-12-01",
+              "name": "[format('{0}/{1}', format('psql-{0}', parameters('suffix')), 'AllowAllAzureIps')]",
               "properties": {
                 "startIpAddress": "0.0.0.0",
                 "endIpAddress": "0.0.0.0"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('postgresql-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix')))]"
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('psql-{0}', parameters('suffix')))]"
+              ]
+            },
+            {
+              "condition": "[parameters('localDebug')]",
+              "type": "Microsoft.DBforPostgreSQL/flexibleServers/firewallRules",
+              "apiVersion": "2022-12-01",
+              "name": "[format('{0}/{1}', format('psql-{0}', parameters('suffix')), 'AllowAllIps')]",
+              "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "255.255.255.255"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('psql-{0}', parameters('suffix')))]"
               ]
             },
             {
               "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
               "apiVersion": "2022-12-01",
-              "name": "[format('{0}/{1}', format('postgresql-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix')), variables('postgresWebApiDatabaseName'))]",
+              "name": "[format('{0}/{1}', format('psql-{0}', parameters('suffix')), variables('postgresWebApiDatabaseName'))]",
               "properties": {
                 "charset": "utf8",
                 "collation": "en_US.utf8"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('postgresql-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix')))]"
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('psql-{0}', parameters('suffix')))]"
               ]
-            },
-            {
-              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-              "apiVersion": "2023-01-31",
-              "name": "atlas-init-script-identity",
-              "location": "[parameters('location')]"
             },
             {
               "type": "Microsoft.Resources/deploymentScripts",
               "apiVersion": "2020-10-01",
-              "name": "deployment-atlas-init-scripts-with-outputs",
+              "name": "deployment-ohdsi-webapi-init",
               "location": "[parameters('location')]",
               "kind": "AzureCLI",
-              "identity": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'atlas-init-script-identity'))]": {}
-                }
-              },
               "properties": {
                 "azCliVersion": "2.42.0",
-                "timeout": "PT30M",
+                "timeout": "PT5M",
+                "containerSettings": {
+                  "containerGroupName": "deployment-ohdsi-webapi-init"
+                },
                 "environmentVariables": [
                   {
                     "name": "MAIN_CONNECTION_STRING",
-                    "secureValue": "[format('host={0} port=5432 dbname={1} user={2} password={3} sslmode=require', reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('postgresql-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix'))), '2022-12-01').fullyQualifiedDomainName, variables('postgresWebApiDatabaseName'), variables('postgresAdminUsername'), parameters('postgresAdminPassword'))]"
+                    "secureValue": "[format('host={0} port=5432 dbname={1} user={2} password={3} sslmode=require', reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('psql-{0}', parameters('suffix'))), '2022-12-01').fullyQualifiedDomainName, variables('postgresWebApiDatabaseName'), variables('postgresAdminUsername'), parameters('postgresAdminPassword'))]"
                   },
                   {
                     "name": "OHDSI_ADMIN_CONNECTION_STRING",
-                    "secureValue": "[format('host={0} port=5432 dbname={1} user={2} password={3} sslmode=require', reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('postgresql-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix'))), '2022-12-01').fullyQualifiedDomainName, variables('postgresWebApiDatabaseName'), variables('postgresWebapiAdminUsername'), parameters('postgresWebapiAdminPassword'))]"
+                    "secureValue": "[format('host={0} port=5432 dbname={1} user={2} password={3} sslmode=require', reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('psql-{0}', parameters('suffix'))), '2022-12-01').fullyQualifiedDomainName, variables('postgresWebApiDatabaseName'), variables('postgresWebapiAdminUsername'), parameters('postgresWebapiAdminPassword'))]"
                   },
                   {
                     "name": "DATABASE_NAME",
@@ -277,39 +366,46 @@
                   {
                     "name": "OHDSI_APP_ROLE",
                     "value": "[variables('postgresWebapiAppRole')]"
+                  },
+                  {
+                    "name": "SQL_ATLAS_USERS",
+                    "value": "[variables('$fxv#0')]"
+                  },
+                  {
+                    "name": "SQL_ATLAS_SCHEMA",
+                    "value": "[variables('$fxv#1')]"
                   }
                 ],
-                "scriptContent": "[variables('$fxv#0')]",
-                "supportingScriptUris": [
-                  "[format('https://raw.githubusercontent.com/microsoft/OHDSIonAzure/{0}/infra/sql/atlas_create_roles_users.sql', parameters('branchName'))]",
-                  "[format('https://raw.githubusercontent.com/microsoft/OHDSIonAzure/{0}/infra/sql/atlas_create_schema.sql', parameters('branchName'))]"
-                ],
+                "scriptContent": "[variables('$fxv#2')]",
                 "cleanupPreference": "OnSuccess",
                 "retentionInterval": "PT1H"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'atlas-init-script-identity')]",
-                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/databases', format('postgresql-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix')), variables('postgresWebApiDatabaseName'))]",
-                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('postgresql-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix')))]"
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/databases', format('psql-{0}', parameters('suffix')), variables('postgresWebApiDatabaseName'))]",
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('psql-{0}', parameters('suffix')))]"
               ]
             }
           ],
           "outputs": {
+            "postgresWebapiAdminSecretName": {
+              "type": "string",
+              "value": "ohdsi-admin-password"
+            },
+            "postgresWebapiAppSecretName": {
+              "type": "string",
+              "value": "ohdsi-app-password"
+            },
             "postgresServerName": {
               "type": "string",
-              "value": "[format('postgresql-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix'))]"
+              "value": "[format('psql-{0}', parameters('suffix'))]"
             },
             "postgresServerFullyQualifiedDomainName": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('postgresql-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix'))), '2022-12-01').fullyQualifiedDomainName]"
+              "value": "[reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('psql-{0}', parameters('suffix'))), '2022-12-01').fullyQualifiedDomainName]"
             },
             "postgresSchemaName": {
               "type": "string",
               "value": "[variables('postgresSchemaName')]"
-            },
-            "postgresAdminUsername": {
-              "type": "string",
-              "value": "[variables('postgresAdminUsername')]"
             },
             "postgresWebapiAdminUsername": {
               "type": "string",
@@ -326,272 +422,11 @@
           }
         }
       },
-      "metadata": {
-        "description": "Creates the database server, users and groups required for ohdsi webapi"
-      }
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
-      "name": "appServicePlan",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "suffix": {
-            "value": "[parameters('suffix')]"
-          },
-          "odhsiWebApiName": {
-            "value": "[parameters('odhsiWebApiName')]"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.15.31.15270",
-              "templateHash": "12368269893202633877"
-            }
-          },
-          "parameters": {
-            "location": {
-              "type": "string"
-            },
-            "odhsiWebApiName": {
-              "type": "string"
-            },
-            "suffix": {
-              "type": "string"
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.Web/serverfarms",
-              "apiVersion": "2022-03-01",
-              "name": "[format('appServicePlan-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix'))]",
-              "location": "[parameters('location')]",
-              "sku": {
-                "name": "S1",
-                "tier": "Standard",
-                "size": "S1"
-              },
-              "kind": "linux",
-              "properties": {
-                "reserved": true
-              }
-            }
-          ],
-          "outputs": {
-            "appServicePlanId": {
-              "type": "string",
-              "value": "[resourceId('Microsoft.Web/serverfarms', format('appServicePlan-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix')))]"
-            }
-          }
-        }
-      },
-      "metadata": {
-        "description": "Creates the app service plan"
-      }
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
-      "name": "keyvault",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "suffix": {
-            "value": "[parameters('suffix')]"
-          },
-          "tenantId": {
-            "value": "[parameters('tenantId')]"
-          },
-          "odhsiWebApiName": {
-            "value": "[parameters('odhsiWebApiName')]"
-          },
-          "postgresAdminPassword": {
-            "value": "[parameters('postgresAdminPassword')]"
-          },
-          "postgresWebapiAdminPassword": {
-            "value": "[parameters('postgresWebapiAdminPassword')]"
-          },
-          "postgresWebapiAppPassword": {
-            "value": "[parameters('postgresWebapiAppPassword')]"
-          },
-          "jdbcConnectionStringWebapiAdmin": {
-            "value": "[format('jdbc:postgresql://{0}:5432/{1}?user={2}&password={3}&sslmode=require', reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2020-10-01').outputs.postgresServerFullyQualifiedDomainName.value, reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2020-10-01').outputs.postgresWebApiDatabaseName.value, reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2020-10-01').outputs.postgresWebapiAdminUsername.value, parameters('postgresWebapiAdminPassword'))]"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.15.31.15270",
-              "templateHash": "788685165295863027"
-            }
-          },
-          "parameters": {
-            "location": {
-              "type": "string"
-            },
-            "odhsiWebApiName": {
-              "type": "string"
-            },
-            "tenantId": {
-              "type": "string"
-            },
-            "suffix": {
-              "type": "string"
-            },
-            "postgresAdminPassword": {
-              "type": "securestring"
-            },
-            "postgresWebapiAdminPassword": {
-              "type": "securestring"
-            },
-            "postgresWebapiAppPassword": {
-              "type": "securestring"
-            },
-            "jdbcConnectionStringWebapiAdmin": {
-              "type": "securestring"
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-              "apiVersion": "2023-01-31",
-              "name": "[format('kv-identity-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix'))]",
-              "location": "[parameters('location')]"
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults",
-              "apiVersion": "2022-07-01",
-              "name": "[format('kv-{0}', parameters('suffix'))]",
-              "location": "[parameters('location')]",
-              "properties": {
-                "accessPolicies": [
-                  {
-                    "objectId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('kv-identity-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix'))), '2023-01-31').principalId]",
-                    "permissions": {
-                      "secrets": [
-                        "Get",
-                        "List"
-                      ]
-                    },
-                    "tenantId": "[parameters('tenantId')]"
-                  }
-                ],
-                "sku": {
-                  "family": "A",
-                  "name": "standard"
-                },
-                "tenantId": "[parameters('tenantId')]",
-                "networkAcls": {
-                  "defaultAction": "Allow",
-                  "bypass": "AzureServices"
-                }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('kv-identity-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix')))]"
-              ]
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults/secrets",
-              "apiVersion": "2022-07-01",
-              "name": "[format('{0}/{1}', format('kv-{0}', parameters('suffix')), 'postgres-admin-password')]",
-              "properties": {
-                "value": "[parameters('postgresAdminPassword')]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('suffix')))]"
-              ]
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults/secrets",
-              "apiVersion": "2022-07-01",
-              "name": "[format('{0}/{1}', format('kv-{0}', parameters('suffix')), 'ohdsi-admin-password')]",
-              "properties": {
-                "value": "[parameters('postgresWebapiAdminPassword')]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('suffix')))]"
-              ]
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults/secrets",
-              "apiVersion": "2022-07-01",
-              "name": "[format('{0}/{1}', format('kv-{0}', parameters('suffix')), 'ohdsi-app-password')]",
-              "properties": {
-                "value": "[parameters('postgresWebapiAppPassword')]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('suffix')))]"
-              ]
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults/secrets",
-              "apiVersion": "2022-07-01",
-              "name": "[format('{0}/{1}', format('kv-{0}', parameters('suffix')), 'jdbc-connectionstring')]",
-              "properties": {
-                "value": "[parameters('jdbcConnectionStringWebapiAdmin')]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('suffix')))]"
-              ]
-            }
-          ],
-          "outputs": {
-            "keyVaultName": {
-              "type": "string",
-              "value": "[format('kv-{0}', parameters('suffix'))]"
-            },
-            "keyVaultResourceId": {
-              "type": "string",
-              "value": "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('suffix')))]"
-            },
-            "userAssignedIdentityId": {
-              "type": "string",
-              "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('kv-identity-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix')))]"
-            },
-            "postgresAdminSecretName": {
-              "type": "string",
-              "value": "postgres-admin-password"
-            },
-            "postgresWebapiAdminSecretName": {
-              "type": "string",
-              "value": "ohdsi-admin-password"
-            },
-            "postgresWebapiAppSecretName": {
-              "type": "string",
-              "value": "ohdsi-app-password"
-            },
-            "jdbcConnectionStringWebapiAdminSecretName": {
-              "type": "string",
-              "value": "jdbc-connectionstring"
-            }
-          }
-        }
-      },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'atlasDatabase')]"
+        "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('suffix')))]"
       ],
       "metadata": {
-        "description": "Creates the key vault"
+        "description": "Creates the database server, users and groups required for ohdsi webapi"
       }
     },
     {
@@ -610,26 +445,20 @@
           "suffix": {
             "value": "[parameters('suffix')]"
           },
-          "odhsiWebApiName": {
-            "value": "[parameters('odhsiWebApiName')]"
-          },
           "appServicePlanId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appServicePlan'), '2020-10-01').outputs.appServicePlanId.value]"
+            "value": "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}', parameters('suffix')))]"
           },
           "keyVaultName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault'), '2020-10-01').outputs.keyVaultName.value]"
+            "value": "[format('kv-{0}', parameters('suffix'))]"
           },
-          "userAssignedIdentityId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault'), '2020-10-01').outputs.userAssignedIdentityId.value]"
-          },
-          "jdbcConnectionStringWebapiAdminSecret": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault'), '2020-10-01').outputs.jdbcConnectionStringWebapiAdminSecretName.value]"
+          "jdbcConnectionStringWebapiAdmin": {
+            "value": "[format('jdbc:postgresql://{0}:5432/{1}?user={2}&password={3}&sslmode=require', reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2020-10-01').outputs.postgresServerFullyQualifiedDomainName.value, reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2020-10-01').outputs.postgresWebApiDatabaseName.value, reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2020-10-01').outputs.postgresWebapiAdminUsername.value, parameters('postgresWebapiAdminPassword'))]"
           },
           "postgresWebapiAdminSecret": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault'), '2020-10-01').outputs.postgresWebapiAdminSecretName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2020-10-01').outputs.postgresWebapiAdminSecretName.value]"
           },
           "postgresWebapiAppSecret": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault'), '2020-10-01').outputs.postgresWebapiAppSecretName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2020-10-01').outputs.postgresWebapiAppSecretName.value]"
           },
           "postgresWebapiAdminUsername": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2020-10-01').outputs.postgresWebapiAdminUsername.value]"
@@ -648,7 +477,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.15.31.15270",
-              "templateHash": "2154823687148433035"
+              "templateHash": "324083192835473214"
             }
           },
           "parameters": {
@@ -656,12 +485,6 @@
               "type": "string"
             },
             "suffix": {
-              "type": "string"
-            },
-            "userAssignedIdentityId": {
-              "type": "string"
-            },
-            "odhsiWebApiName": {
               "type": "string"
             },
             "appServicePlanId": {
@@ -679,7 +502,7 @@
             "postgresWebapiAdminUsername": {
               "type": "string"
             },
-            "jdbcConnectionStringWebapiAdminSecret": {
+            "jdbcConnectionStringWebapiAdmin": {
               "type": "securestring"
             },
             "postgresWebapiAppSecret": {
@@ -693,20 +516,58 @@
             "dockerRegistryServer": "https://index.docker.io/v1",
             "dockerImageName": "ohdsi/webapi",
             "dockerImageTag": "2.12.1",
-            "flywayBaselineVersion": "2.2.5.20180212152023"
+            "flywayBaselineVersion": "2.2.5.20180212152023",
+            "tenantId": "[subscription().tenantId]"
           },
           "resources": [
             {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2022-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'jdbc-connectionstring')]",
+              "properties": {
+                "value": "[parameters('jdbcConnectionStringWebapiAdmin')]"
+              }
+            },
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "[format('id-ohdsiwebapi-{0}', parameters('suffix'))]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/accessPolicies",
+              "apiVersion": "2022-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'add')]",
+              "properties": {
+                "accessPolicies": [
+                  {
+                    "objectId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-ohdsiwebapi-{0}', parameters('suffix'))), '2023-01-31').principalId]",
+                    "permissions": {
+                      "secrets": [
+                        "Get",
+                        "List"
+                      ]
+                    },
+                    "tenantId": "[variables('tenantId')]"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-ohdsiwebapi-{0}', parameters('suffix')))]"
+              ]
+            },
+            {
               "type": "Microsoft.Web/sites",
               "apiVersion": "2022-03-01",
-              "name": "[format('webapp-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix'))]",
+              "name": "[format('app-ohdsiwebapi-{0}', parameters('suffix'))]",
               "location": "[parameters('location')]",
               "properties": {
                 "httpsOnly": true,
-                "keyVaultReferenceIdentity": "[parameters('userAssignedIdentityId')]",
+                "keyVaultReferenceIdentity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-ohdsiwebapi-{0}', parameters('suffix')))]",
                 "serverFarmId": "[parameters('appServicePlanId')]",
                 "siteConfig": {
                   "linuxFxVersion": "[format('DOCKER|{0}:{1}', variables('dockerImageName'), variables('dockerImageTag'))]",
+                  "alwaysOn": true,
                   "appSettings": [
                     {
                       "name": "DOCKER_REGISTRY_SERVER_URL",
@@ -730,7 +591,7 @@
                     },
                     {
                       "name": "DATASOURCE_URL",
-                      "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', parameters('keyVaultName'), parameters('jdbcConnectionStringWebapiAdminSecret'))]"
+                      "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', parameters('keyVaultName'), 'jdbc-connectionstring')]"
                     },
                     {
                       "name": "FLYWAY_BASELINEDESCRIPTION",
@@ -758,7 +619,7 @@
                     },
                     {
                       "name": "FLYWAY_DATASOURCE_URL",
-                      "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', parameters('keyVaultName'), parameters('jdbcConnectionStringWebapiAdminSecret'))]"
+                      "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', parameters('keyVaultName'), 'jdbc-connectionstring')]"
                     },
                     {
                       "name": "FLYWAY_LOCATIONS",
@@ -779,6 +640,50 @@
                     {
                       "name": "SECURITY_SSL_ENABLED",
                       "value": "false"
+                    },
+                    {
+                      "name": "SECURITY_CORS_ENABLED",
+                      "value": "true"
+                    },
+                    {
+                      "name": "SECURITY_DB_DATASOURCE_AUTHENTICATIONQUERY",
+                      "value": "select password from webapi_security.security where email = ?"
+                    },
+                    {
+                      "name": "SECURITY_DB_DATASOURCE_PASSWORD",
+                      "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', parameters('keyVaultName'), parameters('postgresWebapiAdminSecret'))]"
+                    },
+                    {
+                      "name": "SECURITY_DB_DATASOURCE_SCHEMA",
+                      "value": "webapi_security"
+                    },
+                    {
+                      "name": "SECURITY_DB_DATASOURCE_URL",
+                      "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', parameters('keyVaultName'), 'jdbc-connectionstring')]"
+                    },
+                    {
+                      "name": "SECURITY_DB_DATASOURCE_USERNAME",
+                      "value": "[parameters('postgresWebapiAdminUsername')]"
+                    },
+                    {
+                      "name": "SECURITY_DURATION_INCREMENT",
+                      "value": "10"
+                    },
+                    {
+                      "name": "SECURITY_DURATION_INITIAL",
+                      "value": "10"
+                    },
+                    {
+                      "name": "SECURITY_MAXLOGINATTEMPTS",
+                      "value": "3"
+                    },
+                    {
+                      "name": "SECURITY_ORIGIN",
+                      "value": "*"
+                    },
+                    {
+                      "name": "SECURITY_PROVIDER",
+                      "value": "AtlasRegularSecurity"
                     },
                     {
                       "name": "SPRING_BATCH_REPOSITORY_TABLEPREFIX",
@@ -818,23 +723,27 @@
               "identity": {
                 "type": "UserAssigned",
                 "userAssignedIdentities": {
-                  "[format('{0}', parameters('userAssignedIdentityId'))]": {}
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-ohdsiwebapi-{0}', parameters('suffix'))))]": {}
                 }
-              }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), 'jdbc-connectionstring')]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-ohdsiwebapi-{0}', parameters('suffix')))]"
+              ]
             }
           ],
           "outputs": {
             "ohdsiWebapiUrl": {
               "type": "string",
-              "value": "[format('https://{0}/WebAPI', reference(resourceId('Microsoft.Web/sites', format('webapp-{0}-{1}', parameters('odhsiWebApiName'), parameters('suffix'))), '2022-03-01').defaultHostName)]"
+              "value": "[format('https://{0}/WebAPI/', reference(resourceId('Microsoft.Web/sites', format('app-ohdsiwebapi-{0}', parameters('suffix'))), '2022-03-01').defaultHostName)]"
             }
           }
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'appServicePlan')]",
+        "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}', parameters('suffix')))]",
         "[resourceId('Microsoft.Resources/deployments', 'atlasDatabase')]",
-        "[resourceId('Microsoft.Resources/deployments', 'keyvault')]"
+        "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('suffix')))]"
       ],
       "metadata": {
         "description": "Creates the ohdsi webapi"
@@ -850,14 +759,11 @@
         },
         "mode": "Incremental",
         "parameters": {
-          "branchName": {
-            "value": "[parameters('branchName')]"
-          },
           "location": {
             "value": "[parameters('location')]"
           },
           "keyVaultName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault'), '2020-10-01').outputs.keyVaultName.value]"
+            "value": "[format('kv-{0}', parameters('suffix'))]"
           },
           "cdmContainerUrl": {
             "value": "[parameters('cdmContainerUrl')]"
@@ -891,7 +797,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.15.31.15270",
-              "templateHash": "2257943334279523159"
+              "templateHash": "9388001108154872622"
             }
           },
           "parameters": {
@@ -906,12 +812,6 @@
               "type": "string",
               "metadata": {
                 "description": "The name of webapi CDM database"
-              }
-            },
-            "branchName": {
-              "type": "string",
-              "metadata": {
-                "description": "Used to download the sql scripts from the GitHub repository, this should point to the branch you want to use"
               }
             },
             "postgresServerName": {
@@ -964,7 +864,10 @@
             }
           },
           "variables": {
-            "$fxv#0": "#!/bin/bash\n\n# install postgresql client\necho 'installing psql...'\napk --update add postgresql-client gettext\n\n# create OMOP CDM schema and user\npg_cdm_password=\"${POSTGRES_OMOP_CDM_PASSWORD}${POSTGRES_CDM_USERNAME}\"\nexport CDM_MD5=\"'md5$(echo -n $pg_cdm_password | md5sum | awk '{ print $1 }')'\"\n\nprintf 'Creating omp cdm schemas and user\\n'\ncreate_omop_schemas_script=$(envsubst < create_omop_schemas.sql)\necho \"$create_omop_schemas_script\" | psql \"$OMOP_CONNECTION_STRING\" -e\n\n# create OMOP CDM (+ Vocabulary) tables\nprintf 'Creating OMOP CDM tables\\n'\nsed -i  s/@cdmDatabaseSchema/${POSTGRES_OMOP_CDM_SCHEMA_NAME}/g OMOPCDM_postgresql_5.4_ddl.sql OMOPCDM_postgresql_5.4_constraints.sql OMOPCDM_postgresql_5.4_primary_keys.sql OMOPCDM_postgresql_5.4_indices.sql\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOPCDM_postgresql_5.4_ddl.sql\n\n# create and load OMOP Results (Achilles) tables\nprintf 'Creating OMOP Results tables\\n'\ncreate_omop_results_script=$(envsubst < create_achilles_schema.sql)\necho \"$create_omop_results_script\" | psql \"$OMOP_CONNECTION_STRING\" -e\n\n# skip foreign key constraints for now due to open bug - https://github.com/OHDSI/CommonDataModel/issues/452\n#psql \"$OMOP_CONNECTION_STRING\" -f OMOPCDM_postgresql_5.4_constraints.sql\n\n# create OMOP CDM primary keys\nprintf 'Creating OMOP CDM primary keys\\n'\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOPCDM_postgresql_5.4_primary_keys.sql\n\n# load OMOP CDM data\ntables=(\"cdm.concept_ancestor\" \"cdm.concept_relationship\" \"cdm.source_to_source_vocab_map\" \"cdm.source_to_standard_vocab_map\" \"cdm.concept\" \"cdm.drug_strength\" \"cdm.concept_synonym\" \"cdm.measurement\" \"cdm.observation\" \"cdm.cost\" \"cdm.assign_all_visit_ids\" \"cdm.visit_detail\" \"cdm.visit_occurrence\" \"cdm.all_visits\" \"cdm.payer_plan_period\" \"cdm.drug_exposure\" \"cdm.procedure_occurrence\" \"cdm.final_visit_ids\" \"cdm.condition_occurrence\" \"cdm.condition_era\" \"cdm.provider\" \"cdm.drug_era\" \"cdm.person\" \"cdm.relationship\" \"cdm.observation_period\" \"cdm.concept_class\" \"cdm.device_exposure\" \"cdm.death\" \"cdm.cdm_source\" \"cdm.vocabulary\" \"cdm.domain\" \"cdm_results.achilles_analysis\" \"cdm_results.achilles_results_dist\" \"cdm.drug_era\" \"cdm_results.achilles_results\")\n#load subset of tables for now to speed up testing\n#tables=(\"cdm.all_visits\" \"cdm.person\" \"cdm.drug_era\" \"cdm.death\" \"cdm_results.achilles_analysis\" \"cdm_results.achilles_results_dist\" \"cdm.drug_era\" \"cdm_results.achilles_results\")\nprintf 'Loading OMOP CDM data\\n'\nn=${#tables[@]}\ni=0\nfor element in \"${tables[@]}\"; do\n    ((i++));\n    printf \"Downloading and extracting: %s (%s)\\n\" \"$element.csv.gz\" \"$i/$n\"\n    curl \"${OMOP_CDM_CONTAINER_URL}$element.csv.gz${OMOP_CDM_SAS_TOKEN}\" | gunzip > $element.csv\n    num_of_records=$(wc -l $element.csv | awk '{print $1}')\n    printf \"Copying %s to table: %s\\n\" \"$num_of_records\" \"$element\"\n    psql \"$OMOP_CONNECTION_STRING\" -c \"\\COPY $element FROM '$element.csv' WITH CSV;\"\n    printf \"done\"\ndone\n\n# create OMOP CDM indices\nprintf 'creating OMOP CDM indices\\n'\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOPCDM_postgresql_5.4_indices.sql;\n\n# add OMOP CDM source to WebAPI\nprintf 'adding OMOP CDM source to WebAPI\\n'\nadd_omop_source_script=$(envsubst < add_omop_source.sql)\necho \"$add_omop_source_script\" | psql \"$ATLAS_DB_CONNECTION_STRING\" -e\n",
+            "$fxv#0": "CREATE ROLE ${POSTGRES_OMOP_CDM_ROLE} VALID UNTIL 'infinity';\r\nCOMMENT ON ROLE ${POSTGRES_OMOP_CDM_ROLE} IS 'Application group for OHDSI OMOP CDM'; \r\nCREATE ROLE ${POSTGRES_CDM_USERNAME} LOGIN ENCRYPTED PASSWORD ${CDM_MD5} VALID UNTIL 'infinity'; \r\nGRANT ${POSTGRES_OMOP_CDM_ROLE} TO ${POSTGRES_CDM_USERNAME};\r\nCOMMENT ON ROLE ${POSTGRES_CDM_USERNAME} IS 'Application user account for OHDSI OMOP CDM'; \r\nGRANT CONNECT, TEMPORARY ON DATABASE ${OMOP_CDM_DATABASE_NAME} TO GROUP ${POSTGRES_OMOP_CDM_ROLE};\r\n\r\nCREATE SCHEMA IF NOT EXISTS ${POSTGRES_OMOP_CDM_SCHEMA_NAME} AUTHORIZATION ${POSTGRES_ADMIN_USERNAME}; \r\n\r\nCOMMENT ON SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} IS 'Schema containing tables of the OMOP CDM'; \r\nGRANT USAGE ON SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} TO PUBLIC; \r\nGRANT USAGE ON SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} TO GROUP ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} GRANT SELECT ON TABLES TO ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} GRANT SELECT, USAGE ON SEQUENCES TO ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} GRANT EXECUTE ON FUNCTIONS TO ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} GRANT USAGE ON TYPES TO ${POSTGRES_OMOP_CDM_ROLE};\r\n\r\nCREATE SCHEMA IF NOT EXISTS ${POSTGRES_OMOP_VOCABULARY_SCHEMA_NAME} AUTHORIZATION ${POSTGRES_ADMIN_USERNAME}; \r\nCOMMENT ON SCHEMA ${POSTGRES_OMOP_VOCABULARY_SCHEMA_NAME} IS 'Schema containing tables of the OMOP Vocabulary'; \r\nGRANT USAGE ON SCHEMA ${POSTGRES_OMOP_VOCABULARY_SCHEMA_NAME} TO PUBLIC; \r\nGRANT USAGE ON SCHEMA ${POSTGRES_OMOP_VOCABULARY_SCHEMA_NAME} TO GROUP ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_VOCABULARY_SCHEMA_NAME} GRANT SELECT ON TABLES TO ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_VOCABULARY_SCHEMA_NAME} GRANT SELECT, USAGE ON SEQUENCES TO ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_VOCABULARY_SCHEMA_NAME} GRANT EXECUTE ON FUNCTIONS TO ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_VOCABULARY_SCHEMA_NAME} GRANT USAGE ON TYPES TO ${POSTGRES_OMOP_CDM_ROLE};\r\n\r\nCREATE SCHEMA IF NOT EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} AUTHORIZATION ${POSTGRES_ADMIN_USERNAME}; \r\nCOMMENT ON SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} IS 'Schema containing tables of the OMOP Results'; \r\nGRANT USAGE ON SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} TO PUBLIC; \r\nGRANT USAGE ON SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} TO GROUP ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} GRANT INSERT, SELECT, UPDATE, DELETE, REFERENCES, TRIGGER ON TABLES TO ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} GRANT SELECT, USAGE ON SEQUENCES TO ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} GRANT EXECUTE ON FUNCTIONS TO ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} GRANT USAGE ON TYPES TO ${POSTGRES_OMOP_CDM_ROLE};\r\n\r\nCREATE SCHEMA IF NOT EXISTS ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} AUTHORIZATION ${POSTGRES_ADMIN_USERNAME}; \r\nCOMMENT ON SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} IS 'Schema containing tables of the OMOP Temporary'; \r\nGRANT USAGE ON SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} TO PUBLIC; \r\nGRANT ALL ON SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} TO GROUP ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} GRANT INSERT, SELECT, UPDATE, DELETE, REFERENCES, TRIGGER ON TABLES TO ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} GRANT SELECT, USAGE ON SEQUENCES TO ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} GRANT EXECUTE ON FUNCTIONS TO ${POSTGRES_OMOP_CDM_ROLE}; \r\nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} GRANT USAGE ON TYPES TO ${POSTGRES_OMOP_CDM_ROLE};\r\n",
+            "$fxv#1": "CREATE TABLE IF NOT EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_analysis\r\n(\r\n    analysis_id integer,\r\n    analysis_name character varying(255) COLLATE pg_catalog.\"default\",\r\n    stratum_1_name character varying(255) COLLATE pg_catalog.\"default\",\r\n    stratum_2_name character varying(255) COLLATE pg_catalog.\"default\",\r\n    stratum_3_name character varying(255) COLLATE pg_catalog.\"default\",\r\n    stratum_4_name character varying(255) COLLATE pg_catalog.\"default\",\r\n    stratum_5_name character varying(255) COLLATE pg_catalog.\"default\",\r\n    is_default integer,\r\n    category character varying(255) COLLATE pg_catalog.\"default\"\r\n)\r\nWITH (\r\n    OIDS = FALSE\r\n)\r\nTABLESPACE pg_default;\r\n\r\nALTER TABLE IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_analysis\r\n    OWNER to ${POSTGRES_ADMIN_USERNAME};\r\n\r\n\r\nCREATE TABLE IF NOT EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results\r\n(\r\n    analysis_id integer,\r\n    stratum_1 character varying COLLATE pg_catalog.\"default\",\r\n    stratum_2 character varying COLLATE pg_catalog.\"default\",\r\n    stratum_3 character varying COLLATE pg_catalog.\"default\",\r\n    stratum_4 character varying COLLATE pg_catalog.\"default\",\r\n    stratum_5 character varying COLLATE pg_catalog.\"default\",\r\n    count_value bigint\r\n)\r\nWITH (\r\n    OIDS = FALSE\r\n)\r\nTABLESPACE pg_default;\r\n\r\nALTER TABLE IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results\r\n    OWNER to ${POSTGRES_ADMIN_USERNAME};\r\n-- Index: idx_ar_aid\r\n\r\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ar_aid;\r\n\r\nCREATE INDEX IF NOT EXISTS idx_ar_aid\r\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results USING btree\r\n    (analysis_id ASC NULLS LAST)\r\n    TABLESPACE pg_default;\r\n-- Index: idx_ar_aid_s1\r\n\r\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ar_aid_s1;\r\n\r\nCREATE INDEX IF NOT EXISTS idx_ar_aid_s1\r\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results USING btree\r\n    (analysis_id ASC NULLS LAST, stratum_1 COLLATE pg_catalog.\"default\" ASC NULLS LAST)\r\n    TABLESPACE pg_default;\r\n-- Index: idx_ar_aid_s1234\r\n\r\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ar_aid_s1234;\r\n\r\nCREATE INDEX IF NOT EXISTS idx_ar_aid_s1234\r\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results USING btree\r\n    (analysis_id ASC NULLS LAST, stratum_1 COLLATE pg_catalog.\"default\" ASC NULLS LAST, stratum_2 COLLATE pg_catalog.\"default\" ASC NULLS LAST, stratum_3 COLLATE pg_catalog.\"default\" ASC NULLS LAST, stratum_4 COLLATE pg_catalog.\"default\" ASC NULLS LAST)\r\n    TABLESPACE pg_default;\r\n-- Index: idx_ar_s1\r\n\r\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ar_s1;\r\n\r\nCREATE INDEX IF NOT EXISTS idx_ar_s1\r\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results USING btree\r\n    (stratum_1 COLLATE pg_catalog.\"default\" ASC NULLS LAST)\r\n    TABLESPACE pg_default;\r\n-- Index: idx_ar_s2\r\n\r\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ar_s2;\r\n\r\nCREATE INDEX IF NOT EXISTS idx_ar_s2\r\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results USING btree\r\n    (stratum_2 COLLATE pg_catalog.\"default\" ASC NULLS LAST)\r\n    TABLESPACE pg_default;\r\n\r\n\r\n-- Table: ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist\r\n\r\n-- DROP TABLE IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist;\r\n\r\nCREATE TABLE IF NOT EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist\r\n(\r\n    analysis_id integer,\r\n    stratum_1 character varying COLLATE pg_catalog.\"default\",\r\n    stratum_2 character varying COLLATE pg_catalog.\"default\",\r\n    stratum_3 character varying COLLATE pg_catalog.\"default\",\r\n    stratum_4 character varying COLLATE pg_catalog.\"default\",\r\n    stratum_5 character varying COLLATE pg_catalog.\"default\",\r\n    count_value bigint,\r\n    min_value numeric,\r\n    max_value numeric,\r\n    avg_value numeric,\r\n    stdev_value numeric,\r\n    median_value numeric,\r\n    p10_value numeric,\r\n    p25_value numeric,\r\n    p75_value numeric,\r\n    p90_value numeric\r\n)\r\nWITH (\r\n    OIDS = FALSE\r\n)\r\nTABLESPACE pg_default;\r\n\r\nALTER TABLE IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist\r\n    OWNER to ${POSTGRES_ADMIN_USERNAME};\r\n-- Index: idx_ard_aid\r\n\r\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ard_aid;\r\n\r\nCREATE INDEX IF NOT EXISTS idx_ard_aid\r\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist USING btree\r\n    (analysis_id ASC NULLS LAST)\r\n    TABLESPACE pg_default;\r\n-- Index: idx_ard_s1\r\n\r\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ard_s1;\r\n\r\nCREATE INDEX IF NOT EXISTS idx_ard_s1\r\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist USING btree\r\n    (stratum_1 COLLATE pg_catalog.\"default\" ASC NULLS LAST)\r\n    TABLESPACE pg_default;\r\n-- Index: idx_ard_s2\r\n\r\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ard_s2;\r\n\r\nCREATE INDEX IF NOT EXISTS idx_ard_s2\r\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist USING btree\r\n    (stratum_2 COLLATE pg_catalog.\"default\" ASC NULLS LAST)\r\n    TABLESPACE pg_default;",
+            "$fxv#2": "INSERT INTO ${WEBAPI_SCHEMA_NAME}.source (source_id, source_name, source_key, source_connection, source_dialect) \r\nSELECT nextval('${WEBAPI_SCHEMA_NAME}.source_sequence'), '${OMOP_CDM_DATABASE_NAME}', '${OMOP_CDM_DATABASE_NAME}', '${OMOP_JDBC_CONNECTION_STRING}', 'postgresql';\r\n\r\nINSERT INTO ${WEBAPI_SCHEMA_NAME}.source_daimon (source_daimon_id, source_id, daimon_type, table_qualifier, priority) \r\nSELECT nextval('${WEBAPI_SCHEMA_NAME}.source_daimon_sequence'), source_id, 0, '${POSTGRES_OMOP_CDM_SCHEMA_NAME}', 0\r\nFROM ${WEBAPI_SCHEMA_NAME}.source\r\nWHERE source_key = '${OMOP_CDM_DATABASE_NAME}';\r\n\r\n-- Vocabulary tables are in the same schema as the CDM tables\r\nINSERT INTO ${WEBAPI_SCHEMA_NAME}.source_daimon (source_daimon_id, source_id, daimon_type, table_qualifier, priority) \r\nSELECT nextval('${WEBAPI_SCHEMA_NAME}.source_daimon_sequence'), source_id, 1, '${POSTGRES_OMOP_CDM_SCHEMA_NAME}', 1\r\nFROM ${WEBAPI_SCHEMA_NAME}.source\r\nWHERE source_key = '${OMOP_CDM_DATABASE_NAME}';\r\n\r\nINSERT INTO ${WEBAPI_SCHEMA_NAME}.source_daimon (source_daimon_id, source_id, daimon_type, table_qualifier, priority) \r\nSELECT nextval('${WEBAPI_SCHEMA_NAME}.source_daimon_sequence'), source_id, 2, '${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}', 1\r\nFROM ${WEBAPI_SCHEMA_NAME}.source\r\nWHERE source_key = '${OMOP_CDM_DATABASE_NAME}';\r\n\r\nINSERT INTO ${WEBAPI_SCHEMA_NAME}.source_daimon (source_daimon_id, source_id, daimon_type, table_qualifier, priority) \r\nSELECT nextval('${WEBAPI_SCHEMA_NAME}.source_daimon_sequence'), source_id, 5, '${POSTGRES_OMOP_TEMP_SCHEMA_NAME}', 0\r\nFROM ${WEBAPI_SCHEMA_NAME}.source\r\nWHERE source_key = '${OMOP_CDM_DATABASE_NAME}';",
+            "$fxv#3": "#!/bin/bash\r\nset -o errexit\r\nset -o pipefail\r\nset -o nounset\r\n\r\nLOG_FILE=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/all.log\r\n\r\nexec >  >(tee -ia ${LOG_FILE})\r\nexec 2> >(tee -ia ${LOG_FILE} >&2)\r\n\r\n# install postgresql client\r\necho 'installing psql...'\r\napk --update add postgresql-client gettext\r\n\r\n# create OMOP CDM schema and user\r\npg_cdm_password=\"${POSTGRES_OMOP_CDM_PASSWORD}${POSTGRES_CDM_USERNAME}\"\r\nexport CDM_MD5=\"'md5$(echo -n $pg_cdm_password | md5sum | awk '{ print $1 }')'\"\r\n\r\nprintf 'Creating omp cdm schemas and user\\n'\r\necho \"$SQL_create_omop_schemas\" | envsubst | psql \"$OMOP_CONNECTION_STRING\" -e\r\n\r\n# create OMOP CDM (+ Vocabulary) tables\r\nprintf 'Creating OMOP CDM tables\\n'\r\nsed -i  s/@cdmDatabaseSchema/${POSTGRES_OMOP_CDM_SCHEMA_NAME}/g OMOPCDM_postgresql_5.4_ddl.sql OMOPCDM_postgresql_5.4_constraints.sql OMOPCDM_postgresql_5.4_primary_keys.sql OMOPCDM_postgresql_5.4_indices.sql\r\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOPCDM_postgresql_5.4_ddl.sql -v ON_ERROR_STOP=1\r\n\r\n# create and load OMOP Results (Achilles) tables\r\nprintf 'Creating OMOP Results tables\\n'\r\necho \"$SQL_create_achilles_schema\" | envsubst | psql \"$OMOP_CONNECTION_STRING\" -e -v ON_ERROR_STOP=1\r\n\r\n# skip foreign key constraints for now due to open bug - https://github.com/OHDSI/CommonDataModel/issues/452\r\n# psql \"$OMOP_CONNECTION_STRING\" -f OMOPCDM_postgresql_5.4_constraints.sql\r\n\r\n# create OMOP CDM primary keys\r\nprintf 'Creating OMOP CDM primary keys\\n'\r\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOPCDM_postgresql_5.4_primary_keys.sql -v ON_ERROR_STOP=1\r\n\r\n# load OMOP CDM data\r\ntables=(\"cdm.concept_ancestor\" \"cdm.concept_relationship\" \"cdm.concept\" \"cdm.drug_strength\" \"cdm.concept_synonym\" \"cdm.measurement\" \"cdm.observation\" \"cdm.cost\" \"cdm.visit_detail\" \"cdm.visit_occurrence\" \"cdm.payer_plan_period\" \"cdm.drug_exposure\" \"cdm.procedure_occurrence\" \"cdm.condition_occurrence\" \"cdm.condition_era\" \"cdm.provider\" \"cdm.drug_era\" \"cdm.person\" \"cdm.relationship\" \"cdm.observation_period\" \"cdm.concept_class\" \"cdm.device_exposure\" \"cdm.death\" \"cdm.cdm_source\" \"cdm.vocabulary\" \"cdm.domain\" \"cdm_results.achilles_analysis\" \"cdm_results.achilles_results_dist\" \"cdm.drug_era\" \"cdm_results.achilles_results\")\r\n# \"cdm.source_to_source_vocab_map\" \"cdm.source_to_standard_vocab_map\" \"cdm.assign_all_visit_ids\" \"cdm.all_visits\" \"cdm.final_visit_ids\" \r\n# load subset of tables for now to speed up testing\r\n# tables=(\"cdm.all_visits\" \"cdm.person\" \"cdm.drug_era\" \"cdm.death\" \"cdm_results.achilles_analysis\" \"cdm_results.achilles_results_dist\" \"cdm.drug_era\" \"cdm_results.achilles_results\")\r\nprintf 'Loading OMOP CDM data\\n'\r\nn=${#tables[@]}\r\ni=0\r\nfor element in \"${tables[@]}\"; do\r\n    ((i++)) || true\r\n    printf \"Downloading and extracting: %s (%s)\\n\" \"$element.csv.gz\" \"$i/$n\"\r\n    file=/tmp/\"$element\".csv\r\n    curl \"${OMOP_CDM_CONTAINER_URL}$element.csv.gz${OMOP_CDM_SAS_TOKEN}\" | gunzip > \"$file\"\r\n    num_of_records=$(wc -l \"$file\" | awk '{print $1}')\r\n    printf \"Copying %s to table: %s\\n\" \"$num_of_records\" \"$element\"\r\n    psql \"$OMOP_CONNECTION_STRING\" -c \"\\COPY $element FROM '$file' WITH CSV;\" #-v ON_ERROR_STOP=1\r\n    rm -f \"$file\"\r\n    printf \"done\\n\"\r\ndone\r\n\r\n# create OMOP CDM indices\r\nprintf 'creating OMOP CDM indices\\n'\r\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOPCDM_postgresql_5.4_indices.sql -v ON_ERROR_STOP=1\r\n\r\n# add OMOP CDM source to WebAPI\r\nprintf 'adding OMOP CDM source to WebAPI\\n'\r\necho \"$SQL_add_omop_source\" | envsubst | psql \"$ATLAS_DB_CONNECTION_STRING\" -e -v ON_ERROR_STOP=1\r\n",
             "postgresOMOPCDMSchemaName": "cdm",
             "postgresOMOPVocabularySchemaName": "vocabulary",
             "postgresOMOPResultsSchemaName": "cdm_results",
@@ -1004,26 +907,15 @@
               }
             },
             {
-              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-              "apiVersion": "2023-01-31",
-              "name": "managed-identity-omop-cdm",
-              "location": "[parameters('location')]"
-            },
-            {
               "type": "Microsoft.Resources/deploymentScripts",
               "apiVersion": "2020-10-01",
               "name": "deployment-script-omop-cdm",
               "location": "[parameters('location')]",
               "kind": "AzureCLI",
-              "identity": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'managed-identity-omop-cdm'))]": {}
-                }
-              },
               "properties": {
                 "azCliVersion": "2.42.0",
                 "timeout": "PT60M",
+                "forceUpdateTag": "1",
                 "environmentVariables": [
                   {
                     "name": "WEBAPI_SCHEMA_NAME",
@@ -1084,35 +976,228 @@
                   {
                     "name": "POSTGRES_OMOP_TEMP_SCHEMA_NAME",
                     "value": "[variables('postgresOMOPTempSchemaName')]"
+                  },
+                  {
+                    "name": "SQL_create_omop_schemas",
+                    "value": "[variables('$fxv#0')]"
+                  },
+                  {
+                    "name": "SQL_create_achilles_schema",
+                    "value": "[variables('$fxv#1')]"
+                  },
+                  {
+                    "name": "SQL_add_omop_source",
+                    "value": "[variables('$fxv#2')]"
                   }
                 ],
-                "scriptContent": "[variables('$fxv#0')]",
+                "scriptContent": "[variables('$fxv#3')]",
                 "supportingScriptUris": [
                   "https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_ddl.sql",
                   "https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_constraints.sql",
                   "https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_primary_keys.sql",
-                  "https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_indices.sql",
-                  "[format('https://raw.githubusercontent.com/microsoft/OHDSIonAzure/{0}/infra/sql/create_omop_schemas.sql', parameters('branchName'))]",
-                  "[format('https://raw.githubusercontent.com/microsoft/OHDSIonAzure/{0}/infra/sql/add_omop_source.sql', parameters('branchName'))]"
+                  "https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_indices.sql"
                 ],
-                "cleanupPreference": "OnSuccess",
-                "retentionInterval": "P1D"
+                "cleanupPreference": "OnExpiration",
+                "retentionInterval": "PT1H",
+                "containerSettings": {
+                  "containerGroupName": "deployment-omop"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}', parameters('suffix')))]",
+        "[resourceId('Microsoft.Resources/deployments', 'atlasDatabase')]",
+        "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('suffix')))]",
+        "[resourceId('Microsoft.Resources/deployments', 'ohdsiWebApiWebapp')]"
+      ],
+      "metadata": {
+        "description": "Creates OMOP CDM database"
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "atlasUI",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "suffix": {
+            "value": "[parameters('suffix')]"
+          },
+          "appServicePlanId": {
+            "value": "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}', parameters('suffix')))]"
+          },
+          "ohdsiWebApiUrl": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ohdsiWebApiWebapp'), '2020-10-01').outputs.ohdsiWebapiUrl.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.15.31.15270",
+              "templateHash": "8559592988803024185"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "suffix": {
+              "type": "string"
+            },
+            "appServicePlanId": {
+              "type": "string"
+            },
+            "ohdsiWebApiUrl": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "$fxv#0": "define([], function () {\r\n\tvar configLocal = {};\r\n\r\n\t// clearing local storage otherwise source cache will obscure the override settings\r\n\tlocalStorage.clear();\r\n\r\n\t// WebAPI\r\n\tconfigLocal.api = {\r\n\t\tname: 'OHDSI',\r\n\t\turl: \"$OHDSI_WEBAPI_URL\"\r\n\t};\r\n\r\n\tconfigLocal.cohortComparisonResultsEnabled = false;\r\n\tconfigLocal.userAuthenticationEnabled = true;\r\n\tconfigLocal.plpResultsEnabled = false;\r\n\r\n\tconfigLocal.authProviders = [{\r\n\t\t\"name\": \"Local Security Test DB\",\r\n\t\t\"url\": \"user/login/db\",\r\n\t\t\"ajax\": true,\r\n\t\t\"icon\": \"fa fa-database\",\r\n\t\t\"isUseCredentialsForm\": true\r\n\t}];\r\n\r\n\treturn configLocal;\r\n});\r\n",
+            "dockerRegistryServer": "https://index.docker.io/v1",
+            "dockerImageName": "ohdsi/atlas",
+            "dockerImageTag": "2.13.0",
+            "shareName": "atlas",
+            "mountPath": "/etc/atlas"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+              "apiVersion": "2021-04-01",
+              "name": "[format('{0}/{1}/{2}', format('stohdsi{0}', parameters('suffix')), 'default', variables('shareName'))]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/fileServices', format('stohdsi{0}', parameters('suffix')), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/fileServices",
+              "apiVersion": "2021-04-01",
+              "name": "[format('{0}/{1}', format('stohdsi{0}', parameters('suffix')), 'default')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', format('stohdsi{0}', parameters('suffix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2021-04-01",
+              "name": "[format('stohdsi{0}', parameters('suffix'))]",
+              "location": "[parameters('location')]",
+              "kind": "StorageV2",
+              "sku": {
+                "name": "Standard_LRS"
+              }
+            },
+            {
+              "type": "Microsoft.Resources/deploymentScripts",
+              "apiVersion": "2020-10-01",
+              "name": "deployment-ohdsi-atlas-config-file",
+              "location": "[parameters('location')]",
+              "kind": "AzureCLI",
+              "properties": {
+                "azCliVersion": "2.42.0",
+                "timeout": "PT5M",
+                "retentionInterval": "PT1H",
+                "environmentVariables": [
+                  {
+                    "name": "AZURE_STORAGE_ACCOUNT",
+                    "value": "[format('stohdsi{0}', parameters('suffix'))]"
+                  },
+                  {
+                    "name": "AZURE_STORAGE_KEY",
+                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', format('stohdsi{0}', parameters('suffix'))), '2021-04-01').keys[0].value]"
+                  },
+                  {
+                    "name": "OHDSI_WEBAPI_URL",
+                    "value": "[parameters('ohdsiWebApiUrl')]"
+                  },
+                  {
+                    "name": "CONTENT",
+                    "value": "[variables('$fxv#0')]"
+                  },
+                  {
+                    "name": "SHARE_NAME",
+                    "value": "[variables('shareName')]"
+                  }
+                ],
+                "scriptContent": "    apk --update add gettext\r\n    echo \"$CONTENT\" > config-local-temp.js\r\n    envsubst < config-local-temp.js > config-local.js\r\n    az storage file upload --source config-local.js -s $SHARE_NAME\r\n    "
               },
               "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'managed-identity-omop-cdm')]"
+                "[resourceId('Microsoft.Storage/storageAccounts', format('stohdsi{0}', parameters('suffix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2022-03-01",
+              "name": "[format('app-ohdsiatlas-{0}', parameters('suffix'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "httpsOnly": true,
+                "serverFarmId": "[parameters('appServicePlanId')]",
+                "siteConfig": {
+                  "azureStorageAccounts": {
+                    "[format('{0}', variables('shareName'))]": {
+                      "type": "AzureFiles",
+                      "shareName": "[variables('shareName')]",
+                      "mountPath": "[variables('mountPath')]",
+                      "accountName": "[format('stohdsi{0}', parameters('suffix'))]",
+                      "accessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', format('stohdsi{0}', parameters('suffix'))), '2021-04-01').keys[0].value]"
+                    }
+                  },
+                  "linuxFxVersion": "[format('DOCKER|{0}:{1}', variables('dockerImageName'), variables('dockerImageTag'))]",
+                  "appSettings": [
+                    {
+                      "name": "DOCKER_REGISTRY_SERVER_URL",
+                      "value": "[variables('dockerRegistryServer')]"
+                    },
+                    {
+                      "name": "WEBSITE_HEALTHCHECK_MAXPINGFAILURES",
+                      "value": "10"
+                    },
+                    {
+                      "name": "WEBAPI_URL",
+                      "value": "[parameters('ohdsiWebApiUrl')]"
+                    },
+                    {
+                      "name": "WEBSITE_HTTPLOGGING_RETENTION_DAYS",
+                      "value": "30"
+                    },
+                    {
+                      "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                      "value": "false"
+                    },
+                    {
+                      "name": "WEBSITES_PORT",
+                      "value": "8080"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Resources/deploymentScripts', 'deployment-ohdsi-atlas-config-file')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', format('stohdsi{0}', parameters('suffix')))]"
               ]
             }
           ]
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'appServicePlan')]",
-        "[resourceId('Microsoft.Resources/deployments', 'atlasDatabase')]",
-        "[resourceId('Microsoft.Resources/deployments', 'keyvault')]",
+        "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}', parameters('suffix')))]",
         "[resourceId('Microsoft.Resources/deployments', 'ohdsiWebApiWebapp')]"
       ],
       "metadata": {
-        "description": "Creates OMOP CDM database"
+        "description": "Creates the ohdsi atlas UI"
       }
     }
   ],

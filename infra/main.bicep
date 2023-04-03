@@ -2,7 +2,6 @@ targetScope = 'resourceGroup'
 
 @description('The location for all resources.')
 param location string = resourceGroup().location
-param odhsiWebApiName string = 'ohdsi-webapi'
 param suffix string = uniqueString(utcNow())
 
 @description('The url of the container where the cdm is stored')
@@ -34,45 +33,53 @@ param postgresOMOPCDMpassword string = uniqueString(newGuid())
 @description('Enables local access for debugging.')
 param localDebug bool = false
 
+var tenantId = subscription().tenantId
+
+@description('Creates the app service plan')
+resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
+#disable-next-line use-stable-resource-identifiers
+  name: 'asp-${suffix}'
+  location: location
+  sku: {
+    name: 'S1'
+  }
+  kind: 'linux'
+  properties: {
+    reserved: true
+  }
+}
+
+@description('Creates the key vault')
+resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
+#disable-next-line use-stable-resource-identifiers
+  name: 'kv-${suffix}'
+  location: location
+  properties: {
+    accessPolicies: []
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    tenantId: tenantId
+    networkAcls: {
+      defaultAction: 'Allow'
+      bypass: 'AzureServices'
+    }
+  }
+}
+
 @description('Creates the database server, users and groups required for ohdsi webapi')
 module atlasDatabase 'atlas_database.bicep' = {
   name: 'atlasDatabase'
   params: {
     location: location
     suffix: suffix
-    odhsiWebApiName: odhsiWebApiName
+    keyVaultName: keyVault.name
     postgresAdminPassword: postgresAdminPassword
     postgresWebapiAdminPassword: postgresWebapiAdminPassword
     postgresWebapiAppPassword: postgresWebapiAppPassword
     localDebug: localDebug
   }
-}
-
-@description('Creates the app service plan')
-module appServicePlan 'app_plan.bicep' = {
-  name: 'appServicePlan'
-  params: {
-    location: location
-    suffix: suffix
-    odhsiWebApiName: odhsiWebApiName
-  }
-}
-
-@description('Creates the key vault')
-module keyvault 'keyvault.bicep' = {
-  name: 'keyvault'
-  params: {
-    location: location
-    suffix: suffix
-    odhsiWebApiName: odhsiWebApiName
-    postgresAdminPassword: postgresAdminPassword
-    postgresWebapiAdminPassword: postgresWebapiAdminPassword
-    postgresWebapiAppPassword: postgresWebapiAppPassword
-    jdbcConnectionStringWebapiAdmin: 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${atlasDatabase.outputs.postgresWebApiDatabaseName}?user=${atlasDatabase.outputs.postgresWebapiAdminUsername}&password=${postgresWebapiAdminPassword}&sslmode=require'
-  }
-  dependsOn: [
-    atlasDatabase
-  ]
 }
 
 @description('Creates the ohdsi webapi')
@@ -81,20 +88,16 @@ module ohdsiWebApiWebapp 'ohdsi_webapi.bicep' = {
   params: {
     location: location
     suffix: suffix
-    odhsiWebApiName: odhsiWebApiName
-    appServicePlanId: appServicePlan.outputs.appServicePlanId
-    keyVaultName: keyvault.outputs.keyVaultName
-    userAssignedIdentityId: keyvault.outputs.userAssignedIdentityId
-    jdbcConnectionStringWebapiAdminSecret: keyvault.outputs.jdbcConnectionStringWebapiAdminSecretName
-    postgresWebapiAdminSecret: keyvault.outputs.postgresWebapiAdminSecretName
-    postgresWebapiAppSecret: keyvault.outputs.postgresWebapiAppSecretName
+    appServicePlanId: appServicePlan.id
+    keyVaultName: keyVault.name
+    jdbcConnectionStringWebapiAdmin: 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${atlasDatabase.outputs.postgresWebApiDatabaseName}?user=${atlasDatabase.outputs.postgresWebapiAdminUsername}&password=${postgresWebapiAdminPassword}&sslmode=require'
+    postgresWebapiAdminSecret: atlasDatabase.outputs.postgresWebapiAdminSecretName
+    postgresWebapiAppSecret: atlasDatabase.outputs.postgresWebapiAppSecretName
     postgresWebapiAdminUsername: atlasDatabase.outputs.postgresWebapiAdminUsername
     postgresWebapiAppUsername: atlasDatabase.outputs.postgresWebapiAppUsername
     postgresWebApiSchemaName: atlasDatabase.outputs.postgresSchemaName
   }
   dependsOn: [
-    appServicePlan
-    keyvault
     atlasDatabase
   ]
 }
@@ -104,7 +107,7 @@ module omopCDM 'omop_cdm.bicep' = {
   name: 'omopCDM'
   params: {
     location: location
-    keyVaultName: keyvault.outputs.keyVaultName
+    keyVaultName: keyVault.name
     cdmContainerUrl: cdmContainerUrl
     cdmSasToken: cdmSasToken
     postgresAtlasDatabaseName: atlasDatabase.outputs.postgresWebApiDatabaseName
@@ -118,7 +121,6 @@ module omopCDM 'omop_cdm.bicep' = {
   dependsOn: [
     ohdsiWebApiWebapp
     appServicePlan
-    keyvault
     atlasDatabase
   ]
 }
@@ -129,11 +131,10 @@ module atlasUI 'ohdsi_atlas_ui.bicep' = {
   params: {
     location: location
     suffix: suffix
-    appServicePlanId: appServicePlan.outputs.appServicePlanId
+    appServicePlanId: appServicePlan.id
     ohdsiWebApiUrl: ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
   }
   dependsOn: [
-    appServicePlan
     ohdsiWebApiWebapp
   ]
 }

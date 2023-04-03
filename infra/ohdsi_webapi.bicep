@@ -1,14 +1,12 @@
 param location string
 param suffix string
-param userAssignedIdentityId string
-param odhsiWebApiName string
 param appServicePlanId string
 param keyVaultName string
 param postgresWebApiSchemaName string
 param postgresWebapiAppUsername string
 param postgresWebapiAdminUsername string
 @secure()
-param jdbcConnectionStringWebapiAdminSecret string
+param jdbcConnectionStringWebapiAdmin string
 @secure()
 param postgresWebapiAppSecret string
 @secure()
@@ -18,14 +16,53 @@ var dockerRegistryServer = 'https://index.docker.io/v1'
 var dockerImageName = 'ohdsi/webapi'
 var dockerImageTag = '2.12.1'
 var flywayBaselineVersion = '2.2.5.20180212152023'
+var tenantId = subscription().tenantId
+
+// Get the keyvault
+resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
+  name: keyVaultName
+}
+
+resource jdbcConnectionStringWebapiAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+  name: 'jdbc-connectionstring'
+  parent: keyVault
+  properties: {
+    value: jdbcConnectionStringWebapiAdmin
+  }
+}
+
+// User Assigned Identity
+resource ohdsiWebapiIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: 'id-ohdsiwebapi-${suffix}'
+  location: location
+}
+
+resource ohdsiWebapiAccessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2022-07-01' = {
+  name: 'add'
+  parent: keyVault
+  properties: {
+    accessPolicies: [
+      {
+        objectId: ohdsiWebapiIdentity.properties.principalId
+        permissions: {
+          secrets: [
+            'Get'
+            'List'
+          ]
+        }
+        tenantId: tenantId
+      }
+    ]
+  }
+}
 
 // Create an App Service webapp
 resource webApp 'Microsoft.Web/sites@2022-03-01' = {
-  name: 'webapp-${odhsiWebApiName}-${suffix}'
+  name: 'app-ohdsiwebapi-${suffix}'
   location: location
   properties: {
     httpsOnly: true
-    keyVaultReferenceIdentity: userAssignedIdentityId
+    keyVaultReferenceIdentity: ohdsiWebapiIdentity.id
     serverFarmId: appServicePlanId
     siteConfig: {
       linuxFxVersion: 'DOCKER|${dockerImageName}:${dockerImageTag}'
@@ -53,7 +90,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
         }
         {
           name: 'DATASOURCE_URL'
-          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${jdbcConnectionStringWebapiAdminSecret})'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${jdbcConnectionStringWebapiAdminSecret.name})'
         }
         {
           name: 'FLYWAY_BASELINEDESCRIPTION'
@@ -81,7 +118,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
         }
         {
           name: 'FLYWAY_DATASOURCE_URL'
-          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${jdbcConnectionStringWebapiAdminSecret})'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${jdbcConnectionStringWebapiAdminSecret.name})'
         }
         {
           name: 'FLYWAY_LOCATIONS'
@@ -121,7 +158,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
         }
         {
           name: 'SECURITY_DB_DATASOURCE_URL'
-          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${jdbcConnectionStringWebapiAdminSecret})'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${jdbcConnectionStringWebapiAdminSecret.name})'
         }
         {
           name: 'SECURITY_DB_DATASOURCE_USERNAME'
@@ -185,7 +222,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${userAssignedIdentityId}': {}
+      '${ohdsiWebapiIdentity.id}': {}
     }
   }
 }

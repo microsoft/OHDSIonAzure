@@ -1,16 +1,14 @@
 param location string
 param suffix string
-param odhsiWebApiName string
+param keyVaultName string
 @secure()
 param postgresAdminPassword string
 @secure()
 param postgresWebapiAdminPassword string
 @secure()
 param postgresWebapiAppPassword string
-
 @description('Enables local access for debugging.')
 param localDebug bool = false
-
 var postgresAdminUsername = 'postgres_admin'
 var postgresWebapiAdminUsername = 'ohdsi_admin_user'
 var postgresWebapiAdminRole = 'ohdsi_admin'
@@ -20,9 +18,37 @@ var postgresWebApiDatabaseName = 'atlas_webapi_db'
 var postgresSchemaName = 'webapi'
 var postgresVersion = '14'
 
+resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
+  name: keyVaultName
+}
+
+resource postgresAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+  name: 'postgres-admin-password'
+  parent: keyVault
+  properties: {
+    value: postgresAdminPassword
+  }
+}
+
+resource postgresWebapiAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+  name: 'ohdsi-admin-password'
+  parent: keyVault
+  properties: {
+    value: postgresWebapiAdminPassword
+  }
+}
+
+resource postgresWebapiAppSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+  name: 'ohdsi-app-password'
+  parent: keyVault
+  properties: {
+    value: postgresWebapiAppPassword
+  }
+}
+
 // Create a PostgreSQL server
 resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {
-  name: 'postgresql-${odhsiWebApiName}-${suffix}'
+  name: 'psql-${suffix}'
   location: location
   sku: {
     name: 'Standard_D2s_v3'
@@ -71,15 +97,15 @@ resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2
   }
 }
 
-resource deploymentAtlasInitScripts 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'deployment-atlas-init'
+resource deploymentOhdsiWebapiInitScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  name: 'deployment-ohdsi-webapi-init'
   location: location
   kind: 'AzureCLI'
   properties: {
     azCliVersion: '2.42.0'
     timeout: 'PT5M'
     containerSettings: {
-      containerGroupName: 'deployment-atlas-init'
+      containerGroupName: 'deployment-ohdsi-webapi-init'
     }
     environmentVariables: [
       {
@@ -140,10 +166,11 @@ resource deploymentAtlasInitScripts 'Microsoft.Resources/deploymentScripts@2020-
   ]
 }
 
+output postgresWebapiAdminSecretName string = postgresWebapiAdminSecret.name
+output postgresWebapiAppSecretName string = postgresWebapiAppSecret.name
 output postgresServerName string = postgresServer.name
 output postgresServerFullyQualifiedDomainName string = postgresServer.properties.fullyQualifiedDomainName
 output postgresSchemaName string = postgresSchemaName
-output postgresAdminUsername string = postgresAdminUsername
 output postgresWebapiAdminUsername string = postgresWebapiAdminUsername
 output postgresWebapiAppUsername string = postgresWebapiAppUsername
 output postgresWebApiDatabaseName string = postgresWebApiDatabaseName
