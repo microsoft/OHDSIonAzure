@@ -19,6 +19,7 @@ GRANT ALL ON SCHEMA webapi_security TO GROUP ohdsi_admin;
 do $$
 
 	declare tables_count integer := 0;
+	declare roles_count integer := 0;
 
 begin
 	
@@ -32,8 +33,20 @@ begin
 					AND tablename  in ('sec_user', 'sec_role', 'sec_user_role')
 		);
    	end loop;
-	
+
 	raise notice 'All tables are ready.';
+
+	while roles_count <> 3 loop
+		raise notice 'Waiting for application security roles to become ready...';
+	 	PERFORM pg_sleep(10);
+	  	roles_count := (
+			SELECT 	COUNT(*) 
+			FROM 	webapi.sec_role
+			WHERE 	id in (1, 2, 10)
+		);
+   	end loop;
+	
+	raise notice 'All roles are ready.';
 	
 	insert into webapi.sec_user (id, login, name) values (1000, 'admin', 'admin') ON CONFLICT DO NOTHING;
 	insert into webapi.sec_user_role (user_id, role_id) values (1000, 2); -- admin role

@@ -10,7 +10,7 @@ var shareName = 'atlas'
 var mountPath = '/etc/atlas'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
-  name: 'ohdsisa${suffix}'
+  name: 'stohdsi${suffix}'
   location: location
   kind: 'StorageV2'
   sku: {
@@ -26,8 +26,8 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   }
 }
 
-resource deploymentAtlasUiConfigScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'deployment-atlas-ui-scripts-config-file'
+resource deploymentOhdsiAtlasConfigScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  name: 'deployment-ohdsi-atlas-config-file'
   location: location
   kind: 'AzureCLI'
   properties: {
@@ -68,7 +68,7 @@ resource deploymentAtlasUiConfigScript 'Microsoft.Resources/deploymentScripts@20
 }
 
 resource uiWebApp 'Microsoft.Web/sites@2022-03-01' = {
-  name: 'atlas-ui-${suffix}'
+  name: 'app-ohdsiatlas-${suffix}'
   location: location
   properties: {
     httpsOnly: true
@@ -113,6 +113,6 @@ resource uiWebApp 'Microsoft.Web/sites@2022-03-01' = {
     }
   }
   dependsOn: [
-    deploymentAtlasUiConfigScript
+    deploymentOhdsiAtlasConfigScript
   ]
 }
