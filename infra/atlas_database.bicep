@@ -1,6 +1,8 @@
 param location string
 param suffix string
 param keyVaultName string
+param postgresSku string
+param postgresStorageSize int
 @secure()
 param postgresAdminPassword string
 @secure()
@@ -51,7 +53,7 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' =
   name: 'psql-${suffix}'
   location: location
   sku: {
-    name: 'Standard_D2s_v3'
+    name: postgresSku
     tier: 'GeneralPurpose'
   }
   properties: {
@@ -59,7 +61,7 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' =
     administratorLogin: postgresAdminUsername
     administratorLoginPassword: postgresAdminPassword
     storage: {
-      storageSizeGB: 32
+      storageSizeGB: postgresStorageSize
     }
     backup: {
       backupRetentionDays: 7
