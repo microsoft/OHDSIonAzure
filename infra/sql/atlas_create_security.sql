@@ -8,12 +8,8 @@ CREATE TABLE webapi_security.security
     password character varying(255)
 );
 
-insert into webapi_security.security (email,password) values ('admin', '$2a$10$opEKwT32fEvoPfSbzE1Rx.p8QsCG0KryiA7VEguLP/V0M62aho6mC');
-insert into webapi_security.security (email,password) values ('ohdsi', '$2a$04$Fg8TEiD2u/xnDzaUQFyiP.uoDu4Do/tsYkTUCWNV0zTCW3HgnbJjO');
-
 GRANT USAGE ON SCHEMA webapi_security TO PUBLIC;
 GRANT ALL ON SCHEMA webapi_security TO GROUP ohdsi_admin;
-
 
 
 do $$
@@ -47,14 +43,6 @@ begin
    	end loop;
 	
 	raise notice 'All roles are ready.';
-	
-	insert into webapi.sec_user (id, login, name) values (1000, 'admin', 'admin') ON CONFLICT DO NOTHING;
-	insert into webapi.sec_user_role (user_id, role_id) values (1000, 2); -- admin role
-	insert into webapi.sec_user_role (user_id, role_id) values (1000, 1); -- public role
-
-	insert into webapi.sec_user (id, login, name) values (1001, 'ohdsi', 'ohdsi') ON CONFLICT DO NOTHING;
-	insert into webapi.sec_user_role (user_id, role_id) values (1001, 10); -- atlas user role
-	insert into webapi.sec_user_role (user_id, role_id) values (1001, 1); -- public role
 
    	raise notice 'Done.';
 
