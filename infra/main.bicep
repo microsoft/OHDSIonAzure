@@ -167,7 +167,6 @@ module omopCDM 'omop_cdm.bicep' = {
 
   dependsOn: [
     ohdsiWebApiWebapp
-    appServicePlan
     atlasDatabase
   ]
 }

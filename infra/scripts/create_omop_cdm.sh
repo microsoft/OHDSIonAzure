@@ -36,10 +36,7 @@ printf 'Creating OMOP CDM primary keys\n'
 psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_primary_keys.sql -v ON_ERROR_STOP=1
 
 # load OMOP CDM data
-tables=("cdm.concept_ancestor" "cdm.concept_relationship" "cdm.concept" "cdm.drug_strength" "cdm.concept_synonym" "cdm.measurement" "cdm.observation" "cdm.cost" "cdm.visit_detail" "cdm.visit_occurrence" "cdm.payer_plan_period" "cdm.drug_exposure" "cdm.procedure_occurrence" "cdm.condition_occurrence" "cdm.condition_era" "cdm.provider" "cdm.drug_era" "cdm.person" "cdm.relationship" "cdm.observation_period" "cdm.concept_class" "cdm.device_exposure" "cdm.death" "cdm.cdm_source" "cdm.vocabulary" "cdm.domain" "cdm_results.achilles_analysis" "cdm_results.achilles_results_dist" "cdm.drug_era" "cdm_results.achilles_results")
-# "cdm.source_to_source_vocab_map" "cdm.source_to_standard_vocab_map" "cdm.assign_all_visit_ids" "cdm.all_visits" "cdm.final_visit_ids" 
-# load subset of tables for now to speed up testing
-# tables=("cdm.all_visits" "cdm.person" "cdm.drug_era" "cdm.death" "cdm_results.achilles_analysis" "cdm_results.achilles_results_dist" "cdm.drug_era" "cdm_results.achilles_results")
+tables=("cdm.concept_ancestor" "cdm.concept_relationship" "cdm.concept" "cdm.drug_strength" "cdm.concept_synonym" "cdm.measurement" "cdm.observation" "cdm.cost" "cdm.visit_detail" "cdm.visit_occurrence" "cdm.payer_plan_period" "cdm.drug_exposure" "cdm.procedure_occurrence" "cdm.condition_occurrence" "cdm.condition_era" "cdm.provider" "cdm.drug_era" "cdm.person" "cdm.relationship" "cdm.observation_period" "cdm.concept_class" "cdm.device_exposure" "cdm.death" "cdm.cdm_source" "cdm.vocabulary" "cdm.domain" "cdm_results.achilles_analysis" "cdm_results.achilles_results_dist" "cdm_results.achilles_results")
 printf 'Loading OMOP CDM data\n'
 n=${#tables[@]}
 i=0
@@ -49,8 +46,8 @@ for element in "${tables[@]}"; do
     file=/tmp/"$element".csv
     curl "${OMOP_CDM_CONTAINER_URL}$element.csv.gz${OMOP_CDM_SAS_TOKEN}" | gunzip > "$file"
     num_of_records=$(wc -l "$file" | awk '{print $1}')
-    printf "Copying %s to table: %s\n" "$num_of_records" "$element"
-    psql "$OMOP_CONNECTION_STRING" -c "\COPY $element FROM '$file' WITH CSV;" #-v ON_ERROR_STOP=1
+    printf "Copying %s records to table: %s\n" "$num_of_records" "$element"
+    psql "$OMOP_CONNECTION_STRING" -c "\COPY $element FROM '$file' WITH CSV;" -v ON_ERROR_STOP=1
     rm -f "$file"
     printf "done\n"
 done
@@ -59,6 +56,9 @@ done
 printf 'creating OMOP CDM indices\n'
 psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_indices.sql -v ON_ERROR_STOP=1
 
+# for now user will need to add a source via Atlas UI, there's work in progress to automate this
+printf 'OMOP CDM created, you can now add it to Atlas as a source, connection string will avaiable in Azure KeyVault.\n'
+
 # add OMOP CDM source to WebAPI
-printf 'adding OMOP CDM source to WebAPI\n'
-echo "$SQL_add_omop_source" | envsubst | psql "$ATLAS_DB_CONNECTION_STRING" -e -v ON_ERROR_STOP=1
+# printf 'adding OMOP CDM source to WebAPI\n'
+# echo "$SQL_add_omop_source" | envsubst | psql "$ATLAS_DB_CONNECTION_STRING" -e -v ON_ERROR_STOP=1
