@@ -19,7 +19,32 @@ param postgresOMOPCDMDatabaseName string
 param appPlanSkuName string = 'S1'
 
 @description('The postgres sku')
-@allowed(['Standard_D2s_v3', 'Standard_D8s_v3', 'Standard_D16s_v3', 'Standard_D32s_v3', 'Standard_D48s_v3'])
+@allowed([
+'Standard_D2s_v3'
+'Standard_D4s_v3'
+'Standard_D8s_v3'
+'Standard_D16s_v3'
+'Standard_D32s_v3'
+'Standard_D48s_v3'
+'Standard_D64s_v3'
+'Standard_D2ds_v4'
+'Standard_D4ds_v4'
+'Standard_D8ds_v4'
+'Standard_D16ds_v4'
+'Standard_D32ds_v4'
+'Standard_D48ds_v4'
+'Standard_D64ds_v4'
+'Standard_D64ds_v4'
+'Standard_B1ms'
+'Standard_B2s'
+'Standard_B2ms'
+'Standard_B4ms'
+'Standard_B8ms'
+'Standard_B12ms'
+'Standard_B16ms'
+'Standard_B20ms'
+]
+)
 param postgresSku string = 'Standard_D2s_v3'
 
 @description('The size of the postgres database storage')

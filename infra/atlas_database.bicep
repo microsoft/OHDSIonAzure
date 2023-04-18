@@ -54,7 +54,7 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' =
   location: location
   sku: {
     name: postgresSku
-    tier: 'GeneralPurpose'
+    tier: contains(postgresSku, 'B') ? 'Burstable' : 'GeneralPurpose'
   }
   properties: {
     version: postgresVersion
