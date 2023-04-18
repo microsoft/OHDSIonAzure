@@ -25,7 +25,7 @@ else
     if [ "$count" = "2" ]; then
         psql -v ON_ERROR_STOP=1 -e "$OHDSI_ADMIN_CONNECTION_STRING" -c "insert into webapi.sec_user_role (user_id, role_id) values ($id,2);" #admin role
     else
-    psql -v ON_ERROR_STOP=1 -e "$OHDSI_ADMIN_CONNECTION_STRING" -c "insert into webapi.sec_user_role (user_id, role_id) values ($id,10);"  #atlas user role
+        psql -v ON_ERROR_STOP=1 -e "$OHDSI_ADMIN_CONNECTION_STRING" -c "insert into webapi.sec_user_role (user_id, role_id) values ($id,10);"  #atlas user role
     fi
     let count+=1
     let id+=1
