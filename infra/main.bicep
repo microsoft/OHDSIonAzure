@@ -180,7 +180,7 @@ resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-
         secureValue: atlasSecurityAdminPassword
       }
       {
-        name: 'ATLASUSERS'
+        name: 'ATLAS_USERS'
         secureValue: 'admin,${atlasSecurityAdminPassword},${atlasUsersList}'
       }
       {
