@@ -35,7 +35,6 @@ param postgresOMOPCDMpassword string
 param keyVaultName string
 
 var postgresOMOPCDMSchemaName = 'cdm'
-var postgresOMOPVocabularySchemaName = 'vocabulary'
 var postgresOMOPResultsSchemaName = 'cdm_results'
 var postgresOMOPTempSchemaName = 'temp'
 var postgresOMOPCDMRole = 'cdm_reader'
@@ -86,7 +85,7 @@ resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2
 }
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'deployment-script-omop-cdm'
+  name: 'deployment-omop-cdm'
   location: location
   kind: 'AzureCLI'
   properties: {
@@ -143,10 +142,6 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         value: postgresOMOPCDMSchemaName
       }
       {
-        name: 'POSTGRES_OMOP_VOCABULARY_SCHEMA_NAME'
-        value: postgresOMOPVocabularySchemaName
-      }
-      {
         name: 'POSTGRES_OMOP_RESULTS_SCHEMA_NAME'
         value: postgresOMOPResultsSchemaName
       }
@@ -177,7 +172,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     cleanupPreference: 'OnExpiration'
     retentionInterval: 'PT1H'
     containerSettings: {
-      containerGroupName: 'deployment-omop'
+      containerGroupName: 'deployment-omop-cdm'
     }
   }
 }
