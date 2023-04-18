@@ -30,6 +30,14 @@ param postgresWebapiAppPassword string = uniqueString(newGuid())
 @description('The password for the postgres OMOP CDM user')
 param postgresOMOPCDMpassword string = uniqueString(newGuid())
 
+@secure()
+@description('The password for atlas security admin user')
+param atlasSecurityAdminPassword string = uniqueString(newGuid())
+
+@secure()
+@description('Comma-delimited user list for atlas. Do not use admin as a username. It causes problems with Atlas security')
+param atlasUsersList string
+
 @description('Enables local access for debugging.')
 param localDebug bool = false
 
@@ -140,6 +148,14 @@ module atlasUI 'ohdsi_atlas_ui.bicep' = {
 
 output ohdsiWebapiUrl string = ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
 
+resource atlasSecurityAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+  name: 'atlas-security-admin-password'
+  parent: keyVault
+  properties: {
+    value: atlasSecurityAdminPassword
+  }
+}
+
 resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'deployment-atlas-security'
   location: location
@@ -159,23 +175,19 @@ resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-
         secureValue: 'host=${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName} port=5432 dbname=${atlasDatabase.outputs.postgresWebApiDatabaseName} user=${atlasDatabase.outputs.postgresWebapiAdminUsername} password=${postgresWebapiAdminPassword} sslmode=require'
       }
       {
-        name: 'SQL'
-        value: loadTextContent('sql/atlas_security.sql')
+        name: 'ATLAS_SECURITY_ADMIN_PASSWORD'
+        secureValue: atlasSecurityAdminPassword
+      }
+      {
+        name: 'ATLAS_USERS'
+        secureValue: 'admin,${atlasSecurityAdminPassword},${atlasUsersList}'
+      }
+      {
+        name: 'SQL_ATLAS_CREATE_SECURITY'
+        value: loadTextContent('sql/atlas_create_security.sql')
       }
     ]
-    scriptContent: '''
-      #!/bin/bash
-      set -o errexit
-      set -o pipefail
-      set -o nounset
-
-      LOG_FILE=/mnt/azscripts/azscriptoutput/all.log
-      exec >  >(tee -ia ${LOG_FILE})
-      exec 2> >(tee -ia ${LOG_FILE} >&2)
-
-      apk --update add postgresql-client
-      psql -v ON_ERROR_STOP=1 -e "$OHDSI_ADMIN_CONNECTION_STRING" -c "$SQL"
-    '''
+    scriptContent: loadTextContent('scripts/atlas_security.sh')
   }
   dependsOn: [
     atlasDatabase
