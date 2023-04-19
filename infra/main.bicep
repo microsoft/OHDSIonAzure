@@ -15,7 +15,20 @@ param cdmSasToken string
 param postgresOMOPCDMDatabaseName string
 
 @description('The app service plan sku')
-@allowed(['S1', 'P1V2', 'P1V3'])
+@allowed([
+  'S1'
+  'S2'
+  'S3'
+  'B1'
+  'B2'
+  'B3'
+  'P1V2'
+  'P2V2'
+  'P3V2'
+  'P1V3'
+  'P2V3'
+  'P3V3'
+])
 param appPlanSkuName string = 'S1'
 
 @description('The postgres sku')
