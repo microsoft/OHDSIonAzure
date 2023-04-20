@@ -12,7 +12,7 @@ var mountPath = '/etc/atlas'
 var logCategories = ['AppServiceAppLogs', 'AppServiceConsoleLogs', 'AppServiceHTTPLogs']
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
-  name: substring('stohdsi${suffix}', 0, 24)
+  name: 'stohdsi${suffix}'
   location: location
   kind: 'StorageV2'
   sku: {
