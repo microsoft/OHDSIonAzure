@@ -11,12 +11,14 @@ param jdbcConnectionStringWebapiAdmin string
 param postgresWebapiAppSecret string
 @secure()
 param postgresWebapiAdminSecret string
+param logAnalyticsWorkspaceId string
 
 var dockerRegistryServer = 'https://index.docker.io/v1'
 var dockerImageName = 'ohdsi/webapi'
 var dockerImageTag = '2.12.1'
 var flywayBaselineVersion = '2.2.5.20180212152023'
 var tenantId = subscription().tenantId
+var logCategories = ['AppServiceAppLogs', 'AppServiceConsoleLogs', 'AppServiceHTTPLogs']
 
 // Get the keyvault
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
@@ -62,11 +64,13 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
   location: location
   properties: {
     httpsOnly: true
+    clientAffinityEnabled: false
     keyVaultReferenceIdentity: ohdsiWebapiIdentity.id
     serverFarmId: appServicePlanId
     siteConfig: {
       linuxFxVersion: 'DOCKER|${dockerImageName}:${dockerImageTag}'
       alwaysOn: true
+      ftpsState: 'Disabled'
       appSettings: [
         {
           name: 'DOCKER_REGISTRY_SERVER_URL'
@@ -224,6 +228,22 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
     userAssignedIdentities: {
       '${ohdsiWebapiIdentity.id}': {}
     }
+  }
+}
+
+resource diagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: webApp.name
+  scope: webApp
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [for logCategory in logCategories: {
+      category: logCategory
+      enabled: true
+      retentionPolicy: {
+        days: 30
+        enabled: true
+      }
+    }]
   }
 }
 

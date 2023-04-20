@@ -2,12 +2,14 @@ param location string
 param suffix string
 param appServicePlanId string
 param ohdsiWebApiUrl string
+param logAnalyticsWorkspaceId string
 
 var dockerRegistryServer = 'https://index.docker.io/v1'
 var dockerImageName = 'ohdsi/atlas'
 var dockerImageTag = '2.13.0'
 var shareName = 'atlas'
 var mountPath = '/etc/atlas'
+var logCategories = ['AppServiceAppLogs', 'AppServiceConsoleLogs', 'AppServiceHTTPLogs']
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: 'stohdsi${suffix}'
@@ -72,6 +74,7 @@ resource uiWebApp 'Microsoft.Web/sites@2022-03-01' = {
   location: location
   properties: {
     httpsOnly: true
+    clientAffinityEnabled: false
     serverFarmId: appServicePlanId
     siteConfig: {
       azureStorageAccounts: {
@@ -84,6 +87,7 @@ resource uiWebApp 'Microsoft.Web/sites@2022-03-01' = {
         }
       }
       linuxFxVersion: 'DOCKER|${dockerImageName}:${dockerImageTag}'
+      ftpsState: 'Disabled'
       appSettings: [
         {
           name: 'DOCKER_REGISTRY_SERVER_URL'
@@ -115,4 +119,20 @@ resource uiWebApp 'Microsoft.Web/sites@2022-03-01' = {
   dependsOn: [
     deploymentOhdsiAtlasConfigScript
   ]
+}
+
+resource diagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: uiWebApp.name
+  scope: uiWebApp
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [for logCategory in logCategories: {
+      category: logCategory
+      enabled: true
+      retentionPolicy: {
+        days: 30
+        enabled: true
+      }
+    }]
+  }
 }
