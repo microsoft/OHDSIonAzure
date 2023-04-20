@@ -11,6 +11,8 @@ param postgresWebapiAdminPassword string
 param postgresWebapiAppPassword string
 @description('Enables local access for debugging.')
 param localDebug bool = false
+param logAnalyticsWorkspaceId string
+
 var postgresAdminUsername = 'postgres_admin'
 var postgresWebapiAdminUsername = 'ohdsi_admin_user'
 var postgresWebapiAdminRole = 'ohdsi_admin'
@@ -19,6 +21,10 @@ var postgresWebapiAppRole = 'ohdsi_app'
 var postgresWebApiDatabaseName = 'atlas_webapi_db'
 var postgresSchemaName = 'webapi'
 var postgresVersion = '14'
+
+var logCategories = ['PostgreSQLLogs']
+// these cost extra.
+// var logCategories = ['PostgreSQLLogs', 'PostgreSQLFlexDatabaseXacts', 'PostgreSQLFlexQueryStoreRuntime', 'PostgreSQLFlexQueryStoreWaitStats', 'PostgreSQLFlexSessions', 'PostgreSQLFlexTableStats']
 
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
   name: keyVaultName
@@ -166,6 +172,22 @@ resource deploymentOhdsiWebapiInitScript 'Microsoft.Resources/deploymentScripts@
   dependsOn: [
     postgresDatabase
   ]
+}
+
+resource diagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: postgresServer.name
+  scope: postgresServer
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [for logCategory in logCategories: {
+      category: logCategory
+      enabled: true
+      retentionPolicy: {
+        days: 30
+        enabled: true
+      }
+    }]
+  }
 }
 
 output postgresWebapiAdminSecretName string = postgresWebapiAdminSecret.name

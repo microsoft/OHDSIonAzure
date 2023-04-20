@@ -33,35 +33,35 @@ param appPlanSkuName string = 'S1'
 
 @description('The postgres sku')
 @allowed([
-'Standard_D2s_v3'
-'Standard_D4s_v3'
-'Standard_D8s_v3'
-'Standard_D16s_v3'
-'Standard_D32s_v3'
-'Standard_D48s_v3'
-'Standard_D64s_v3'
-'Standard_D2ds_v4'
-'Standard_D4ds_v4'
-'Standard_D8ds_v4'
-'Standard_D16ds_v4'
-'Standard_D32ds_v4'
-'Standard_D48ds_v4'
-'Standard_D64ds_v4'
-'Standard_D64ds_v4'
-'Standard_B1ms'
-'Standard_B2s'
-'Standard_B2ms'
-'Standard_B4ms'
-'Standard_B8ms'
-'Standard_B12ms'
-'Standard_B16ms'
-'Standard_B20ms'
-]
+    'Standard_D2s_v3'
+    'Standard_D4s_v3'
+    'Standard_D8s_v3'
+    'Standard_D16s_v3'
+    'Standard_D32s_v3'
+    'Standard_D48s_v3'
+    'Standard_D64s_v3'
+    'Standard_D2ds_v4'
+    'Standard_D4ds_v4'
+    'Standard_D8ds_v4'
+    'Standard_D16ds_v4'
+    'Standard_D32ds_v4'
+    'Standard_D48ds_v4'
+    'Standard_D64ds_v4'
+    'Standard_D64ds_v4'
+    'Standard_B1ms'
+    'Standard_B2s'
+    'Standard_B2ms'
+    'Standard_B4ms'
+    'Standard_B8ms'
+    'Standard_B12ms'
+    'Standard_B16ms'
+    'Standard_B20ms'
+  ]
 )
 param postgresSku string = 'Standard_D2s_v3'
 
 @description('The size of the postgres database storage')
-@allowed([32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384])
+@allowed([ 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384 ])
 param postgresStorageSize int = 32
 
 @secure()
@@ -95,7 +95,7 @@ var tenantId = subscription().tenantId
 
 @description('Creates the app service plan')
 resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
-#disable-next-line use-stable-resource-identifiers
+  #disable-next-line use-stable-resource-identifiers
   name: 'asp-${suffix}'
   location: location
   sku: {
@@ -109,7 +109,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
 
 @description('Creates the key vault')
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
-#disable-next-line use-stable-resource-identifiers
+  #disable-next-line use-stable-resource-identifiers
   name: 'kv-${suffix}'
   location: location
   properties: {
@@ -126,6 +126,22 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
   }
 }
 
+resource keyVaultDiagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: keyVault.name
+  scope: keyVault
+  properties: {
+    workspaceId: logAnalyticsWorkspace.id
+    logs: [for logCategory in [ 'AuditEvent' ]: {
+      category: logCategory
+      enabled: true
+      retentionPolicy: {
+        days: 30
+        enabled: true
+      }
+    }]
+  }
+}
+
 @description('Creates the database server, users and groups required for ohdsi webapi')
 module atlasDatabase 'atlas_database.bicep' = {
   name: 'atlasDatabase'
@@ -139,6 +155,7 @@ module atlasDatabase 'atlas_database.bicep' = {
     postgresWebapiAdminPassword: postgresWebapiAdminPassword
     postgresWebapiAppPassword: postgresWebapiAppPassword
     localDebug: localDebug
+    logAnalyticsWorkspaceId: logAnalyticsWorkspace.id
   }
 }
 
@@ -156,6 +173,7 @@ module ohdsiWebApiWebapp 'ohdsi_webapi.bicep' = {
     postgresWebapiAdminUsername: atlasDatabase.outputs.postgresWebapiAdminUsername
     postgresWebapiAppUsername: atlasDatabase.outputs.postgresWebapiAppUsername
     postgresWebApiSchemaName: atlasDatabase.outputs.postgresSchemaName
+    logAnalyticsWorkspaceId: logAnalyticsWorkspace.id
   }
   dependsOn: [
     atlasDatabase
@@ -192,6 +210,7 @@ module atlasUI 'ohdsi_atlas_ui.bicep' = {
     suffix: suffix
     appServicePlanId: appServicePlan.id
     ohdsiWebApiUrl: ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
+    logAnalyticsWorkspaceId: logAnalyticsWorkspace.id
   }
   dependsOn: [
     ohdsiWebApiWebapp
@@ -244,4 +263,10 @@ resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-
   dependsOn: [
     atlasDatabase
   ]
+}
+
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+  #disable-next-line use-stable-resource-identifiers
+  name: 'log-${suffix}'
+  location: location
 }
