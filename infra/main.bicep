@@ -131,14 +131,16 @@ resource keyVaultDiagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-0
   scope: keyVault
   properties: {
     workspaceId: logAnalyticsWorkspace.id
-    logs: [for logCategory in [ 'AuditEvent' ]: {
-      category: logCategory
-      enabled: true
-      retentionPolicy: {
-        days: 30
+    logs: [
+      {
+        category: 'AuditEvent'
         enabled: true
+        retentionPolicy: {
+          days: 30
+          enabled: true
+        }
       }
-    }]
+    ]
   }
 }
 
