@@ -259,6 +259,10 @@ resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-
         name: 'SQL_ATLAS_CREATE_SECURITY'
         value: loadTextContent('sql/atlas_create_security.sql')
       }
+      {
+        name: 'WEBAPI_URL'
+        value: ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
+      }
     ]
     scriptContent: loadTextContent('scripts/atlas_security.sh')
   }
