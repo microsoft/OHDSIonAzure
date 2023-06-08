@@ -32,7 +32,7 @@ Some of the OHDSI projects included:
 
 Once deployed, The OHDSI on Azure solution will have the following components:
 
-1. Your Atlas and Webapi instances will be deployed as container on Azure App Service. The images get pulled from Docker Hub. Both app services will be deployed in a single App Service Plan.
+1. An Atlas and Webapi instances will be deployed as container on Azure App Service. The images get pulled from Docker Hub. Both sites will be deployed into a single App Service Plan.
 2. A Storage Account will be deployed with a filesystem. This is used to store the Atlas configuration files.
 3. Azure database for PostgreSQL will be deployed with different databases - one for the OMOP CDM and one for the Atlas WebAPI schemas.
 4. Key Vault will be deployed to store the database credentials and other secrets.
