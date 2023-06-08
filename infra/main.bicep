@@ -343,7 +343,7 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
     scriptContent: loadTextContent('scripts/add_data_source.sh')
   }
   dependsOn: [
-    atlasUI
+    deploymentAtlasSecurity
     ohdsiWebApiWebapp
     omopCDM
   ]
