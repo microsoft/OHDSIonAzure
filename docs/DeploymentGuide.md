@@ -23,7 +23,7 @@ In order to deploy OHDSI on Azure, you will need the following prerequisites:
 | Location                      | The location of the resources.                                                                                | Resource group location                                       |
 | Suffix                        | The suffix for the resource names.                                                                            | Unique string is being generated                              |
 | CDM Container URL             | The URL prefix or Blob container where CDM files can be downloaded from.           | <https://omoppublic.blob.core.windows.net/shared/synthea1k/> |
-| CDM SAS Token                 | The SAS token for accessing the CDM container. If no need for a SAS token, leave empty.                      | None                                                          |
+| CDM SAS Token                 | The SAS token for accessing the CDM container. Leave empty if the files are available anonymously.                      | None                                                          |
 | Postgres OMOP CDM Database Name| The name of the PostgreSQL OMOP CDM database.                                                                 | None                                                          |
 | App Plan SKU                  | The SKU for the app plan.                                                                                     | S1                                                            |
 | Postgres SKU                  | The SKU for the PostgreSQL database.                                                                          | Standard_D2s_v3                                               |
