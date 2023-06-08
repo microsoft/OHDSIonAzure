@@ -235,7 +235,7 @@ resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-
   kind: 'AzureCLI'
   properties: {
     azCliVersion: '2.42.0'
-    timeout: 'PT5M'
+    timeout: 'PT60M'
     forceUpdateTag: '5'
     containerSettings: {
       containerGroupName: 'deployment-atlas-security'
@@ -275,4 +275,76 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10
   #disable-next-line use-stable-resource-identifiers
   name: 'log-${suffix}'
   location: location
+}
+
+resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  name: 'deployment-add-data-source'
+  location: location
+  kind: 'AzureCLI'
+  properties: {
+    azCliVersion: '2.42.0'
+    timeout: 'PT5M'
+    forceUpdateTag: '5'
+    containerSettings: {
+      containerGroupName: 'deployment-add-data-source'
+    }
+    retentionInterval: 'PT1H'
+    cleanupPreference: 'OnExpiration'
+    environmentVariables: [
+      {
+        name: 'CONNECTION_STRING'
+        secureValue: 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=postgres_admin&password=${postgresOMOPCDMpassword}&sslmode=require'
+      }
+      {
+        name: 'OHDSI_WEBAPI_PASSWORD'
+        secureValue: atlasSecurityAdminPassword
+      }
+      {
+        name: 'OHDSI_WEBAPI_USER'
+        value: 'admin'
+      }
+      {
+        name: 'OHDSI_WEBAPI_URL'
+        value: ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
+      }
+      {
+        name: 'DIALECT'
+        value: 'postgresql'
+      }
+      {
+        name: 'SOURCE_NAME'
+        value: 'omop-cdm-synthea'
+      }
+      {
+        name: 'SOURCE_KEY'
+        value: 'omop-cdm-synthea'
+      }
+      {
+        name: 'USERNAME'
+        value: atlasDatabase.outputs.postgresWebapiAdminUsername
+      }
+      {
+        name: 'PASSWORD'
+        secureValue: postgresWebapiAdminPassword
+      }
+      {
+        name: 'DAIMON_CDM'
+        value: 'cdm'
+      }
+      {
+        name: 'DAIMON_VOCABULARY'
+        value: 'cdm'
+      }
+      {
+        name: 'DAIMON_RESULTS'
+        value: 'cdm_results'
+      }
+    ]
+    scriptContent: loadTextContent('scripts/add_data_source.sh')
+  }
+  dependsOn: [
+    deploymentAtlasSecurity
+    ohdsiWebApiWebapp
+    omopCDM
+  ]
 }
