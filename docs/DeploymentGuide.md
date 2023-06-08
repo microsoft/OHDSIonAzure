@@ -13,7 +13,7 @@ In order to deploy OHDSI on Azure, you will need the following prerequisites:
 * To get started, click on deploy to Azure button. \
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Fv2%2Finfra%2Farm_output%2Fmain.json)
 
-* Once you click, you will be redirected to custom deployment page, which will ask you to fill the following details:
+* Once you click, you will be redirected to custom deployment page, which will ask you to provide the following details:
 
 | Name                          | Details                                                                                                       | Default Value                                                 |
 |-------------------------------|---------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
