@@ -29,7 +29,7 @@ param postgresWebapiAdminPassword string
 
 @secure()
 @description('Password for the cdm user')
-param postgresOMOPCDMpassword string
+param postgresOMOPCDMPassword string
 
 @description('The name of the keyvault')
 param keyVaultName string
@@ -44,7 +44,7 @@ var postgresOMOPCDMJDBCConnectionStringSecretName = '${postgresOMOPCDMDatabaseNa
 var postgresWebAPISchemaName = 'webapi'
 var postgresWebapiAdminUsername = 'ohdsi_admin_user'
 var postgresAdminUsername = 'postgres_admin'
-var postgresOMOPCDMJDBCConnectionString = 'jdbc:postgresql://${postgresServer.properties.fullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=${postgresOMOPCDMUsername}&password=${postgresOMOPCDMpassword}&sslmode=require'
+var postgresOMOPCDMJDBCConnectionString = 'jdbc:postgresql://${postgresServer.properties.fullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=${postgresOMOPCDMUsername}&password=${postgresOMOPCDMPassword}&sslmode=require'
 
 // Get the postgres server
 resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' existing = {
@@ -61,7 +61,7 @@ resource postgresAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
   name: postgresOMOPCDMUserSecretName
   parent: keyVault
   properties: {
-    value: postgresOMOPCDMpassword
+    value: postgresOMOPCDMPassword
   }
 }
 
@@ -131,7 +131,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       }
       {
         name: 'POSTGRES_OMOP_CDM_PASSWORD'
-        secureValue: postgresOMOPCDMpassword
+        secureValue: postgresOMOPCDMPassword
       }
       {
         name: 'OMOP_CDM_SAS_TOKEN'

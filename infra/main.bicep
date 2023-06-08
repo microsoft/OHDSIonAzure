@@ -78,7 +78,7 @@ param postgresWebapiAppPassword string = uniqueString(newGuid())
 
 @secure()
 @description('The password for the postgres OMOP CDM user')
-param postgresOMOPCDMpassword string = uniqueString(newGuid())
+param postgresOMOPCDMPassword string = uniqueString(newGuid())
 
 @secure()
 @description('The password for atlas security admin user')
@@ -194,7 +194,7 @@ module omopCDM 'omop_cdm.bicep' = {
     postgresOMOPCDMDatabaseName: postgresOMOPCDMDatabaseName
     postgresAdminPassword: postgresAdminPassword
     postgresWebapiAdminPassword: postgresWebapiAdminPassword
-    postgresOMOPCDMpassword: postgresOMOPCDMpassword
+    postgresOMOPCDMPassword: postgresOMOPCDMPassword
     postgresServerName: atlasDatabase.outputs.postgresServerName
   }
 
@@ -293,7 +293,7 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
     environmentVariables: [
       {
         name: 'CONNECTION_STRING'
-        secureValue: 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=postgres_admin&password=${postgresOMOPCDMpassword}&sslmode=require'
+        secureValue: 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=postgres_admin&password=${postgresOMOPCDMPassword}&sslmode=require'
       }
       {
         name: 'OHDSI_WEBAPI_PASSWORD'

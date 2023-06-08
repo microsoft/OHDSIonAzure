@@ -34,7 +34,7 @@ This setup is based on the [CDM v5.4.0 for PostgreSQL](https://github.com/OHDSI/
 
 To get started, click on deploy to Azure button.
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Fv2%2Finfra%2Fmain.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Ffeature%2Fadd-data-source-synthea%2Finfra%2Farm_output%2Fmain.json)
 
 ## Contributing
 
