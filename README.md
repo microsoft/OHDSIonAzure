@@ -26,6 +26,20 @@ Some of the OHDSI projects included:
 * [Achilles](https://github.com/OHDSI/Achilles) - provides descriptive statistics on an OMOP CDM database
 * [ETL-Synthea](https://github.com/OHDSI/ETL-Synthea) - Conversion from Synthea CSV to OMOP CDM
 
+## Overview
+
+![alt text](./docs/media/OHDSIonAzure.png "Architecture")
+
+Once deployed, The OHDSI on Azure solution will have the following components:
+
+1. Your Atlas and Webapi instances will be deployed as container on Azure App Service. The images get pulled from Docker Hub. Both app services will be deployed in a single App Service Plan.
+2. A Storage Account will be deployed with a filesystem. This is used to store the Atlas configuration files.
+3. Azure database for PostgreSQL will be deployed with different databases - one for the OMOP CDM and one for the Atlas WebAPI schemas.
+4. Key Vault will be deployed to store the database credentials and other secrets.
+5. Log Analytics workspace will be deployed to collect logs from the App Services, PostgreSQL and Key Vault.
+
+* You can host your CDM in Azure PostgreSQL. You can load your vocabularies into Azure Storage Container as cs.gz files, and pass as a paramater in your custom deployment.
+
 ## CDM Version
 
 This setup is based on the [CDM v5.4.0 for PostgreSQL](https://github.com/OHDSI/CommonDataModel/tree/main/inst/ddl/5.4/postgresql).
@@ -33,8 +47,8 @@ This setup is based on the [CDM v5.4.0 for PostgreSQL](https://github.com/OHDSI/
 ## Getting Started
 
 To get started, click on deploy to Azure button.
-
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Ffeature%2Fadd-data-source-synthea%2Finfra%2Farm_output%2Fmain.json)
+To get more detailed instructions, please refer to the [Deployment Guide](./docs/DeploymentGuide.md).
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Fv2%2Finfra%2Farm_output%2Fmain.json)
 
 ## Contributing
 

@@ -1,14 +1,19 @@
-# Getting Started
-
-## Introduction
+# Deployment Guide
 
 ## Prerequisites
+
+In order to deploy OHDSI on Azure, you will need the following prerequisites:
 
 1. Azure Subscription
 2. Resource Group
 3. Logged in with a user that has Contributer role on the subscription and resource group
 
-Once you click on deploy to azure buttom, you will be redirected to Custom deployment page, which will ask you to fill the following details.
+## Setup
+
+* To get started, click on deploy to Azure button. \
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Fv2%2Finfra%2Farm_output%2Fmain.json)
+
+* Once you click, you will be redirected to custom deployment page, which will ask you to fill the following details:
 
 | Name                          | Details                                                                                                       | Default Value                                                 |
 |-------------------------------|---------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
@@ -31,3 +36,4 @@ Once you click on deploy to azure buttom, you will be redirected to Custom deplo
 | Atlas Users List              | The list of users for the Atlas system should be provided in the following format: 'username1,password1,username2,password2,' and so on. Separate each set of credentials with a comma. For example, if you have two sets of credentials, it should look like this: 'user1,pass1,user2,pass2.' Ensure that the usernames and passwords are in the correct order and do not include any additional spaces or characters between the credentials. Note that this format allows you to specify multiple sets of username-password pairs for different users. Make sure each pair is properly formatted and separated by commas. | None                                                          |
 | Local Debug                   | Enable local debugging mode.                                                                                   | false                                                         |
 
+* Once you fill all the details, click on Review + Create. The deployment will start and will take around 60 minutes to complete.

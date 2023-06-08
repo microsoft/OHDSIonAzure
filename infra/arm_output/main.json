@@ -132,7 +132,7 @@
         "description": "The password for the postgres webapi app user"
       }
     },
-    "postgresOMOPCDMpassword": {
+    "postgresOMOPCDMPassword": {
       "type": "securestring",
       "defaultValue": "[uniqueString(newGuid())]",
       "metadata": {
@@ -306,7 +306,7 @@
         "environmentVariables": [
           {
             "name": "CONNECTION_STRING",
-            "secureValue": "[format('jdbc:postgresql://{0}:5432/{1}?user=postgres_admin&password={2}&sslmode=require', reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2022-09-01').outputs.postgresServerFullyQualifiedDomainName.value, parameters('postgresOMOPCDMDatabaseName'), parameters('postgresOMOPCDMpassword'))]"
+            "secureValue": "[format('jdbc:postgresql://{0}:5432/{1}?user=postgres_admin&password={2}&sslmode=require', reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2022-09-01').outputs.postgresServerFullyQualifiedDomainName.value, parameters('postgresOMOPCDMDatabaseName'), parameters('postgresOMOPCDMPassword'))]"
           },
           {
             "name": "OHDSI_WEBAPI_PASSWORD",
@@ -1085,8 +1085,8 @@
           "postgresWebapiAdminPassword": {
             "value": "[parameters('postgresWebapiAdminPassword')]"
           },
-          "postgresOMOPCDMpassword": {
-            "value": "[parameters('postgresOMOPCDMpassword')]"
+          "postgresOMOPCDMPassword": {
+            "value": "[parameters('postgresOMOPCDMPassword')]"
           },
           "postgresServerName": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2022-09-01').outputs.postgresServerName.value]"
@@ -1152,7 +1152,7 @@
                 "description": "Admin password for the webapi database"
               }
             },
-            "postgresOMOPCDMpassword": {
+            "postgresOMOPCDMPassword": {
               "type": "securestring",
               "metadata": {
                 "description": "Password for the cdm user"
@@ -1187,7 +1187,7 @@
               "apiVersion": "2022-07-01",
               "name": "[format('{0}/{1}', parameters('keyVaultName'), variables('postgresOMOPCDMUserSecretName'))]",
               "properties": {
-                "value": "[parameters('postgresOMOPCDMpassword')]"
+                "value": "[parameters('postgresOMOPCDMPassword')]"
               }
             },
             {
@@ -1195,7 +1195,7 @@
               "apiVersion": "2022-07-01",
               "name": "[format('{0}/{1}', parameters('keyVaultName'), variables('postgresOMOPCDMJDBCConnectionStringSecretName'))]",
               "properties": {
-                "value": "[format('jdbc:postgresql://{0}:5432/{1}?user={2}&password={3}&sslmode=require', reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('postgresServerName')), '2022-12-01').fullyQualifiedDomainName, parameters('postgresOMOPCDMDatabaseName'), variables('postgresOMOPCDMUsername'), parameters('postgresOMOPCDMpassword'))]"
+                "value": "[format('jdbc:postgresql://{0}:5432/{1}?user={2}&password={3}&sslmode=require', reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('postgresServerName')), '2022-12-01').fullyQualifiedDomainName, parameters('postgresOMOPCDMDatabaseName'), variables('postgresOMOPCDMUsername'), parameters('postgresOMOPCDMPassword'))]"
               }
             },
             {
@@ -1232,7 +1232,7 @@
                   },
                   {
                     "name": "OMOP_JDBC_CONNECTION_STRING",
-                    "secureValue": "[format('jdbc:postgresql://{0}:5432/{1}?user={2}&password={3}&sslmode=require', reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('postgresServerName')), '2022-12-01').fullyQualifiedDomainName, parameters('postgresOMOPCDMDatabaseName'), variables('postgresOMOPCDMUsername'), parameters('postgresOMOPCDMpassword'))]"
+                    "secureValue": "[format('jdbc:postgresql://{0}:5432/{1}?user={2}&password={3}&sslmode=require', reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('postgresServerName')), '2022-12-01').fullyQualifiedDomainName, parameters('postgresOMOPCDMDatabaseName'), variables('postgresOMOPCDMUsername'), parameters('postgresOMOPCDMPassword'))]"
                   },
                   {
                     "name": "OMOP_CDM_DATABASE_NAME",
@@ -1256,7 +1256,7 @@
                   },
                   {
                     "name": "POSTGRES_OMOP_CDM_PASSWORD",
-                    "secureValue": "[parameters('postgresOMOPCDMpassword')]"
+                    "secureValue": "[parameters('postgresOMOPCDMPassword')]"
                   },
                   {
                     "name": "OMOP_CDM_SAS_TOKEN",
