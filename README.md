@@ -30,7 +30,7 @@ Some of the OHDSI projects included:
 
 ![alt text](./docs/media/OHDSIonAzure.png "Architecture")
 
-* You can host your CDM in Azure PostgreSQL. You can load your CDM and Vocabs into Azure Storage Container as cs.gz files, and pass as a paramater in your custom deployment.
+* You can host your CDM in Azure PostgreSQL. You can load your cdm and vocabularies into Azure Storage Container as cs.gz files, and pass as a paramater in your custom deployment.
 
 ## CDM Version
 

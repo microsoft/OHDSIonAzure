@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.17.1.54307",
-      "templateHash": "12715046860006199558"
+      "templateHash": "14629331912396981044"
     }
   },
   "parameters": {
@@ -29,12 +29,14 @@
     },
     "cdmSasToken": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "The sas token to access the cdm container"
       }
     },
     "postgresOMOPCDMDatabaseName": {
       "type": "string",
+      "defaultValue": "synthea1k",
       "metadata": {
         "description": "The name of the database to create for the OMOP CDM"
       }
@@ -357,7 +359,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'atlasDatabase')]",
-        "[resourceId('Microsoft.Resources/deployments', 'atlasUI')]",
+        "[resourceId('Microsoft.Resources/deploymentScripts', 'deployment-atlas-security')]",
         "[resourceId('Microsoft.Resources/deployments', 'ohdsiWebApiWebapp')]",
         "[resourceId('Microsoft.Resources/deployments', 'omopCDM')]"
       ]
