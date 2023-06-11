@@ -9,10 +9,10 @@ param suffix string = uniqueString(utcNow())
 param cdmContainerUrl string = 'https://omoppublic.blob.core.windows.net/shared/synthea1k/'
 
 @description('The sas token to access the cdm container')
-param cdmSasToken string
+param cdmSasToken string = ''
 
 @description('The name of the database to create for the OMOP CDM')
-param postgresOMOPCDMDatabaseName string
+param postgresOMOPCDMDatabaseName string = 'synthea1k'
 
 @description('The app service plan sku')
 @allowed([

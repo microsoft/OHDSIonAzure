@@ -5,8 +5,7 @@
 In order to deploy OHDSI on Azure, you will need the following prerequisites:
 
 1. Azure Subscription
-2. Resource Group
-3. Logged in with a user that has Contributer role on the subscription and resource group
+2. Logged in with a user that has Contributer role on the subscription
 
 ## Setup
 
@@ -33,7 +32,7 @@ In order to deploy OHDSI on Azure, you will need the following prerequisites:
 | Postgres WebAPI App Password  | The password for the PostgreSQL WebAPI app user.                                                              | Unique password is being generated                            |
 | Postgres OMOP CDM Password     | The password for the PostgreSQL OMOP CDM user.                                                                | Unique password is being generated                            |
 | Atlas Security Admin Password | The password for the Atlas security admin user.                                                                | Unique password is being generated                            |
-| Atlas Users List              | The list of users for the Atlas system should be provided in the following format: 'username1,password1,username2,password2,' and so on. Separate each set of credentials with a comma. For example, if you have two sets of credentials, it should look like this: 'user1,pass1,user2,pass2.' Ensure that the usernames and passwords are in the correct order and do not include any additional spaces or characters between the credentials. Note that this format allows you to specify multiple sets of username-password pairs for different users. Make sure each pair is properly formatted and separated by commas. | None                                                          |
-| Local Debug                   | Enable local debugging mode.                                                                                   | false                                                         |
+| Atlas Users List             | Atlas Users List              | The list of users for the Atlas system should be provided in the following format: 'admin, admin_password,username1,password1,username2,password2' and so on.  The admin username and password should be declared first. Ensure usernames and passwords are in the correct order and do not include any additional spaces or characters between the credentials. Note that this format allows you to specify multiple sets of username-password pairs for different users. Make sure each pair is properly formatted and separated by commas. | None                                                          |None                                                          |
+| Local Debug                   | Enable local debugging mode. If enabled, it will create a Firewall rule that will enable unrestricted access to the PostgreSQL database from any location.    | false                                                         |
 
 * Once you fill all the details, click on Review + Create. The deployment will start and will take around 60 minutes to complete.
