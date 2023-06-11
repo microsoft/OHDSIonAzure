@@ -26,6 +26,12 @@ Some of the OHDSI projects included:
 * [Achilles](https://github.com/OHDSI/Achilles) - provides descriptive statistics on an OMOP CDM database
 * [ETL-Synthea](https://github.com/OHDSI/ETL-Synthea) - Conversion from Synthea CSV to OMOP CDM
 
+## Overview
+
+![alt text](./docs/media/OHDSIonAzure.png "Architecture")
+
+* You can host your CDM in Azure PostgreSQL. You can load your cdm and vocabularies into Azure Storage Container as cs.gz files, and pass as a paramater in your custom deployment.
+
 ## CDM Version
 
 This setup is based on the [CDM v5.4.0 for PostgreSQL](https://github.com/OHDSI/CommonDataModel/tree/main/inst/ddl/5.4/postgresql).
@@ -33,8 +39,8 @@ This setup is based on the [CDM v5.4.0 for PostgreSQL](https://github.com/OHDSI/
 ## Getting Started
 
 To get started, click on deploy to Azure button.
-
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Fv2%2Finfra%2Fmain.json)
+To get more detailed instructions, please refer to the [Deployment Guide](./docs/DeploymentGuide.md).
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Fv2%2Finfra%2Farm_output%2Fmain.json)
 
 ## Contributing
 
