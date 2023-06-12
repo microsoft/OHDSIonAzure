@@ -47,7 +47,7 @@ jobs:
         run: echo "::error::Code update without updating omop_cdm.json" && exit 1
 
       # MegaLinter
-      - name: MegaLinter
+      - name: Lint code base
         id: megalinter
         uses: oxsecurity/megalinter@v7
         env:
