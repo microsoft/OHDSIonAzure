@@ -1,0 +1,57 @@
+---
+name: Build Validation
+
+on: # yamllint disable-line rule:truthy
+  push:
+    branches:
+      # TODO: when merging change to main
+      - v2
+      - "feature/**"
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Filter changes
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          # TODO: when merging change to main
+          base: v2
+          filters: |
+            main:
+              - 'infra/**'
+            main_json:
+              - 'infra/arm_output/main.json'
+            omop_cdm:
+              - 'infra/omop_cdm.bicep'
+            omop_cdm_json:
+              - 'infra/arm_output/omop_cdm.json'
+
+      - name: "Stale json file: main"
+        if: ${{ steps.filter.outputs.main == 'true' &&
+          steps.filter.outputs.main_json == 'false' }}
+        run: echo "::error::Code update without updating main.json" && exit 1
+
+      - name: "Stale json file: omop_cdm.json"
+        if: ${{ steps.filter.outputs.omop_cdm == 'true' &&
+          steps.filter.outputs.omop_cdm_json == 'false' }}
+        run: echo "::error::Code update without updating omop_cdm.json" && exit 1
+
+      # MegaLinter
+      - name: MegaLinter
+        id: megalinter
+        uses: oxsecurity/megalinter@v7
+        env:
+          # All available variables are described in documentation
+          # https://megalinter.io/configuration/
+          VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Validates all source when push on main, else just the git diff with main. Override with true if you always want to lint all sources
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
