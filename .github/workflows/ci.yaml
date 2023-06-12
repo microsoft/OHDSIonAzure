@@ -2,9 +2,9 @@
 name: Build Validation
 
 on:  # yamllint disable-line rule:truthy
-  pull_request:
+  push:
     branches:
-      - main
+      - v2
       - 'feature/**'
   workflow_dispatch:
 
@@ -37,38 +37,39 @@ jobs:
           # DISABLE: COPYPASTE,SPELL # Uncomment to disable copy-paste and spell checks
 
 
-  # ci:
-  #   name: Filter changes
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
-  #       with:
-  #         persist-credentials: false
+  ci:
+    name: Filter changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
 
-  #     - name: Filter changes
-  #       uses: dorny/paths-filter@v2
-  #       id: filter
-  #       with:
-  #         filters: |
-  #           main:
-  #             - 'infra/**'
-  #           main_json:
-  #             - 'infra/arm_output/main.json'
-  #           omop_cdm:
-  #             - 'infra/omop_cdm.bicep'
-  #           omop_cdm_json:
-  #             - 'infra/arm_output/omop_cdm.json'
+      - name: Filter changes
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          base: v2
+          filters: |
+            main:
+              - 'infra/**'
+            main_json:
+              - 'infra/arm_output/main.json'
+            omop_cdm:
+              - 'infra/omop_cdm.bicep'
+            omop_cdm_json:
+              - 'infra/arm_output/omop_cdm.json'
 
-  #     - name: "Stale json file: main"
-  #       if: ${{ steps.filter.outputs.main == 'true' &&
-  #         steps.filter.outputs.main_json == 'false' }}
-  #       run: echo "::error::Code update without updating main.json" && exit 1
+      - name: "Stale json file: main"
+        if: ${{ steps.filter.outputs.main == 'true' &&
+          steps.filter.outputs.main_json == 'false' }}
+        run: echo "::error::Code update without updating main.json" && exit 1
 
-  #     - name: "Stale json file: omop_cdm.json"
-  #       if: ${{ steps.filter.outputs.omop_cdm == 'true' &&
-  #         steps.filter.outputs.omop_cdm_json == 'false' }}
-  #       run: echo "::error::Code update without updating omop_cdm.json" && exit 1
+      - name: "Stale json file: omop_cdm.json"
+        if: ${{ steps.filter.outputs.omop_cdm == 'true' &&
+          steps.filter.outputs.omop_cdm_json == 'false' }}
+        run: echo "::error::Code update without updating omop_cdm.json" && exit 1
 
 
     
