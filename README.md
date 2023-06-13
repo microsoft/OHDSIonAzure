@@ -10,13 +10,13 @@ OHDSI on Azure GitHub repository is designed to ease deployment of tools provide
 2. Increased access to funding
 3. Simplified adoption strategy
 
-OHDSI on Azure is a set of scripts and templates designed to automate the deployment of the OHDSI in the Microsoft Azure cloud using Biceo & PaaS services. It is designed to facilitate standardized scalable deployments within customer managed Azure subscriptions. Provide best practices for running OHDSI on Azure. Ease the burden of management and cost monitoring of research projects.
+OHDSI on Azure is a set of scripts and templates designed to automate the deployment of the OHDSI in the Microsoft Azure cloud using Bicep & PaaS services. It is designed to facilitate standardized scalable deployments within customer managed Azure subscriptions. Provide best practices for running OHDSI on Azure. Ease the burden of management and cost monitoring of research projects.
 
 OHDSI on Azure has taken a container-based approach to operating OHDSI tools. Therefore, OHDSI on Azure does its best to not host code developed by the [OHDSI community](https://github.com/OHDSI). Our deployment templates pull containers from Docker Hub.
 
 We invite you and your organization to participate in the continued feature expansion of OHDSI on Azure.
 
-This repository assumes the end user is familiar with the OHDSI/ OMOP community, Azure, and Bicep.
+This repository assumes the end user is familiar with the OHDSI community, OMOP, Azure, and Bicep.
 
 Some of the OHDSI projects included:
 
