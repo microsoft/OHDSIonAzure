@@ -1,0 +1,15 @@
+---
+# Configuration file for Mega-Linter
+# See all available variables at https://oxsecurity.github.io/megalinter/#configuration and in linters documentation
+FILTER_REGEX_EXCLUDE: (.*v1/.*|.*infra/arm_output/.*|\.github|\.vscode)
+# only linters listed under ENABLE_LINTERS will be run (all others disabled)
+ENABLE_LINTERS:
+  - MARKDOWN_MARKDOWNLINT
+  - BASH_EXEC
+  - BASH_SHELLCHECK
+  - BICEP_BICEP_LINTER
+  - JSON_JSONLINT
+  - JSON_PRETTIER
+  - JSON_V8R
+  - JSON_ESLINT_PLUGIN_JSONC
+  - YAML_YAMLLINT
