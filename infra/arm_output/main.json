@@ -97,7 +97,18 @@
     "postgresStorageSize": {
       "type": "int",
       "defaultValue": 32,
-      "allowedValues": [32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384],
+      "allowedValues": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384
+      ],
       "metadata": {
         "description": "The size of the postgres database storage"
       }
@@ -452,7 +463,9 @@
             "postgresWebApiDatabaseName": "atlas_webapi_db",
             "postgresSchemaName": "webapi",
             "postgresVersion": "14",
-            "logCategories": ["PostgreSQLLogs"]
+            "logCategories": [
+              "PostgreSQLLogs"
+            ]
           },
           "resources": [
             {
@@ -805,7 +818,10 @@
                   {
                     "objectId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-ohdsiwebapi-{0}', parameters('suffix'))), '2023-01-31').principalId]",
                     "permissions": {
-                      "secrets": ["Get", "List"]
+                      "secrets": [
+                        "Get",
+                        "List"
+                      ]
                     },
                     "tenantId": "[variables('tenantId')]"
                   }

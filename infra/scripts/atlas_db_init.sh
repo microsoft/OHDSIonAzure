@@ -5,7 +5,7 @@ set -o nounset
 
 LOG_FILE=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/all.log
 
-exec > >(tee -ia "${LOG_FILE}")
+exec >  >(tee -ia "${LOG_FILE}")
 exec 2> >(tee -ia "${LOG_FILE}" >&2)
 
 apk --update add postgresql-client gettext
