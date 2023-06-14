@@ -10,15 +10,13 @@ OHDSI on Azure GitHub repository is designed to ease deployment of tools provide
 2. Increased access to funding
 3. Simplified adoption strategy
 
-OHDSI on Azure is a set of scripts, templates, and DevOps pipelines designed to automate the deployment of the OHDSI in the Microsoft Azure cloud using Terraform & PaaS services. It is designed to facilitate standardized scalable deployments within customer managed Azure subscriptions. Provide best practices for running OHDSI on Azure. Ease the burden of management and cost monitoring of research projects.
+OHDSI on Azure is a set of scripts and templates designed to automate the deployment of the OHDSI in the Microsoft Azure cloud using Bicep & PaaS services. It is designed to facilitate standardized scalable deployments within customer managed Azure subscriptions. Provide best practices for running OHDSI on Azure. Ease the burden of management and cost monitoring of research projects.
 
 OHDSI on Azure has taken a container-based approach to operating OHDSI tools. Therefore, OHDSI on Azure does its best to not host code developed by the [OHDSI community](https://github.com/OHDSI). Our deployment templates pull containers from Docker Hub.
 
-We encourage customers to perform their due diligence as part of the pipeline deployments. CI/CD pipelines can be modified to fit your organization’s requirements. Our goal is to get a Sandbox environment setup and provide starter tools for deploying to other environments (DEV/Test, Staging, and Production).
-
 We invite you and your organization to participate in the continued feature expansion of OHDSI on Azure.
 
-This repository assumes the end user is familiar with the OHDSI/ OMOP community, Azure, and Terraform.
+This repository assumes the end user is familiar with the OHDSI community, OMOP, Azure, and Bicep.
 
 Some of the OHDSI projects included:
 
@@ -30,40 +28,19 @@ Some of the OHDSI projects included:
 
 ## Overview
 
-![Overview](/docs/media/azure_overview.png)
+![alt text](./docs/media/OHDSIonAzure.png "Architecture")
 
-You can use [Azure DevOps pipelines](/pipelines/README.md/#pipelines) to manage your environment, see the guide for [creating your environment](/docs/creating_your_environment.md) for an overview.
-
-Your administrator can manage Azure Resources in your [bootstrap resource group](/infra/terraform/bootstrap/README.md) and your Azure DevOps setup [using Terraform](/infra/README.md/#bootstrap-deployment-overview).  You will also need to work with your Azure administrator to setup your Azure DevOps using the [administrative steps](/infra/README.md/#administrative-steps).
-
-The Azure resources in the [OMOP resource group](/infra/terraform/omop/README.md) are [managed through Terraform](/infra/README.md/#running-terraform).
-
-You can host your [CDM in Azure SQL](/sql/README.md#cdm-notes).  You can [load your vocabularies](/docs/setup/setup_vocabulary.md) into Azure Storage so that the [Azure DevOps Vocabulary Release Pipeline](/pipelines/README.md/#vocabulary-release-pipeline) can populate your [Azure SQL CDM](/sql/README.md/#vocabulary-notes).
-
-You can [setup Atlas and Webapi](/docs/setup/setup_atlas_webapi.md) using the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) to build and push the [Broadsea webtools (for Atlas / WebApi)](/apps/broadsea-webtools/README.md) image into Azure Container Registry. You can then run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) to configure Atlas and WebApi in your Azure App Service.
-
-You can also [setup Achilles and Synthea](/docs/setup/setup_achilles_synthea.md) using the [Broadsea Build Pipeline](/pipelines/README.md/#broadsea-build-pipeline) to build and push the [Broadsea Methods (for Achilles and Synthea)](/apps/broadsea-methods/README.md) image into Azure Container Registry.  You can then run the [Broadsea Release Pipeline](/pipelines/README.md/#broadsea-release-pipeline) to perform the following steps:
-
-1. Run an [ETL job](/apps/broadsea-methods/README.md/#synthea-etl) and use [Synthea to generate synthetic patient data](/apps/broadsea-methods/README.md/#use-synthea-to-generate-synthetic-patient-data) as an optional step
-2. Run [Achilles](/apps/broadsea-methods/README.md/#achilles) to characterize the CDM data in Azure SQL
-
-[Setup E2E Overview](https://user-images.githubusercontent.com/2498998/167233869-dfe1c4ca-4b75-4104-8486-ae6b1c6a6084.mp4)
+* You can host your CDM in Azure PostgreSQL. You can load your cdm and vocabularies into Azure Storage Container as cs.gz files, and pass as a paramater in your custom deployment.
 
 ## CDM Version
 
-This setup supports a modified version of the CDM [v5.3.1](/sql/cdm/v5.3.1/) schema based on the [CDM v5.3.1 for SQL Server](https://github.com/OHDSI/CommonDataModel/tree/v5.3.1/Sql%20Server).
-
-You can review more notes on the modifications in the [readme](/sql/README.md/#modifications-from-ohdsi).
+This setup is based on the [CDM v5.4.0 for PostgreSQL](https://github.com/OHDSI/CommonDataModel/tree/main/inst/ddl/5.4/postgresql).
 
 ## Getting Started
 
-To get started, first clone the repository.
-
-```console
-git clone https://github.com/microsoft/OHDSIonAzure
-```
-
-You can work through the notes on [creating your environment quickstart](/docs/creating_your_environment_quickstart.md) which will walk through how to set up OHDSI on Azure.
+To get started, click on deploy to Azure button.
+To get more detailed instructions, please refer to the [Deployment Guide](./docs/DeploymentGuide.md).
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Fv2%2Finfra%2Farm_output%2Fmain.json)
 
 ## Contributing
 

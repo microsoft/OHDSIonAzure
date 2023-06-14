@@ -1,1 +1,2 @@
-.cnab/
+# local bicep parameters
+*.parameters.json
