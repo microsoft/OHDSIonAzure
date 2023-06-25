@@ -42,6 +42,10 @@ To get started, click on deploy to Azure button.
 To get more detailed instructions, please refer to the [Deployment Guide](./docs/DeploymentGuide.md).
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Fv2%2Finfra%2Farm_output%2Fmain.json)
 
+
+## Create a synthetic OMOP CDM
+follow [this guide](/docs/PrepareSyntheticOMOP.md) to create a synthetic OMOP CDM database to use with Atlas and WebAPI.
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
