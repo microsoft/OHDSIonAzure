@@ -1,5 +1,8 @@
+param location string = resourceGroup().location
+param suffix string
+
 @description('The SQL Logical Server name.')
-param sqlServerName string = 'sql${uniqueString(resourceGroup().id)}'
+param sqlServerName string = 'sql${suffix}'
 
 @description('The administrator username of the SQL Server.')
 param sqlAdminLogin string = 'sqladmin'
@@ -26,14 +29,14 @@ param capacity int = 900
 @description('The SQL Database collation.')
 param databaseCollation string = 'SQL_Latin1_General_CP1_CI_AS'
 
-@description('Resource location')
-param location string = resourceGroup().location
-
 @description('Enables local access for debugging.')
 param localDebug bool = false
 
 @description('The name of the keyvault')
 param keyVaultName string
+
+@description('The URL of the OHDSI WebAPI')
+param ohdsiWebapiUrl string
 
 var OMOPCDMSchemaName = 'cdm'
 var OMOPResultsSchemaName = 'cdm_results'
@@ -152,6 +155,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'OMOP_TEMP_SCHEMA_NAME'
         value: OMOPTempSchemaName
+      }
+      {
+        name: 'OHDSI_WEBAPI_URL'
+        value: ohdsiWebapiUrl
       }
       {
         name: 'SQL_create_omop_schemas'

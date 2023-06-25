@@ -154,6 +154,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         value: postgresOMOPTempSchemaName
       }
       {
+        name: 'OHDSI_WEBAPI_URL'
+        value: ohdsiWebapiUrl
+      }
+      {
         name: 'SQL_create_omop_schemas'
         value: loadTextContent('sql/create_omop_schemas_postgres.sql')
       }

@@ -10,6 +10,7 @@ exec 2> >(tee -ia "${LOG_FILE}" >&2)
 
 apk --update add gettext gnupg
 
+printf 'installing sqlcmd...\n'
 # Download the desired package(s)
 curl -O https://download.microsoft.com/download/1/f/f/1fffb537-26ab-4947-a46a-7a45c27f6f77/msodbcsql18_18.2.1.1-1_amd64.apk
 curl -O https://download.microsoft.com/download/1/f/f/1fffb537-26ab-4947-a46a-7a45c27f6f77/mssql-tools18_18.2.1.1-1_amd64.apk
@@ -43,11 +44,7 @@ printf 'Creating OMOP Results tables\n'
 # shellcheck disable=SC2154
 echo "$SQL_create_achilles_tables" | envsubst | sqlcmd -I -b
 
-# create OMOP CDM primary keys
-# printf 'Creating OMOP CDM primary keys\n'
-# psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_primary_keys.sql -v ON_ERROR_STOP=1
-
-# load ODOM data
+# load OMOP data
 tables=("cdm.concept_ancestor" "cdm.concept_relationship" "cdm.concept" "cdm.drug_strength" "cdm.concept_synonym" "cdm.measurement" "cdm.observation" "cdm.cost" "cdm.visit_detail" "cdm.visit_occurrence" "cdm.payer_plan_period" "cdm.drug_exposure" "cdm.procedure_occurrence" "cdm.condition_occurrence" "cdm.condition_era" "cdm.provider" "cdm.drug_era" "cdm.person" "cdm.relationship" "cdm.observation_period" "cdm.concept_class" "cdm.device_exposure" "cdm.death" "cdm.cdm_source" "cdm.vocabulary" "cdm.domain" "cdm_results.achilles_analysis" "cdm_results.achilles_results_dist" "cdm_results.achilles_results")
 printf 'Loading OMOP data\n'
 n=${#tables[@]}
@@ -56,13 +53,12 @@ for element in "${tables[@]}"; do
     ((i++)) || true
     printf "Importing %s (%s)\n" "$element.csv.gz" "$i/$n"        
     sqlcmd -I -b -Q "COPY INTO $element FROM '${OMOP_CDM_CONTAINER_URL}$element.csv.gz${OMOP_CDM_SAS_TOKEN}' WITH (FILE_TYPE = 'CSV', COMPRESSION = 'gzip')"
-    echo "exit code $?"
 done
 
+printf 'Get Results DDL from API...\n'
+wget -O OMOP_RESULTS_DDL.sql "${OHDSI_WEBAPI_URL}ddl/results?dialect=synapse&schema=cdm_results&vocabSchema=$OMOP_CDM_SCHEMA_NAME&tempSchema=temp&initConceptHierarchy=true"
 
-# create OMOP CDM indices
-# printf 'creating OMOP CDM indices\n'
-# psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_indices.sql -v ON_ERROR_STOP=1
-# for now user will need to add a source via Atlas UI, there's work in progress to automate this
+printf 'Run Results DDL...\n'
+sqlcmd -I -b -i OMOP_RESULTS_DDL.sql
 
-printf 'OMOP CDM created, you can now add it to Atlas as a source, connection string will avaiable in Azure KeyVault.\n'
+printf 'Done.\n'

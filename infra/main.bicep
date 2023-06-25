@@ -12,7 +12,7 @@ param cdmContainerUrl string = 'https://omoppublic.blob.core.windows.net/shared/
 param cdmSasToken string = ''
 
 @description('The name of the database to create for the OMOP CDM')
-param postgresOMOPCDMDatabaseName string = 'synthea1k'
+param OMOPCDMDatabaseName string = 'synthea1k'
 
 @description('The app service plan sku')
 @allowed([
@@ -78,7 +78,7 @@ param postgresWebapiAppPassword string = uniqueString(newGuid())
 
 @secure()
 @description('The password for the postgres OMOP CDM user')
-param postgresOMOPCDMPassword string = uniqueString(newGuid())
+param OMOPCDMPassword string = uniqueString(newGuid())
 
 @secure()
 @description('The password for atlas security admin user')
@@ -199,14 +199,13 @@ module omopCDMPostgres 'omop_cdm_postgres.bicep' = if (cdmDbType == 'PostgreSQL'
     cdmContainerUrl: cdmContainerUrl
     cdmSasToken: cdmSasToken
     postgresAtlasDatabaseName: atlasDatabase.outputs.postgresWebApiDatabaseName
-    postgresOMOPCDMDatabaseName: postgresOMOPCDMDatabaseName
+    postgresOMOPCDMDatabaseName: OMOPCDMDatabaseName
     postgresAdminPassword: postgresAdminPassword
     postgresWebapiAdminPassword: postgresWebapiAdminPassword
-    postgresOMOPCDMPassword: postgresOMOPCDMPassword
+    postgresOMOPCDMPassword: OMOPCDMPassword
     postgresServerName: atlasDatabase.outputs.postgresServerName
     ohdsiWebapiUrl: ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
   }
-
   dependsOn: [
     ohdsiWebApiWebapp
     atlasDatabase
@@ -218,12 +217,17 @@ module omopCDMSynapse 'omop_cdm_synapse.bicep' = if (cdmDbType == 'Synapse Dedic
   name: 'omopCDMSynapse'
   params: {
     location: location
+    suffix: suffix
     keyVaultName: keyVault.name
     cdmContainerUrl: cdmContainerUrl
     cdmSasToken: cdmSasToken    
-    databaseName: postgresOMOPCDMDatabaseName
-    sqlAdminPassword: postgresOMOPCDMPassword
+    databaseName: OMOPCDMDatabaseName
+    sqlAdminPassword: OMOPCDMPassword
+    ohdsiWebapiUrl: ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
   }
+  dependsOn: [
+    ohdsiWebApiWebapp
+  ]
 }
 
 @description('Creates the ohdsi atlas UI')
@@ -315,7 +319,7 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
     environmentVariables: [
       {
         name: 'CONNECTION_STRING'
-        secureValue: cdmDbType == 'PostgreSQL' ? 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=postgres_admin&password=${postgresOMOPCDMPassword}&sslmode=require' : omopCDMSynapse.outputs.OmopCdmJdbcConnectionString
+        secureValue: cdmDbType == 'PostgreSQL' ? 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${OMOPCDMDatabaseName}?user=postgres_admin&password=${OMOPCDMPassword}&sslmode=require' : omopCDMSynapse.outputs.OmopCdmJdbcConnectionString
       }
       {
         name: 'OHDSI_WEBAPI_PASSWORD'
