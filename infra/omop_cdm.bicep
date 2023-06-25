@@ -34,6 +34,9 @@ param postgresOMOPCDMPassword string
 @description('The name of the keyvault')
 param keyVaultName string
 
+@description('The URL of the OHDSI WebAPI')
+param ohdsiWebapiUrl string
+
 var postgresOMOPCDMSchemaName = 'cdm'
 var postgresOMOPResultsSchemaName = 'cdm_results'
 var postgresOMOPTempSchemaName = 'temp'
@@ -160,6 +163,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'SQL_add_omop_source'
         value: loadTextContent('sql/add_omop_source.sql')
+      }
+      {
+        name: 'OHDSI_WEBAPI_URL'
+        value: ohdsiWebapiUrl
       }
     ]
     scriptContent: loadTextContent('scripts/create_omop_cdm.sh')

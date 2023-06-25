@@ -56,5 +56,12 @@ done
 # create OMOP CDM indices
 printf 'creating OMOP CDM indices\n'
 psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_indices.sql -v ON_ERROR_STOP=1
+
+# Generate results DDL
+wget -O OMOP_RESULTS_DDL.sql "${OHDSI_WEBAPI_URL}ddl/results?dialect=postgresql&schema=$POSTGRES_OMOP_RESULTS_SCHEMA_NAME&vocabSchema=$POSTGRES_OMOP_CDM_SCHEMA_NAME&tempSchema=$POSTGRES_OMOP_TEMP_SCHEMA_NAME&initConceptHierarchy=true"
+
+# Execute results DDL
+psql "$OMOP_CONNECTION_STRING" -e -f OMOP_RESULTS_DDL.sql -v ON_ERROR_STOP=1
+
 # for now user will need to add a source via Atlas UI, there's work in progress to automate this
 printf 'OMOP CDM created, you can now add it to Atlas as a source, connection string will avaiable in Azure KeyVault.\n'

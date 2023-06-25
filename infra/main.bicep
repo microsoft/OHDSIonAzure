@@ -196,6 +196,7 @@ module omopCDM 'omop_cdm.bicep' = {
     postgresWebapiAdminPassword: postgresWebapiAdminPassword
     postgresOMOPCDMPassword: postgresOMOPCDMPassword
     postgresServerName: atlasDatabase.outputs.postgresServerName
+    ohdsiWebapiUrl: ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
   }
 
   dependsOn: [
