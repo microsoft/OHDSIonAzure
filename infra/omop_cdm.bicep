@@ -160,14 +160,6 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         name: 'SQL_create_achilles_schema'
         value: loadTextContent('sql/create_achilles_schema.sql')
       }
-      {
-        name: 'SQL_add_omop_source'
-        value: loadTextContent('sql/add_omop_source.sql')
-      }
-      {
-        name: 'OHDSI_WEBAPI_URL'
-        value: ohdsiWebapiUrl
-      }
     ]
     scriptContent: loadTextContent('scripts/create_omop_cdm.sh')
     supportingScriptUris: [
