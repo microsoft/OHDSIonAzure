@@ -91,7 +91,7 @@ param atlasUsersList string
 @description('Enables local access for debugging.')
 param localDebug bool = false
 
-@description('CDM database type')
+@description('OMOP CDM database type')
 @allowed([
     'PostgreSQL'
     'Synapse Dedicated Pool'

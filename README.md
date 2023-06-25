@@ -34,12 +34,13 @@ Some of the OHDSI projects included:
 
 ## CDM Version
 
-This setup is based on the [CDM v5.4.0 for PostgreSQL](https://github.com/OHDSI/CommonDataModel/tree/main/inst/ddl/5.4/postgresql).
+This setup is based on the [CDM v5.4.0](https://github.com/OHDSI/CommonDataModel/tree/main/inst/ddl/5.4) and supports both PostgreSQL and Azure Synapse.
 
 ## Getting Started
 
 To get started, click on deploy to Azure button.
 To get more detailed instructions, please refer to the [Deployment Guide](./docs/DeploymentGuide.md).
+
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Fv2%2Finfra%2Farm_output%2Fmain.json)
 
 ## Contributing
