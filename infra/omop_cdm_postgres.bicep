@@ -49,6 +49,7 @@ var postgresWebapiAdminUsername = 'ohdsi_admin_user'
 var postgresAdminUsername = 'postgres_admin'
 var postgresOMOPCDMJDBCConnectionString = 'jdbc:postgresql://${postgresServer.properties.fullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=${postgresOMOPCDMUsername}&password=${postgresOMOPCDMPassword}&sslmode=require'
 
+
 // Get the postgres server
 resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' existing = {
   name: postgresServerName
@@ -154,14 +155,14 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       }
       {
         name: 'SQL_create_omop_schemas'
-        value: loadTextContent('sql/create_omop_schemas.sql')
+        value: loadTextContent('sql/create_omop_schemas_postgres.sql')
       }
       {
-        name: 'SQL_create_achilles_schema'
-        value: loadTextContent('sql/create_achilles_schema.sql')
+        name: 'SQL_create_achilles_tables'
+        value: loadTextContent('sql/create_achilles_tables_postgres.sql')
       }
     ]
-    scriptContent: loadTextContent('scripts/create_omop_cdm.sh')
+    scriptContent: loadTextContent('scripts/create_omop_cdm_postgres.sh')
     supportingScriptUris: [
       'https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_ddl.sql'
       'https://raw.githubusercontent.com/OHDSI/CommonDataModel/main/inst/ddl/5.4/postgresql/OMOPCDM_postgresql_5.4_constraints.sql'
@@ -175,3 +176,5 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     }
   }
 }
+
+output OmopCdmJdbcConnectionString string = postgresOMOPCDMJDBCConnectionString

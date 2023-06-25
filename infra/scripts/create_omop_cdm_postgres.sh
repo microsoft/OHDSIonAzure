@@ -29,7 +29,7 @@ psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_ddl.sql -v ON_ERROR_
 # create and load OMOP Results (Achilles) tables
 printf 'Creating OMOP Results tables\n'
 # shellcheck disable=SC2154
-echo "$SQL_create_achilles_schema" | envsubst | psql "$OMOP_CONNECTION_STRING" -e -v ON_ERROR_STOP=1
+echo "$SQL_create_achilles_tables" | envsubst | psql "$OMOP_CONNECTION_STRING" -e -v ON_ERROR_STOP=1
 
 # skip foreign key constraints for now due to open bug - https://github.com/OHDSI/CommonDataModel/issues/452
 # psql "$OMOP_CONNECTION_STRING" -f OMOPCDM_postgresql_5.4_constraints.sql

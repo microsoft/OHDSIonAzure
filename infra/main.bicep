@@ -91,6 +91,14 @@ param atlasUsersList string
 @description('Enables local access for debugging.')
 param localDebug bool = false
 
+@description('CDM database type')
+@allowed([
+    'PostgreSQL'
+    'Synapse Dedicated Pool'
+  ]
+)
+param cdmDbType string = 'PostgreSQL'
+
 var tenantId = subscription().tenantId
 
 @description('Creates the app service plan')
@@ -182,9 +190,9 @@ module ohdsiWebApiWebapp 'ohdsi_webapi.bicep' = {
   ]
 }
 
-@description('Creates OMOP CDM database')
-module omopCDM 'omop_cdm.bicep' = {
-  name: 'omopCDM'
+@description('Creates OMOP CDM database on Postgres')
+module omopCDMPostgres 'omop_cdm_postgres.bicep' = if (cdmDbType == 'PostgreSQL') {
+  name: 'omopCDMPostgres'
   params: {
     location: location
     keyVaultName: keyVault.name
@@ -203,6 +211,19 @@ module omopCDM 'omop_cdm.bicep' = {
     ohdsiWebApiWebapp
     atlasDatabase
   ]
+}
+
+@description('Creates OMOP CDM database on Synapse')
+module omopCDMSynapse 'omop_cdm_synapse.bicep' = if (cdmDbType == 'Synapse Dedicated Pool') {
+  name: 'omopCDMSynapse'
+  params: {
+    location: location
+    keyVaultName: keyVault.name
+    cdmContainerUrl: cdmContainerUrl
+    cdmSasToken: cdmSasToken    
+    databaseName: postgresOMOPCDMDatabaseName
+    sqlAdminPassword: postgresOMOPCDMPassword
+  }
 }
 
 @description('Creates the ohdsi atlas UI')
@@ -294,7 +315,7 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
     environmentVariables: [
       {
         name: 'CONNECTION_STRING'
-        secureValue: 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=postgres_admin&password=${postgresOMOPCDMPassword}&sslmode=require'
+        secureValue: cdmDbType == 'PostgreSQL' ? 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=postgres_admin&password=${postgresOMOPCDMPassword}&sslmode=require' : omopCDMSynapse.outputs.OmopCdmJdbcConnectionString
       }
       {
         name: 'OHDSI_WEBAPI_PASSWORD'
@@ -310,7 +331,7 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
       }
       {
         name: 'DIALECT'
-        value: 'postgresql'
+        value: cdmDbType == 'PostgreSQL' ? 'postgresql' : 'synapse'
       }
       {
         name: 'SOURCE_NAME'
@@ -346,6 +367,7 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
   dependsOn: [
     deploymentAtlasSecurity
     ohdsiWebApiWebapp
-    omopCDM
+    omopCDMPostgres
+    omopCDMSynapse
   ]
 }
