@@ -34,6 +34,9 @@ param postgresOMOPCDMPassword string
 @description('The name of the keyvault')
 param keyVaultName string
 
+@description('The URL of the OHDSI WebAPI')
+param ohdsiWebapiUrl string
+
 var postgresOMOPCDMSchemaName = 'cdm'
 var postgresOMOPResultsSchemaName = 'cdm_results'
 var postgresOMOPTempSchemaName = 'temp'
