@@ -2,7 +2,7 @@
 
 ## Overview
 
-The purpose of this document is to guide you thru the process of creating a synthetic OMOP CDM database.
+The purpose of this document is to guide you through the process of creating a synthetic OMOP CDM database.
 
 ## Follow these steps
 
