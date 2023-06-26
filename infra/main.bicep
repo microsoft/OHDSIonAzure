@@ -368,6 +368,10 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
         value: 'cdm_results'
       }
       {
+        name: 'DAIMON_TEMP'
+        value: 'temp'
+      }
+      {
         name: 'OHDSI_ADMIN_CONNECTION_STRING'
         secureValue: ohdsi_admin_connection_string
       }
