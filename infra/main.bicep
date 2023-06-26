@@ -321,7 +321,7 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
     environmentVariables: [
       {
         name: 'CONNECTION_STRING'
-        secureValue: cdmDbType == 'PostgreSQL' ? 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${OMOPCDMDatabaseName}?user=postgres_admin&password=${OMOPCDMPassword}&sslmode=require' : omopCDMSynapse.outputs.OmopCdmJdbcConnectionString
+        secureValue: cdmDbType == 'PostgreSQL' ? omopCDMPostgres.outputs.OmopCdmJdbcConnectionString : omopCDMSynapse.outputs.OmopCdmJdbcConnectionString
       }
       {
         name: 'OHDSI_WEBAPI_PASSWORD'
@@ -349,11 +349,11 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
       }
       {
         name: 'USERNAME'
-        value: atlasDatabase.outputs.postgresWebapiAdminUsername
+        value: cdmDbType == 'PostgreSQL'? omopCDMPostgres.outputs.OmopCdmUser : omopCDMSynapse.outputs.OmopCdmUser
       }
       {
         name: 'PASSWORD'
-        secureValue: postgresWebapiAdminPassword
+        secureValue: OMOPCDMPassword
       }
       {
         name: 'DAIMON_CDM'
