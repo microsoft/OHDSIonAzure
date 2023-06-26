@@ -262,7 +262,7 @@ resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-
   location: location
   kind: 'AzureCLI'
   properties: {
-    azCliVersion: '2.42.0'
+    azCliVersion: '2.48.0'
     timeout: 'PT60M'
     forceUpdateTag: '5'
     containerSettings: {
@@ -310,9 +310,9 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
   location: location
   kind: 'AzureCLI'
   properties: {
-    azCliVersion: '2.42.0'
+    azCliVersion: '2.48.0'
     timeout: 'PT5M'
-    forceUpdateTag: '5'
+    forceUpdateTag: '6'
     containerSettings: {
       containerGroupName: 'deployment-add-data-source'
     }
