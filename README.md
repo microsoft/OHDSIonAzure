@@ -6,11 +6,11 @@ OHDSI on Azure GitHub repository is designed to ease deployment of tools provide
 
 ## Objectives
 
-1. Decreased Deployment challenges
+1. Decreased deployment challenges
 2. Increased access to funding
 3. Simplified adoption strategy
 
-OHDSI on Azure is a set of scripts and templates designed to automate the deployment of the OHDSI in the Microsoft Azure cloud using Bicep & PaaS services. It is designed to facilitate standardized scalable deployments within customer managed Azure subscriptions. Provide best practices for running OHDSI on Azure. Ease the burden of management and cost monitoring of research projects.
+OHDSI on Azure is a set of scripts and templates designed to automate the deployment of the solution in the Microsoft Azure cloud using Bicep & PaaS services. It is designed to facilitate standardized scalable deployments within customer managed Azure subscriptions. Provide best practices for running OHDSI on Azure. Ease the burden of management and cost monitoring of research projects.
 
 OHDSI on Azure has taken a container-based approach to operating OHDSI tools. Therefore, OHDSI on Azure does its best to not host code developed by the [OHDSI community](https://github.com/OHDSI). Our deployment templates pull containers from Docker Hub.
 
@@ -41,8 +41,7 @@ This setup is based on the [CDM v5.4.0](https://github.com/OHDSI/CommonDataModel
 To get started, click on deploy to Azure button.
 To get more detailed instructions, please refer to the [Deployment Guide](./docs/DeploymentGuide.md).
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Fv2%2Finfra%2Farm_output%2Fmain.json)
-
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FOHDSIonAzure%2Ftamirkamara%2F152-synapse-cdm%2Finfra%2Farm_output%2Fmain.json)
 
 ## Create a synthetic OMOP CDM
 This solution comes with a prebuilt synthetic CDM of 1,000 patients. If you wish to create your own (maybe larger) synthetic dataset you can follow a similar process described [here](/docs/PrepareSyntheticOMOP.md).

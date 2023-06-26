@@ -33,7 +33,7 @@ resource deploymentOhdsiAtlasConfigScript 'Microsoft.Resources/deploymentScripts
   location: location
   kind: 'AzureCLI'
   properties: {
-    azCliVersion: '2.42.0'
+    azCliVersion: '2.48.0'
     timeout: 'PT5M'
     retentionInterval: 'PT1H'
     environmentVariables: [
