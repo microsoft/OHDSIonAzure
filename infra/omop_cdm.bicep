@@ -176,3 +176,5 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     }
   }
 }
+
+output postgresOMOPCDMJDBCConnectionString string = postgresOMOPCDMJDBCConnectionString

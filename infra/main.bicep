@@ -296,7 +296,7 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
     environmentVariables: [
       {
         name: 'CONNECTION_STRING'
-        secureValue: 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=${postgresOMOPCDMUserName}&password=${postgresOMOPCDMPassword}&sslmode=require'
+        secureValue: omopCDM.outputs.postgresOMOPCDMJDBCConnectionString
       }
       {
         name: 'OHDSI_WEBAPI_PASSWORD'
