@@ -116,9 +116,9 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   location: location
   kind: 'AzureCLI'
   properties: {
-    azCliVersion: '2.42.0'
+    azCliVersion: '2.48.0'
     timeout: 'PT60M'
-    forceUpdateTag: '1'
+    forceUpdateTag: '2'
     environmentVariables: [
       {
         name: 'SQLCMDSERVER'

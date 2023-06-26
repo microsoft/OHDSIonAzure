@@ -110,7 +110,7 @@ resource deploymentOhdsiWebapiInitScript 'Microsoft.Resources/deploymentScripts@
   location: location
   kind: 'AzureCLI'
   properties: {
-    azCliVersion: '2.42.0'
+    azCliVersion: '2.48.0'
     timeout: 'PT5M'
     containerSettings: {
       containerGroupName: 'deployment-ohdsi-webapi-init'
