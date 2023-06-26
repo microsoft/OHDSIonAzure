@@ -3,6 +3,11 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+LOG_FILE=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/all.log
+
+exec >  >(tee -ia "${LOG_FILE}")
+exec 2> >(tee -ia "${LOG_FILE}" >&2)
+
 function build_daimon_object() {
     local DAIMON_TYPE=$1
     local VALUE=$2
@@ -17,6 +22,7 @@ function build_daimon_object() {
 
 
 # Login
+echo 'Login to API...'
 login_response=$(curl "${OHDSI_WEBAPI_URL}user/login/db" \
     --data-raw "login=$OHDSI_WEBAPI_USER&password=$OHDSI_WEBAPI_PASSWORD" \
 --compressed -i)
@@ -62,8 +68,17 @@ fi
 
 
 # Add the data source
+echo 'Sending source payload to API...'
 curl -v "${OHDSI_WEBAPI_URL}source/" \
 -H "Authorization: Bearer ${token}" \
 -H 'Content-Type: multipart/form-data; boundary=----WebKitFormBoundary2C72lleJPQ9UH4DL' \
 --data-raw $'------WebKitFormBoundary2C72lleJPQ9UH4DL\r\nContent-Disposition: form-data; name="keyfile"\r\n\r\nundefined\r\n------WebKitFormBoundary2C72lleJPQ9UH4DL\r\nContent-Disposition: form-data; name="source"; filename="blob"\r\nContent-Type: application/json\r\n\r\n'"${JSON_PAYLOAD}"$'\r\n------WebKitFormBoundary2C72lleJPQ9UH4DL--\r\n' \
 --compressed
+
+
+# Add the right permissions for all existing users
+echo 'Installing psql...'
+apk --update add postgresql-client gettext
+
+echo 'Executing permissions script...'
+psql -v ON_ERROR_STOP=1 -e "$OHDSI_ADMIN_CONNECTION_STRING" -c "${SQL_SOURCE_PERMISSIONS}"
