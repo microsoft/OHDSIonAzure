@@ -215,3 +215,4 @@ resource omopCdmConnectionString 'Microsoft.KeyVault/vaults/secrets@2022-07-01' 
 }
 
 output OmopCdmJdbcConnectionString string = OMOPCDMJDBCConnectionString
+output OmopCdmUser string = sqlAdminLogin

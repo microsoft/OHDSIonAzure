@@ -182,3 +182,4 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
 }
 
 output OmopCdmJdbcConnectionString string = postgresOMOPCDMJDBCConnectionString
+output OmopCdmUser string = postgresOMOPCDMUsername
