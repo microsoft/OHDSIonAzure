@@ -21,7 +21,7 @@ param databaseName string
 ])
 param transparentDataEncryption string = 'Enabled'
 
-@description('DW Performance Level expressed in DTU (i.e. 900 DTU = DW100c)')
+@description('DW Performance level expressed in DTU (i.e. 900 DTU = DW100c)')
 @minValue(900)
 @maxValue(54000)
 param capacity int = 900

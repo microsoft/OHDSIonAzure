@@ -77,7 +77,7 @@ param postgresWebapiAdminPassword string = uniqueString(newGuid())
 param postgresWebapiAppPassword string = uniqueString(newGuid())
 
 @secure()
-@description('The password for the postgres OMOP CDM user')
+@description('The password for the OMOP CDM user')
 param OMOPCDMPassword string = uniqueString(newGuid())
 
 @secure()
