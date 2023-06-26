@@ -44,7 +44,7 @@ To get more detailed instructions, please refer to the [Deployment Guide](./docs
 
 
 ## Create a synthetic OMOP CDM
-follow [this guide](/docs/PrepareSyntheticOMOP.md) to create a synthetic OMOP CDM database to use with Atlas and WebAPI.
+This solution comes with a prebuilt synthetic CDM of 1,000 patients. If you wish to create your own (maybe larger) synthetic dataset you can follow a similar process described [here](/docs/PrepareSyntheticOMOP.md).
 
 ## Contributing
 
