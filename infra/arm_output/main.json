@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "9870549550816440165"
+      "templateHash": "6884501141819924291"
     }
   },
   "parameters": {
@@ -138,7 +138,7 @@
       "type": "securestring",
       "defaultValue": "[uniqueString(newGuid())]",
       "metadata": {
-        "description": "The password for the postgres OMOP CDM user"
+        "description": "The password for the OMOP CDM user"
       }
     },
     "atlasSecurityAdminPassword": {
@@ -176,7 +176,8 @@
   "variables": {
     "$fxv#0": "create schema IF NOT EXISTS webapi_security;\n\nDROP TABLE IF EXISTS webapi_security.security;\n\nCREATE TABLE webapi_security.security\n(\n    email character varying(255),\n    password character varying(255)\n);\n\nGRANT USAGE ON SCHEMA webapi_security TO PUBLIC;\nGRANT ALL ON SCHEMA webapi_security TO GROUP ohdsi_admin;\n\n\ndo $$\n\n\tdeclare tables_count integer := 0;\n\tdeclare roles_count integer := 0;\n\nbegin\n\t\n\twhile tables_count <> 3 loop\n\t\traise notice 'Waiting for application security tables to become ready...';\n\t \tPERFORM pg_sleep(10);\n\t  \ttables_count := (\n\t\t\tSELECT \tCOUNT(*) \n\t\t\tFROM \tpg_tables\n\t\t\tWHERE \tschemaname = 'webapi'\n\t\t\t\t\tAND tablename  in ('sec_user', 'sec_role', 'sec_user_role')\n\t\t);\n   \tend loop;\n\n\traise notice 'All tables are ready.';\n\n\twhile roles_count <> 3 loop\n\t\traise notice 'Waiting for application security roles to become ready...';\n\t \tPERFORM pg_sleep(10);\n\t  \troles_count := (\n\t\t\tSELECT \tCOUNT(*) \n\t\t\tFROM \twebapi.sec_role\n\t\t\tWHERE \tid in (1, 2, 10)\n\t\t);\n   \tend loop;\n\t\n\traise notice 'All roles are ready.';\n\n   \traise notice 'Done.';\n\nend$$;\n",
     "$fxv#1": "#!/bin/bash\nset -o errexit\nset -o pipefail\nset -o nounset\n\nLOG_FILE=/mnt/azscripts/azscriptoutput/all.log\nexec >  >(tee -ia ${LOG_FILE})\nexec 2> >(tee -ia ${LOG_FILE} >&2)\n\napk --update add postgresql-client apache2-utils\n\npsql -v ON_ERROR_STOP=1 -e \"$OHDSI_ADMIN_CONNECTION_STRING\" -c \"$SQL_ATLAS_CREATE_SECURITY\"\n\ncount=1\nfor i in ${ATLAS_USERS//,/ }\ndo\n    if [ \"$((\"$count\" % 2))\" -eq \"1\" ]; then\n        username=$i\n    else\n        # shellcheck disable=SC2016\n        atlaspw=$(htpasswd -bnBC 4 \"\" \"$i\" | tr -d ':\\n' | sed 's/$2y/$2a/')\n        psql -v ON_ERROR_STOP=1 -e \"$OHDSI_ADMIN_CONNECTION_STRING\" -c \"insert into webapi_security.security (email,password) values ('$username', E'$atlaspw');\"\n        # this step adds some required rows/ids in the db\n        curl \"$WEBAPI_URL/user/login/db\" --data-urlencode \"login=$username\" --data-urlencode \"password=$i\" --fail\n\n        if [ \"$count\" = \"2\" ]; then\n            psql -v ON_ERROR_STOP=1 -e \"$OHDSI_ADMIN_CONNECTION_STRING\" -c \"insert into webapi.sec_user_role (user_id, role_id) values ((select id from webapi.sec_user where login='$username'),2);\" #admin role\n        else\n            psql -v ON_ERROR_STOP=1 -e \"$OHDSI_ADMIN_CONNECTION_STRING\" -c \"insert into webapi.sec_user_role (user_id, role_id) values ((select id from webapi.sec_user where login='$username'),10);\" #atlas user role\n        fi\n    fi\n    ((count++))\ndone\n",
-    "$fxv#2": "#!/bin/bash\nset -o errexit\nset -o pipefail\nset -o nounset\n\nfunction build_daimon_object() {\n    local DAIMON_TYPE=$1\n    local VALUE=$2\n    \n    echo '{\n    \"tableQualifier\": \"'\"$VALUE\"'\",\n    \"priority\": 0,\n    \"sourceDaimonId\": null,\n    \"daimonType\": \"'\"$DAIMON_TYPE\"'\"\n    }'\n}\n\n\n# Login\nlogin_response=$(curl \"${OHDSI_WEBAPI_URL}user/login/db\" \\\n    --data-raw \"login=$OHDSI_WEBAPI_USER&password=$OHDSI_WEBAPI_PASSWORD\" \\\n--compressed -i)\n\ntoken=$(echo \"$login_response\" | grep -i bearer: | sed 's/Bearer: //' | tr -d '[:space:]')\n\n\n# Build the request payload\nJSON_PAYLOAD=\"{}\"\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.dialect = $DIALECT' --arg DIALECT \"$DIALECT\")\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.name = $SOURCE_NAME' --arg SOURCE_NAME \"$SOURCE_NAME\")\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.key = $SOURCE_KEY' --arg SOURCE_KEY \"$SOURCE_KEY\")\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.connectionString = $CONNECTION_STRING' --arg CONNECTION_STRING \"$CONNECTION_STRING\")\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.username = $USERNAME' --arg USERNAME \"$USERNAME\")\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.password = $PASSWORD' --arg PASSWORD \"$PASSWORD\")\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.krbAuthMethod = \"password\"')\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.krbAdminServer = null')\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons = []')\n\nif [[ -v DAIMON_CDM ]]; then\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_CDM]' --argjson DAIMON_CDM \"$(build_daimon_object \"CDM\" \"${DAIMON_CDM}\")\")\nfi\n\nif [[ -v DAIMON_VOCABULARY ]]; then\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_VOCABULARY]' --argjson DAIMON_VOCABULARY \"$(build_daimon_object \"Vocabulary\" \"${DAIMON_VOCABULARY}\")\")\nfi\n\nif [[ -v DAIMON_RESULTS ]]; then\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_RESULTS]' --argjson DAIMON_RESULTS \"$(build_daimon_object \"Results\" \"${DAIMON_RESULTS}\")\")\nfi\n\nif [[ -v DAIMON_CEM ]]; then\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_CEM]' --argjson DAIMON_CEM \"$(build_daimon_object \"CEM\" \"${DAIMON_CEM}\")\")\nfi\n\nif [[ -v DAIMON_CEM_RESULTS ]]; then\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_CEM_RESULTS]' --argjson DAIMON_CEM_RESULTS \"$(build_daimon_object \"CEMResults\" \"${DAIMON_CEM_RESULTS}\")\")\nfi\n\nif [[ -v DAIMON_TEMP ]]; then\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_TEMP]' --argjson DAIMON_TEMP \"$(build_daimon_object \"Temp\" \"${DAIMON_TEMP}\")\")\nfi\n\n\n# Add the data source\ncurl -v \"${OHDSI_WEBAPI_URL}source/\" \\\n-H \"Authorization: Bearer ${token}\" \\\n-H 'Content-Type: multipart/form-data; boundary=----WebKitFormBoundary2C72lleJPQ9UH4DL' \\\n--data-raw $'------WebKitFormBoundary2C72lleJPQ9UH4DL\\r\\nContent-Disposition: form-data; name=\"keyfile\"\\r\\n\\r\\nundefined\\r\\n------WebKitFormBoundary2C72lleJPQ9UH4DL\\r\\nContent-Disposition: form-data; name=\"source\"; filename=\"blob\"\\r\\nContent-Type: application/json\\r\\n\\r\\n'\"${JSON_PAYLOAD}\"$'\\r\\n------WebKitFormBoundary2C72lleJPQ9UH4DL--\\r\\n' \\\n--compressed\n",
+    "$fxv#2": "-- This gives existing non-admin users access to all sources plus 'Atlas User' role.\n-- It runs once after the deployment so new users created manually should also be given right permissions.\n\nINSERT INTO webapi.sec_user_role (role_id, user_id)\nSELECT r.id as role_id, u.id as user_id\nFROM webapi.sec_user u cross join webapi.sec_role r\nWHERE u.name <> 'admin' AND r.name LIKE 'Source user%'\nEXCEPT\nSELECT role_id, user_id\nFROM webapi.sec_user_role;\n",
+    "$fxv#3": "#!/bin/bash\nset -o errexit\nset -o pipefail\nset -o nounset\n\nLOG_FILE=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/all.log\n\nexec >  >(tee -ia \"${LOG_FILE}\")\nexec 2> >(tee -ia \"${LOG_FILE}\" >&2)\n\nfunction build_daimon_object() {\n    local DAIMON_TYPE=$1\n    local VALUE=$2\n    \n    echo '{\n    \"tableQualifier\": \"'\"$VALUE\"'\",\n    \"priority\": 0,\n    \"sourceDaimonId\": null,\n    \"daimonType\": \"'\"$DAIMON_TYPE\"'\"\n    }'\n}\n\n\n# Login\necho 'Login to API...'\nlogin_response=$(curl \"${OHDSI_WEBAPI_URL}user/login/db\" \\\n    --data-raw \"login=$OHDSI_WEBAPI_USER&password=$OHDSI_WEBAPI_PASSWORD\" \\\n--compressed -i)\n\ntoken=$(echo \"$login_response\" | grep -i bearer: | sed 's/Bearer: //' | tr -d '[:space:]')\n\n\n# Build the request payload\nJSON_PAYLOAD=\"{}\"\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.dialect = $DIALECT' --arg DIALECT \"$DIALECT\")\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.name = $SOURCE_NAME' --arg SOURCE_NAME \"$SOURCE_NAME\")\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.key = $SOURCE_KEY' --arg SOURCE_KEY \"$SOURCE_KEY\")\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.connectionString = $CONNECTION_STRING' --arg CONNECTION_STRING \"$CONNECTION_STRING\")\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.username = $USERNAME' --arg USERNAME \"$USERNAME\")\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.password = $PASSWORD' --arg PASSWORD \"$PASSWORD\")\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.krbAuthMethod = \"password\"')\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.krbAdminServer = null')\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons = []')\n\nif [[ -v DAIMON_CDM ]]; then\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_CDM]' --argjson DAIMON_CDM \"$(build_daimon_object \"CDM\" \"${DAIMON_CDM}\")\")\nfi\n\nif [[ -v DAIMON_VOCABULARY ]]; then\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_VOCABULARY]' --argjson DAIMON_VOCABULARY \"$(build_daimon_object \"Vocabulary\" \"${DAIMON_VOCABULARY}\")\")\nfi\n\nif [[ -v DAIMON_RESULTS ]]; then\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_RESULTS]' --argjson DAIMON_RESULTS \"$(build_daimon_object \"Results\" \"${DAIMON_RESULTS}\")\")\nfi\n\nif [[ -v DAIMON_CEM ]]; then\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_CEM]' --argjson DAIMON_CEM \"$(build_daimon_object \"CEM\" \"${DAIMON_CEM}\")\")\nfi\n\nif [[ -v DAIMON_CEM_RESULTS ]]; then\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_CEM_RESULTS]' --argjson DAIMON_CEM_RESULTS \"$(build_daimon_object \"CEMResults\" \"${DAIMON_CEM_RESULTS}\")\")\nfi\n\nif [[ -v DAIMON_TEMP ]]; then\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_TEMP]' --argjson DAIMON_TEMP \"$(build_daimon_object \"Temp\" \"${DAIMON_TEMP}\")\")\nfi\n\n\n# Add the data source\necho 'Sending source payload to API...'\ncurl -v \"${OHDSI_WEBAPI_URL}source/\" \\\n-H \"Authorization: Bearer ${token}\" \\\n-H 'Content-Type: multipart/form-data; boundary=----WebKitFormBoundary2C72lleJPQ9UH4DL' \\\n--data-raw $'------WebKitFormBoundary2C72lleJPQ9UH4DL\\r\\nContent-Disposition: form-data; name=\"keyfile\"\\r\\n\\r\\nundefined\\r\\n------WebKitFormBoundary2C72lleJPQ9UH4DL\\r\\nContent-Disposition: form-data; name=\"source\"; filename=\"blob\"\\r\\nContent-Type: application/json\\r\\n\\r\\n'\"${JSON_PAYLOAD}\"$'\\r\\n------WebKitFormBoundary2C72lleJPQ9UH4DL--\\r\\n' \\\n--compressed\n\n\n# Add the right permissions for all existing users\necho 'Installing psql...'\napk --update add postgresql-client\n\necho 'Executing permissions script...'\npsql -v ON_ERROR_STOP=1 -e \"$OHDSI_ADMIN_CONNECTION_STRING\" -c \"${SQL_SOURCE_PERMISSIONS}\"\n",
     "tenantId": "[subscription().tenantId]"
   },
   "resources": [
@@ -258,7 +259,7 @@
       "location": "[parameters('location')]",
       "kind": "AzureCLI",
       "properties": {
-        "azCliVersion": "2.42.0",
+        "azCliVersion": "2.48.0",
         "timeout": "PT60M",
         "forceUpdateTag": "5",
         "containerSettings": {
@@ -308,9 +309,9 @@
       "location": "[parameters('location')]",
       "kind": "AzureCLI",
       "properties": {
-        "azCliVersion": "2.42.0",
+        "azCliVersion": "2.48.0",
         "timeout": "PT5M",
-        "forceUpdateTag": "5",
+        "forceUpdateTag": "6",
         "containerSettings": {
           "containerGroupName": "deployment-add-data-source"
         },
@@ -364,9 +365,17 @@
           {
             "name": "DAIMON_RESULTS",
             "value": "cdm_results"
+          },
+          {
+            "name": "OHDSI_ADMIN_CONNECTION_STRING",
+            "secureValue": "[format('host={0} port=5432 dbname={1} user={2} password={3} sslmode=require', reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2022-09-01').outputs.postgresServerFullyQualifiedDomainName.value, reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2022-09-01').outputs.postgresWebApiDatabaseName.value, reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2022-09-01').outputs.postgresWebapiAdminUsername.value, parameters('postgresWebapiAdminPassword'))]"
+          },
+          {
+            "name": "SQL_SOURCE_PERMISSIONS",
+            "value": "[variables('$fxv#2')]"
           }
         ],
-        "scriptContent": "[variables('$fxv#2')]"
+        "scriptContent": "[variables('$fxv#3')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'atlasDatabase')]",
@@ -424,7 +433,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.18.4.5664",
-              "templateHash": "17994129255750437077"
+              "templateHash": "10618358590607697132"
             }
           },
           "parameters": {
@@ -570,7 +579,7 @@
               "location": "[parameters('location')]",
               "kind": "AzureCLI",
               "properties": {
-                "azCliVersion": "2.42.0",
+                "azCliVersion": "2.48.0",
                 "timeout": "PT5M",
                 "containerSettings": {
                   "containerGroupName": "deployment-ohdsi-webapi-init"
@@ -1117,7 +1126,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.18.4.5664",
-              "templateHash": "13532967943380228577"
+              "templateHash": "3316881879205686399"
             }
           },
           "parameters": {
@@ -1192,7 +1201,7 @@
           "variables": {
             "$fxv#0": "CREATE ROLE ${POSTGRES_OMOP_CDM_ROLE} VALID UNTIL 'infinity';\nCOMMENT ON ROLE ${POSTGRES_OMOP_CDM_ROLE} IS 'Application group for OHDSI OMOP CDM'; \nCREATE ROLE ${POSTGRES_CDM_USERNAME} LOGIN ENCRYPTED PASSWORD ${CDM_MD5} VALID UNTIL 'infinity'; \nGRANT ${POSTGRES_OMOP_CDM_ROLE} TO ${POSTGRES_CDM_USERNAME};\nCOMMENT ON ROLE ${POSTGRES_CDM_USERNAME} IS 'Application user account for OHDSI OMOP CDM'; \nGRANT CONNECT, TEMPORARY ON DATABASE ${OMOP_CDM_DATABASE_NAME} TO GROUP ${POSTGRES_OMOP_CDM_ROLE};\n\nCREATE SCHEMA IF NOT EXISTS ${POSTGRES_OMOP_CDM_SCHEMA_NAME} AUTHORIZATION ${POSTGRES_ADMIN_USERNAME}; \n\nCOMMENT ON SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} IS 'Schema containing tables of the OMOP CDM'; \nGRANT USAGE ON SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} TO PUBLIC; \nGRANT USAGE ON SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} TO GROUP ${POSTGRES_OMOP_CDM_ROLE}; \nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} GRANT SELECT ON TABLES TO ${POSTGRES_OMOP_CDM_ROLE}; \nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} GRANT SELECT, USAGE ON SEQUENCES TO ${POSTGRES_OMOP_CDM_ROLE}; \nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} GRANT EXECUTE ON FUNCTIONS TO ${POSTGRES_OMOP_CDM_ROLE}; \nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_CDM_SCHEMA_NAME} GRANT USAGE ON TYPES TO ${POSTGRES_OMOP_CDM_ROLE};\n\nCREATE SCHEMA IF NOT EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} AUTHORIZATION ${POSTGRES_ADMIN_USERNAME}; \nCOMMENT ON SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} IS 'Schema containing tables of the OMOP Results'; \nGRANT USAGE ON SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} TO PUBLIC; \nGRANT USAGE ON SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} TO GROUP ${POSTGRES_OMOP_CDM_ROLE}; \nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} GRANT INSERT, SELECT, UPDATE, DELETE, REFERENCES, TRIGGER ON TABLES TO ${POSTGRES_OMOP_CDM_ROLE}; \nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} GRANT SELECT, USAGE ON SEQUENCES TO ${POSTGRES_OMOP_CDM_ROLE}; \nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} GRANT EXECUTE ON FUNCTIONS TO ${POSTGRES_OMOP_CDM_ROLE}; \nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME} GRANT USAGE ON TYPES TO ${POSTGRES_OMOP_CDM_ROLE};\n\nCREATE SCHEMA IF NOT EXISTS ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} AUTHORIZATION ${POSTGRES_ADMIN_USERNAME}; \nCOMMENT ON SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} IS 'Schema containing tables of the OMOP Temporary'; \nGRANT USAGE ON SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} TO PUBLIC; \nGRANT ALL ON SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} TO GROUP ${POSTGRES_OMOP_CDM_ROLE}; \nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} GRANT INSERT, SELECT, UPDATE, DELETE, REFERENCES, TRIGGER ON TABLES TO ${POSTGRES_OMOP_CDM_ROLE}; \nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} GRANT SELECT, USAGE ON SEQUENCES TO ${POSTGRES_OMOP_CDM_ROLE}; \nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} GRANT EXECUTE ON FUNCTIONS TO ${POSTGRES_OMOP_CDM_ROLE}; \nALTER DEFAULT PRIVILEGES IN SCHEMA ${POSTGRES_OMOP_TEMP_SCHEMA_NAME} GRANT USAGE ON TYPES TO ${POSTGRES_OMOP_CDM_ROLE};\n",
             "$fxv#1": "CREATE TABLE IF NOT EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_analysis\n(\n    analysis_id integer,\n    analysis_name character varying(255) COLLATE pg_catalog.\"default\",\n    stratum_1_name character varying(255) COLLATE pg_catalog.\"default\",\n    stratum_2_name character varying(255) COLLATE pg_catalog.\"default\",\n    stratum_3_name character varying(255) COLLATE pg_catalog.\"default\",\n    stratum_4_name character varying(255) COLLATE pg_catalog.\"default\",\n    stratum_5_name character varying(255) COLLATE pg_catalog.\"default\",\n    is_default integer,\n    category character varying(255) COLLATE pg_catalog.\"default\"\n)\nWITH (\n    OIDS = FALSE\n)\nTABLESPACE pg_default;\n\nALTER TABLE IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_analysis\n    OWNER to ${POSTGRES_ADMIN_USERNAME};\n\n\nCREATE TABLE IF NOT EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results\n(\n    analysis_id integer,\n    stratum_1 character varying COLLATE pg_catalog.\"default\",\n    stratum_2 character varying COLLATE pg_catalog.\"default\",\n    stratum_3 character varying COLLATE pg_catalog.\"default\",\n    stratum_4 character varying COLLATE pg_catalog.\"default\",\n    stratum_5 character varying COLLATE pg_catalog.\"default\",\n    count_value bigint\n)\nWITH (\n    OIDS = FALSE\n)\nTABLESPACE pg_default;\n\nALTER TABLE IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results\n    OWNER to ${POSTGRES_ADMIN_USERNAME};\n-- Index: idx_ar_aid\n\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ar_aid;\n\nCREATE INDEX IF NOT EXISTS idx_ar_aid\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results USING btree\n    (analysis_id ASC NULLS LAST)\n    TABLESPACE pg_default;\n-- Index: idx_ar_aid_s1\n\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ar_aid_s1;\n\nCREATE INDEX IF NOT EXISTS idx_ar_aid_s1\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results USING btree\n    (analysis_id ASC NULLS LAST, stratum_1 COLLATE pg_catalog.\"default\" ASC NULLS LAST)\n    TABLESPACE pg_default;\n-- Index: idx_ar_aid_s1234\n\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ar_aid_s1234;\n\nCREATE INDEX IF NOT EXISTS idx_ar_aid_s1234\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results USING btree\n    (analysis_id ASC NULLS LAST, stratum_1 COLLATE pg_catalog.\"default\" ASC NULLS LAST, stratum_2 COLLATE pg_catalog.\"default\" ASC NULLS LAST, stratum_3 COLLATE pg_catalog.\"default\" ASC NULLS LAST, stratum_4 COLLATE pg_catalog.\"default\" ASC NULLS LAST)\n    TABLESPACE pg_default;\n-- Index: idx_ar_s1\n\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ar_s1;\n\nCREATE INDEX IF NOT EXISTS idx_ar_s1\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results USING btree\n    (stratum_1 COLLATE pg_catalog.\"default\" ASC NULLS LAST)\n    TABLESPACE pg_default;\n-- Index: idx_ar_s2\n\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ar_s2;\n\nCREATE INDEX IF NOT EXISTS idx_ar_s2\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results USING btree\n    (stratum_2 COLLATE pg_catalog.\"default\" ASC NULLS LAST)\n    TABLESPACE pg_default;\n\n\n-- Table: ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist\n\n-- DROP TABLE IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist;\n\nCREATE TABLE IF NOT EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist\n(\n    analysis_id integer,\n    stratum_1 character varying COLLATE pg_catalog.\"default\",\n    stratum_2 character varying COLLATE pg_catalog.\"default\",\n    stratum_3 character varying COLLATE pg_catalog.\"default\",\n    stratum_4 character varying COLLATE pg_catalog.\"default\",\n    stratum_5 character varying COLLATE pg_catalog.\"default\",\n    count_value bigint,\n    min_value numeric,\n    max_value numeric,\n    avg_value numeric,\n    stdev_value numeric,\n    median_value numeric,\n    p10_value numeric,\n    p25_value numeric,\n    p75_value numeric,\n    p90_value numeric\n)\nWITH (\n    OIDS = FALSE\n)\nTABLESPACE pg_default;\n\nALTER TABLE IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist\n    OWNER to ${POSTGRES_ADMIN_USERNAME};\n-- Index: idx_ard_aid\n\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ard_aid;\n\nCREATE INDEX IF NOT EXISTS idx_ard_aid\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist USING btree\n    (analysis_id ASC NULLS LAST)\n    TABLESPACE pg_default;\n-- Index: idx_ard_s1\n\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ard_s1;\n\nCREATE INDEX IF NOT EXISTS idx_ard_s1\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist USING btree\n    (stratum_1 COLLATE pg_catalog.\"default\" ASC NULLS LAST)\n    TABLESPACE pg_default;\n-- Index: idx_ard_s2\n\n-- DROP INDEX IF EXISTS ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.idx_ard_s2;\n\nCREATE INDEX IF NOT EXISTS idx_ard_s2\n    ON ${POSTGRES_OMOP_RESULTS_SCHEMA_NAME}.achilles_results_dist USING btree\n    (stratum_2 COLLATE pg_catalog.\"default\" ASC NULLS LAST)\n    TABLESPACE pg_default;",
-            "$fxv#2": "#!/bin/bash\nset -o errexit\nset -o pipefail\nset -o nounset\n\nLOG_FILE=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/all.log\n\nexec >  >(tee -ia \"${LOG_FILE}\")\nexec 2> >(tee -ia \"${LOG_FILE}\" >&2)\n\n# install postgresql client\necho 'installing psql...'\napk --update add postgresql-client gettext\n\n# create OMOP CDM schema and user\npg_cdm_password=\"${POSTGRES_OMOP_CDM_PASSWORD}${POSTGRES_CDM_USERNAME}\"\nCDM_MD5=$(echo -n \"$pg_cdm_password\" | md5sum | awk '{ print $1 }')\nexport CDM_MD5=\"'md5$CDM_MD5'\"\n\nprintf 'Creating omp cdm schemas and user\\n'\n# shellcheck disable=SC2154\necho \"$SQL_create_omop_schemas\" | envsubst | psql \"$OMOP_CONNECTION_STRING\" -e\n\n# create OMOP CDM (+ Vocabulary) tables\nprintf 'Creating OMOP CDM tables\\n'\nsed -i  s/@cdmDatabaseSchema/\"${POSTGRES_OMOP_CDM_SCHEMA_NAME}\"/g OMOPCDM_postgresql_5.4_ddl.sql OMOPCDM_postgresql_5.4_constraints.sql OMOPCDM_postgresql_5.4_primary_keys.sql OMOPCDM_postgresql_5.4_indices.sql\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOPCDM_postgresql_5.4_ddl.sql -v ON_ERROR_STOP=1\n\n# create and load OMOP Results (Achilles) tables\nprintf 'Creating OMOP Results tables\\n'\n# shellcheck disable=SC2154\necho \"$SQL_create_achilles_tables\" | envsubst | psql \"$OMOP_CONNECTION_STRING\" -e -v ON_ERROR_STOP=1\n\n# skip foreign key constraints for now due to open bug - https://github.com/OHDSI/CommonDataModel/issues/452\n# psql \"$OMOP_CONNECTION_STRING\" -f OMOPCDM_postgresql_5.4_constraints.sql\n# create OMOP CDM primary keys\nprintf 'Creating OMOP CDM primary keys\\n'\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOPCDM_postgresql_5.4_primary_keys.sql -v ON_ERROR_STOP=1\n# load OMOP CDM data\ntables=(\"cdm.concept_ancestor\" \"cdm.concept_relationship\" \"cdm.concept\" \"cdm.drug_strength\" \"cdm.concept_synonym\" \"cdm.measurement\" \"cdm.observation\" \"cdm.cost\" \"cdm.visit_detail\" \"cdm.visit_occurrence\" \"cdm.payer_plan_period\" \"cdm.drug_exposure\" \"cdm.procedure_occurrence\" \"cdm.condition_occurrence\" \"cdm.condition_era\" \"cdm.provider\" \"cdm.drug_era\" \"cdm.person\" \"cdm.relationship\" \"cdm.observation_period\" \"cdm.concept_class\" \"cdm.device_exposure\" \"cdm.death\" \"cdm.cdm_source\" \"cdm.vocabulary\" \"cdm.domain\" \"cdm_results.achilles_analysis\" \"cdm_results.achilles_results_dist\" \"cdm_results.achilles_results\")\nprintf 'Loading OMOP CDM data\\n'\nn=${#tables[@]}\ni=0\nfor element in \"${tables[@]}\"; do\n    ((i++)) || true\n    printf \"Downloading and extracting: %s (%s)\\n\" \"$element.csv.gz\" \"$i/$n\"\n    file=/tmp/\"$element\".csv\n    curl \"${OMOP_CDM_CONTAINER_URL}$element.csv.gz${OMOP_CDM_SAS_TOKEN}\" | gunzip > \"$file\"\n    num_of_records=$(wc -l \"$file\" | awk '{print $1}')\n    printf \"Copying %s records to table: %s\\n\" \"$num_of_records\" \"$element\"\n    psql \"$OMOP_CONNECTION_STRING\" -c \"\\COPY $element FROM '$file' WITH CSV;\" -v ON_ERROR_STOP=1\n    rm -f \"$file\"\n    printf \"done\\n\"\ndone\n\n# create OMOP CDM indices\nprintf 'creating OMOP CDM indices\\n'\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOPCDM_postgresql_5.4_indices.sql -v ON_ERROR_STOP=1\n\n# Generate results DDL\nwget -O OMOP_RESULTS_DDL.sql \"${OHDSI_WEBAPI_URL}ddl/results?dialect=postgresql&schema=$POSTGRES_OMOP_RESULTS_SCHEMA_NAME&vocabSchema=$POSTGRES_OMOP_CDM_SCHEMA_NAME&tempSchema=$POSTGRES_OMOP_TEMP_SCHEMA_NAME&initConceptHierarchy=true\"\n\n# Execute results DDL\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOP_RESULTS_DDL.sql -v ON_ERROR_STOP=1\n\n# for now user will need to add a source via Atlas UI, there's work in progress to automate this\nprintf 'OMOP CDM created, you can now add it to Atlas as a source, connection string will avaiable in Azure KeyVault.\\n'\n",
+            "$fxv#2": "#!/bin/bash\nset -o errexit\nset -o pipefail\nset -o nounset\n\nLOG_FILE=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/all.log\n\nexec >  >(tee -ia \"${LOG_FILE}\")\nexec 2> >(tee -ia \"${LOG_FILE}\" >&2)\n\nprintf 'installing psql...\\n'\napk --update add postgresql-client gettext\n\n# create OMOP CDM schema and user\npg_cdm_password=\"${POSTGRES_OMOP_CDM_PASSWORD}${POSTGRES_CDM_USERNAME}\"\nCDM_MD5=$(echo -n \"$pg_cdm_password\" | md5sum | awk '{ print $1 }')\nexport CDM_MD5=\"'md5$CDM_MD5'\"\n\nprintf 'Creating omp cdm schemas and user\\n'\n# shellcheck disable=SC2154\necho \"$SQL_create_omop_schemas\" | envsubst | psql \"$OMOP_CONNECTION_STRING\" -e\n\n# create OMOP CDM (+ Vocabulary) tables\nprintf 'Creating OMOP CDM tables\\n'\nsed -i  s/@cdmDatabaseSchema/\"${POSTGRES_OMOP_CDM_SCHEMA_NAME}\"/g OMOPCDM_postgresql_5.4_ddl.sql OMOPCDM_postgresql_5.4_constraints.sql OMOPCDM_postgresql_5.4_primary_keys.sql OMOPCDM_postgresql_5.4_indices.sql\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOPCDM_postgresql_5.4_ddl.sql -v ON_ERROR_STOP=1\n\n# create and load OMOP Results (Achilles) tables\nprintf 'Creating OMOP Results tables\\n'\n# shellcheck disable=SC2154\necho \"$SQL_create_achilles_tables\" | envsubst | psql \"$OMOP_CONNECTION_STRING\" -e -v ON_ERROR_STOP=1\n\n# skip foreign key constraints for now due to open bug - https://github.com/OHDSI/CommonDataModel/issues/452\n# psql \"$OMOP_CONNECTION_STRING\" -f OMOPCDM_postgresql_5.4_constraints.sql\n# create OMOP CDM primary keys\nprintf 'Creating OMOP CDM primary keys\\n'\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOPCDM_postgresql_5.4_primary_keys.sql -v ON_ERROR_STOP=1\n# load OMOP CDM data\ntables=(\"cdm.concept_ancestor\" \"cdm.concept_relationship\" \"cdm.concept\" \"cdm.drug_strength\" \"cdm.concept_synonym\" \"cdm.measurement\" \"cdm.observation\" \"cdm.cost\" \"cdm.visit_detail\" \"cdm.visit_occurrence\" \"cdm.payer_plan_period\" \"cdm.drug_exposure\" \"cdm.procedure_occurrence\" \"cdm.condition_occurrence\" \"cdm.condition_era\" \"cdm.provider\" \"cdm.drug_era\" \"cdm.person\" \"cdm.relationship\" \"cdm.observation_period\" \"cdm.concept_class\" \"cdm.device_exposure\" \"cdm.death\" \"cdm.cdm_source\" \"cdm.vocabulary\" \"cdm.domain\" \"cdm_results.achilles_analysis\" \"cdm_results.achilles_results_dist\" \"cdm_results.achilles_results\")\nprintf 'Loading OMOP CDM data\\n'\nn=${#tables[@]}\ni=0\nfor element in \"${tables[@]}\"; do\n    ((i++)) || true\n    printf \"Downloading and extracting: %s (%s)\\n\" \"$element.csv.gz\" \"$i/$n\"\n    file=/tmp/\"$element\".csv\n    curl \"${OMOP_CDM_CONTAINER_URL}$element.csv.gz${OMOP_CDM_SAS_TOKEN}\" | gunzip > \"$file\"\n    num_of_records=$(wc -l \"$file\" | awk '{print $1}')\n    printf \"Copying %s records to table: %s\\n\" \"$num_of_records\" \"$element\"\n    psql \"$OMOP_CONNECTION_STRING\" -c \"\\COPY $element FROM '$file' WITH CSV;\" -v ON_ERROR_STOP=1\n    rm -f \"$file\"\n    printf \"done\\n\"\ndone\n\n# create OMOP CDM indices\nprintf 'creating OMOP CDM indices\\n'\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOPCDM_postgresql_5.4_indices.sql -v ON_ERROR_STOP=1\n\nprintf 'Get Results DDL from API...\\n'\nwget -O OMOP_RESULTS_DDL.sql \"${OHDSI_WEBAPI_URL}ddl/results?dialect=postgresql&schema=$POSTGRES_OMOP_RESULTS_SCHEMA_NAME&vocabSchema=$POSTGRES_OMOP_CDM_SCHEMA_NAME&tempSchema=$POSTGRES_OMOP_TEMP_SCHEMA_NAME&initConceptHierarchy=true\"\n\nprintf 'Run Results DDL...\\n'\npsql \"$OMOP_CONNECTION_STRING\" -e -f OMOP_RESULTS_DDL.sql -v ON_ERROR_STOP=1\n\nprintf 'Done.\\n'\n",
             "postgresOMOPCDMSchemaName": "cdm",
             "postgresOMOPResultsSchemaName": "cdm_results",
             "postgresOMOPTempSchemaName": "temp",
@@ -1237,9 +1246,9 @@
               "location": "[parameters('location')]",
               "kind": "AzureCLI",
               "properties": {
-                "azCliVersion": "2.42.0",
+                "azCliVersion": "2.48.0",
                 "timeout": "PT60M",
-                "forceUpdateTag": "1",
+                "forceUpdateTag": "2",
                 "environmentVariables": [
                   {
                     "name": "WEBAPI_SCHEMA_NAME",
@@ -1385,7 +1394,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.18.4.5664",
-              "templateHash": "9789931549488618462"
+              "templateHash": "10918484848075617605"
             }
           },
           "parameters": {
@@ -1439,7 +1448,7 @@
               "maxValue": 54000,
               "minValue": 900,
               "metadata": {
-                "description": "DW Performance Level expressed in DTU (i.e. 900 DTU = DW100c)"
+                "description": "DW Performance level expressed in DTU (i.e. 900 DTU = DW100c)"
               }
             },
             "databaseCollation": {
@@ -1568,9 +1577,9 @@
               "location": "[parameters('location')]",
               "kind": "AzureCLI",
               "properties": {
-                "azCliVersion": "2.42.0",
+                "azCliVersion": "2.48.0",
                 "timeout": "PT60M",
-                "forceUpdateTag": "1",
+                "forceUpdateTag": "2",
                 "environmentVariables": [
                   {
                     "name": "SQLCMDSERVER",
@@ -1713,7 +1722,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.18.4.5664",
-              "templateHash": "15901564848532204157"
+              "templateHash": "17033841896013442980"
             }
           },
           "parameters": {
@@ -1780,7 +1789,7 @@
               "location": "[parameters('location')]",
               "kind": "AzureCLI",
               "properties": {
-                "azCliVersion": "2.42.0",
+                "azCliVersion": "2.48.0",
                 "timeout": "PT5M",
                 "retentionInterval": "PT1H",
                 "environmentVariables": [

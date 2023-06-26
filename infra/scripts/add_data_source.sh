@@ -78,7 +78,7 @@ curl -v "${OHDSI_WEBAPI_URL}source/" \
 
 # Add the right permissions for all existing users
 echo 'Installing psql...'
-apk --update add postgresql-client gettext
+apk --update add postgresql-client
 
 echo 'Executing permissions script...'
 psql -v ON_ERROR_STOP=1 -e "$OHDSI_ADMIN_CONNECTION_STRING" -c "${SQL_SOURCE_PERMISSIONS}"
