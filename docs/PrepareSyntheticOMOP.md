@@ -1,4 +1,4 @@
-# Synthetic OMOP CDM creation guide  
+# How to create a Synthetic OMOP CDM
 
 ## Overview
 
