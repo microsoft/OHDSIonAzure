@@ -1,6 +1,7 @@
 param location string
 param suffix string
 param keyVaultName string
+param postgresAdminUsername string
 param postgresSku string
 param postgresStorageSize int
 @secure()
@@ -13,7 +14,6 @@ param postgresWebapiAppPassword string
 param localDebug bool = false
 param logAnalyticsWorkspaceId string
 
-var postgresAdminUsername = 'postgres_admin'
 var postgresWebapiAdminUsername = 'ohdsi_admin_user'
 var postgresWebapiAdminRole = 'ohdsi_admin'
 var postgresWebapiAppUsername = 'ohdsi_app_user'

@@ -76,6 +76,8 @@ param postgresWebapiAdminPassword string = uniqueString(newGuid())
 @description('The password for the postgres webapi app user')
 param postgresWebapiAppPassword string = uniqueString(newGuid())
 
+var postgresOMOPCDMUserName = 'postgres_admin'
+
 @secure()
 @description('The password for the postgres OMOP CDM user')
 param postgresOMOPCDMPassword string = uniqueString(newGuid())
@@ -156,6 +158,7 @@ module atlasDatabase 'atlas_database.bicep' = {
     postgresAdminPassword: postgresAdminPassword
     postgresWebapiAdminPassword: postgresWebapiAdminPassword
     postgresWebapiAppPassword: postgresWebapiAppPassword
+    postgresAdminUsername: postgresOMOPCDMUserName
     localDebug: localDebug
     logAnalyticsWorkspaceId: logAnalyticsWorkspace.id
   }
@@ -293,7 +296,7 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
     environmentVariables: [
       {
         name: 'CONNECTION_STRING'
-        secureValue: 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=postgres_admin&password=${postgresOMOPCDMPassword}&sslmode=require'
+        secureValue: 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=${postgresOMOPCDMUserName}&password=${postgresOMOPCDMPassword}&sslmode=require'
       }
       {
         name: 'OHDSI_WEBAPI_PASSWORD'
@@ -321,11 +324,11 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
       }
       {
         name: 'USERNAME'
-        value: atlasDatabase.outputs.postgresWebapiAdminUsername
+        value: postgresOMOPCDMUserName
       }
       {
         name: 'PASSWORD'
-        secureValue: postgresWebapiAdminPassword
+        secureValue: postgresOMOPCDMPassword
       }
       {
         name: 'DAIMON_CDM'
