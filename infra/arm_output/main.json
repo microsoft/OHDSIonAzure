@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "6884501141819924291"
+      "templateHash": "3732334950019688213"
     }
   },
   "parameters": {
@@ -378,6 +378,7 @@
         "scriptContent": "[variables('$fxv#3')]"
       },
       "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'atlasDatabase')]",
         "[resourceId('Microsoft.Resources/deploymentScripts', 'deployment-atlas-security')]",
         "[resourceId('Microsoft.Resources/deployments', 'ohdsiWebApiWebapp')]",
         "[resourceId('Microsoft.Resources/deployments', 'omopCDMPostgres')]",
@@ -1125,7 +1126,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.18.4.5664",
-              "templateHash": "3316881879205686399"
+              "templateHash": "9841985243545257103"
             }
           },
           "parameters": {
@@ -1397,7 +1398,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.18.4.5664",
-              "templateHash": "10918484848075617605"
+              "templateHash": "6855183571768023700"
             }
           },
           "parameters": {
