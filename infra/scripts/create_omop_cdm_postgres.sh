@@ -8,8 +8,7 @@ LOG_FILE=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/all.log
 exec >  >(tee -ia "${LOG_FILE}")
 exec 2> >(tee -ia "${LOG_FILE}" >&2)
 
-# install postgresql client
-echo 'installing psql...'
+printf 'installing psql...\n'
 apk --update add postgresql-client gettext
 
 # create OMOP CDM schema and user
@@ -29,7 +28,7 @@ psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_ddl.sql -v ON_ERROR_
 # create and load OMOP Results (Achilles) tables
 printf 'Creating OMOP Results tables\n'
 # shellcheck disable=SC2154
-echo "$SQL_create_achilles_schema" | envsubst | psql "$OMOP_CONNECTION_STRING" -e -v ON_ERROR_STOP=1
+echo "$SQL_create_achilles_tables" | envsubst | psql "$OMOP_CONNECTION_STRING" -e -v ON_ERROR_STOP=1
 
 # skip foreign key constraints for now due to open bug - https://github.com/OHDSI/CommonDataModel/issues/452
 # psql "$OMOP_CONNECTION_STRING" -f OMOPCDM_postgresql_5.4_constraints.sql
@@ -57,11 +56,10 @@ done
 printf 'creating OMOP CDM indices\n'
 psql "$OMOP_CONNECTION_STRING" -e -f OMOPCDM_postgresql_5.4_indices.sql -v ON_ERROR_STOP=1
 
-# Generate results DDL
+printf 'Get Results DDL from API...\n'
 wget -O OMOP_RESULTS_DDL.sql "${OHDSI_WEBAPI_URL}ddl/results?dialect=postgresql&schema=$POSTGRES_OMOP_RESULTS_SCHEMA_NAME&vocabSchema=$POSTGRES_OMOP_CDM_SCHEMA_NAME&tempSchema=$POSTGRES_OMOP_TEMP_SCHEMA_NAME&initConceptHierarchy=true"
 
-# Execute results DDL
+printf 'Run Results DDL...\n'
 psql "$OMOP_CONNECTION_STRING" -e -f OMOP_RESULTS_DDL.sql -v ON_ERROR_STOP=1
 
-# for now user will need to add a source via Atlas UI, there's work in progress to automate this
-printf 'OMOP CDM created, you can now add it to Atlas as a source, connection string will avaiable in Azure KeyVault.\n'
+printf 'Done.\n'

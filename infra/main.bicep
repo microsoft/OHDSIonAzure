@@ -12,7 +12,7 @@ param cdmContainerUrl string = 'https://omoppublic.blob.core.windows.net/shared/
 param cdmSasToken string = ''
 
 @description('The name of the database to create for the OMOP CDM')
-param postgresOMOPCDMDatabaseName string = 'synthea1k'
+param OMOPCDMDatabaseName string = 'synthea1k'
 
 @description('The app service plan sku')
 @allowed([
@@ -77,8 +77,8 @@ param postgresWebapiAdminPassword string = uniqueString(newGuid())
 param postgresWebapiAppPassword string = uniqueString(newGuid())
 
 @secure()
-@description('The password for the postgres OMOP CDM user')
-param postgresOMOPCDMPassword string = uniqueString(newGuid())
+@description('The password for the OMOP CDM user')
+param OMOPCDMPassword string = uniqueString(newGuid())
 
 @secure()
 @description('The password for atlas security admin user')
@@ -90,6 +90,14 @@ param atlasUsersList string
 
 @description('Enables local access for debugging.')
 param localDebug bool = false
+
+@description('OMOP CDM database type')
+@allowed([
+    'PostgreSQL'
+    'Synapse Dedicated Pool'
+  ]
+)
+param cdmDbType string = 'PostgreSQL'
 
 var tenantId = subscription().tenantId
 
@@ -182,26 +190,43 @@ module ohdsiWebApiWebapp 'ohdsi_webapi.bicep' = {
   ]
 }
 
-@description('Creates OMOP CDM database')
-module omopCDM 'omop_cdm.bicep' = {
-  name: 'omopCDM'
+@description('Creates OMOP CDM database on Postgres')
+module omopCDMPostgres 'omop_cdm_postgres.bicep' = if (cdmDbType == 'PostgreSQL') {
+  name: 'omopCDMPostgres'
   params: {
     location: location
     keyVaultName: keyVault.name
     cdmContainerUrl: cdmContainerUrl
     cdmSasToken: cdmSasToken
     postgresAtlasDatabaseName: atlasDatabase.outputs.postgresWebApiDatabaseName
-    postgresOMOPCDMDatabaseName: postgresOMOPCDMDatabaseName
+    postgresOMOPCDMDatabaseName: OMOPCDMDatabaseName
     postgresAdminPassword: postgresAdminPassword
     postgresWebapiAdminPassword: postgresWebapiAdminPassword
-    postgresOMOPCDMPassword: postgresOMOPCDMPassword
+    postgresOMOPCDMPassword: OMOPCDMPassword
     postgresServerName: atlasDatabase.outputs.postgresServerName
     ohdsiWebapiUrl: ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
   }
-
   dependsOn: [
     ohdsiWebApiWebapp
     atlasDatabase
+  ]
+}
+
+@description('Creates OMOP CDM database on Synapse')
+module omopCDMSynapse 'omop_cdm_synapse.bicep' = if (cdmDbType == 'Synapse Dedicated Pool') {
+  name: 'omopCDMSynapse'
+  params: {
+    location: location
+    suffix: suffix
+    keyVaultName: keyVault.name
+    cdmContainerUrl: cdmContainerUrl
+    cdmSasToken: cdmSasToken    
+    databaseName: OMOPCDMDatabaseName
+    sqlAdminPassword: OMOPCDMPassword
+    ohdsiWebapiUrl: ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
+  }
+  dependsOn: [
+    ohdsiWebApiWebapp
   ]
 }
 
@@ -294,7 +319,7 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
     environmentVariables: [
       {
         name: 'CONNECTION_STRING'
-        secureValue: 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${postgresOMOPCDMDatabaseName}?user=postgres_admin&password=${postgresOMOPCDMPassword}&sslmode=require'
+        secureValue: cdmDbType == 'PostgreSQL' ? 'jdbc:postgresql://${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName}:5432/${OMOPCDMDatabaseName}?user=postgres_admin&password=${OMOPCDMPassword}&sslmode=require' : omopCDMSynapse.outputs.OmopCdmJdbcConnectionString
       }
       {
         name: 'OHDSI_WEBAPI_PASSWORD'
@@ -310,7 +335,7 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
       }
       {
         name: 'DIALECT'
-        value: 'postgresql'
+        value: cdmDbType == 'PostgreSQL' ? 'postgresql' : 'synapse'
       }
       {
         name: 'SOURCE_NAME'
@@ -346,6 +371,7 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
   dependsOn: [
     deploymentAtlasSecurity
     ohdsiWebApiWebapp
-    omopCDM
+    omopCDMPostgres
+    omopCDMSynapse
   ]
 }
