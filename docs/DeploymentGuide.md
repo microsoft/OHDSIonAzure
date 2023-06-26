@@ -37,3 +37,13 @@ In order to deploy OHDSI on Azure, you will need the following prerequisites:
 | Local Debug                   | Enable local debugging mode. If enabled, it will create a Firewall rule that will enable unrestricted access to the PostgreSQL database from any location.    | false                                                         |
 
 * Once you fill all the details, click on Review + Create. The deployment will start and will take around 30 minutes to complete.
+
+## Data platform
+
+As noted above this solution currently supports storing the CDM on a managed PostgresSQL and on Azure Synapse Dedicated Pool. Please choose the right SKUs for each of the platforms depending on your dataset size.
+Note that when using the Synapse option, a default table distibution is used. If you intent to use a large dataset that might to be adjusted per the comments [here](https://github.com/OHDSI/CommonDataModel/blob/main/inst/ddl/5.4/synapse/OMOPCDM_synapse_5.4_ddl.sql) (although this quickstart doesn't support this out-of-the-box you can make the right moifications yourself).
+
+## Permissions
+
+All the non-admin users you define in the deployment will automatically get permission to the data source created. 
+If you add more users and/or new data sources then you should use Atlas to grant additional permissions.

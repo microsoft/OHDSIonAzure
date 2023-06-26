@@ -255,12 +255,14 @@ resource atlasSecurityAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01'
   }
 }
 
+var ohdsi_admin_connection_string = 'host=${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName} port=5432 dbname=${atlasDatabase.outputs.postgresWebApiDatabaseName} user=${atlasDatabase.outputs.postgresWebapiAdminUsername} password=${postgresWebapiAdminPassword} sslmode=require'
+
 resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'deployment-atlas-security'
   location: location
   kind: 'AzureCLI'
   properties: {
-    azCliVersion: '2.42.0'
+    azCliVersion: '2.48.0'
     timeout: 'PT60M'
     forceUpdateTag: '5'
     containerSettings: {
@@ -271,7 +273,7 @@ resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-
     environmentVariables: [
       {
         name: 'OHDSI_ADMIN_CONNECTION_STRING'
-        secureValue: 'host=${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName} port=5432 dbname=${atlasDatabase.outputs.postgresWebApiDatabaseName} user=${atlasDatabase.outputs.postgresWebapiAdminUsername} password=${postgresWebapiAdminPassword} sslmode=require'
+        secureValue: ohdsi_admin_connection_string
       }
       {
         name: 'ATLAS_SECURITY_ADMIN_PASSWORD'
@@ -308,9 +310,9 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
   location: location
   kind: 'AzureCLI'
   properties: {
-    azCliVersion: '2.42.0'
+    azCliVersion: '2.48.0'
     timeout: 'PT5M'
-    forceUpdateTag: '5'
+    forceUpdateTag: '6'
     containerSettings: {
       containerGroupName: 'deployment-add-data-source'
     }
@@ -368,6 +370,14 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
       {
         name: 'DAIMON_TEMP'
         value: 'temp'
+      }
+      {
+        name: 'OHDSI_ADMIN_CONNECTION_STRING'
+        secureValue: ohdsi_admin_connection_string
+      }
+      {
+        name: 'SQL_SOURCE_PERMISSIONS'
+        value: loadTextContent('sql/atlas_add_source_permissions.sql')
       }
     ]
     scriptContent: loadTextContent('scripts/add_data_source.sh')

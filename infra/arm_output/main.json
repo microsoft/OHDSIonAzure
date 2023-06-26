@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.17.1.54307",
-      "templateHash": "13136449637319813889"
+      "templateHash": "18110892442885050450"
     }
   },
   "parameters": {
@@ -176,7 +176,8 @@
   "variables": {
     "$fxv#0": "create schema IF NOT EXISTS webapi_security;\r\n\r\nDROP TABLE IF EXISTS webapi_security.security;\r\n\r\nCREATE TABLE webapi_security.security\r\n(\r\n    email character varying(255),\r\n    password character varying(255)\r\n);\r\n\r\nGRANT USAGE ON SCHEMA webapi_security TO PUBLIC;\r\nGRANT ALL ON SCHEMA webapi_security TO GROUP ohdsi_admin;\r\n\r\n\r\ndo $$\r\n\r\n\tdeclare tables_count integer := 0;\r\n\tdeclare roles_count integer := 0;\r\n\r\nbegin\r\n\t\r\n\twhile tables_count <> 3 loop\r\n\t\traise notice 'Waiting for application security tables to become ready...';\r\n\t \tPERFORM pg_sleep(10);\r\n\t  \ttables_count := (\r\n\t\t\tSELECT \tCOUNT(*) \r\n\t\t\tFROM \tpg_tables\r\n\t\t\tWHERE \tschemaname = 'webapi'\r\n\t\t\t\t\tAND tablename  in ('sec_user', 'sec_role', 'sec_user_role')\r\n\t\t);\r\n   \tend loop;\r\n\r\n\traise notice 'All tables are ready.';\r\n\r\n\twhile roles_count <> 3 loop\r\n\t\traise notice 'Waiting for application security roles to become ready...';\r\n\t \tPERFORM pg_sleep(10);\r\n\t  \troles_count := (\r\n\t\t\tSELECT \tCOUNT(*) \r\n\t\t\tFROM \twebapi.sec_role\r\n\t\t\tWHERE \tid in (1, 2, 10)\r\n\t\t);\r\n   \tend loop;\r\n\t\r\n\traise notice 'All roles are ready.';\r\n\r\n   \traise notice 'Done.';\r\n\r\nend$$;\r\n",
     "$fxv#1": "#!/bin/bash\r\nset -o errexit\r\nset -o pipefail\r\nset -o nounset\r\n\r\nLOG_FILE=/mnt/azscripts/azscriptoutput/all.log\r\nexec >  >(tee -ia ${LOG_FILE})\r\nexec 2> >(tee -ia ${LOG_FILE} >&2)\r\n\r\napk --update add postgresql-client apache2-utils\r\n\r\npsql -v ON_ERROR_STOP=1 -e \"$OHDSI_ADMIN_CONNECTION_STRING\" -c \"$SQL_ATLAS_CREATE_SECURITY\"\r\n\r\ncount=1\r\nfor i in ${ATLAS_USERS//,/ }\r\ndo\r\n    if [ \"$((\"$count\" % 2))\" -eq \"1\" ]; then\r\n        username=$i\r\n    else\r\n        # shellcheck disable=SC2016\r\n        atlaspw=$(htpasswd -bnBC 4 \"\" \"$i\" | tr -d ':\\n' | sed 's/$2y/$2a/')\r\n        psql -v ON_ERROR_STOP=1 -e \"$OHDSI_ADMIN_CONNECTION_STRING\" -c \"insert into webapi_security.security (email,password) values ('$username', E'$atlaspw');\"\r\n        # this step adds some required rows/ids in the db\r\n        curl \"$WEBAPI_URL/user/login/db\" --data-urlencode \"login=$username\" --data-urlencode \"password=$i\" --fail\r\n\r\n        if [ \"$count\" = \"2\" ]; then\r\n            psql -v ON_ERROR_STOP=1 -e \"$OHDSI_ADMIN_CONNECTION_STRING\" -c \"insert into webapi.sec_user_role (user_id, role_id) values ((select id from webapi.sec_user where login='$username'),2);\" #admin role\r\n        else\r\n            psql -v ON_ERROR_STOP=1 -e \"$OHDSI_ADMIN_CONNECTION_STRING\" -c \"insert into webapi.sec_user_role (user_id, role_id) values ((select id from webapi.sec_user where login='$username'),10);\" #atlas user role\r\n        fi\r\n    fi\r\n    ((count++))\r\ndone\r\n",
-    "$fxv#2": "#!/bin/bash\r\nset -o errexit\r\nset -o pipefail\r\nset -o nounset\r\n\r\nfunction build_daimon_object() {\r\n    local DAIMON_TYPE=$1\r\n    local VALUE=$2\r\n    \r\n    echo '{\r\n    \"tableQualifier\": \"'\"$VALUE\"'\",\r\n    \"priority\": 0,\r\n    \"sourceDaimonId\": null,\r\n    \"daimonType\": \"'\"$DAIMON_TYPE\"'\"\r\n    }'\r\n}\r\n\r\n\r\n# Login\r\nlogin_response=$(curl \"${OHDSI_WEBAPI_URL}user/login/db\" \\\r\n    --data-raw \"login=$OHDSI_WEBAPI_USER&password=$OHDSI_WEBAPI_PASSWORD\" \\\r\n--compressed -i)\r\n\r\ntoken=$(echo \"$login_response\" | grep -i bearer: | sed 's/Bearer: //' | tr -d '[:space:]')\r\n\r\n\r\n# Build the request payload\r\nJSON_PAYLOAD=\"{}\"\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.dialect = $DIALECT' --arg DIALECT \"$DIALECT\")\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.name = $SOURCE_NAME' --arg SOURCE_NAME \"$SOURCE_NAME\")\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.key = $SOURCE_KEY' --arg SOURCE_KEY \"$SOURCE_KEY\")\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.connectionString = $CONNECTION_STRING' --arg CONNECTION_STRING \"$CONNECTION_STRING\")\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.username = $USERNAME' --arg USERNAME \"$USERNAME\")\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.password = $PASSWORD' --arg PASSWORD \"$PASSWORD\")\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.krbAuthMethod = \"password\"')\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.krbAdminServer = null')\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons = []')\r\n\r\nif [[ -v DAIMON_CDM ]]; then\r\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_CDM]' --argjson DAIMON_CDM \"$(build_daimon_object \"CDM\" \"${DAIMON_CDM}\")\")\r\nfi\r\n\r\nif [[ -v DAIMON_VOCABULARY ]]; then\r\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_VOCABULARY]' --argjson DAIMON_VOCABULARY \"$(build_daimon_object \"Vocabulary\" \"${DAIMON_VOCABULARY}\")\")\r\nfi\r\n\r\nif [[ -v DAIMON_RESULTS ]]; then\r\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_RESULTS]' --argjson DAIMON_RESULTS \"$(build_daimon_object \"Results\" \"${DAIMON_RESULTS}\")\")\r\nfi\r\n\r\nif [[ -v DAIMON_CEM ]]; then\r\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_CEM]' --argjson DAIMON_CEM \"$(build_daimon_object \"CEM\" \"${DAIMON_CEM}\")\")\r\nfi\r\n\r\nif [[ -v DAIMON_CEM_RESULTS ]]; then\r\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_CEM_RESULTS]' --argjson DAIMON_CEM_RESULTS \"$(build_daimon_object \"CEMResults\" \"${DAIMON_CEM_RESULTS}\")\")\r\nfi\r\n\r\nif [[ -v DAIMON_TEMP ]]; then\r\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_TEMP]' --argjson DAIMON_TEMP \"$(build_daimon_object \"Temp\" \"${DAIMON_TEMP}\")\")\r\nfi\r\n\r\n\r\n# Add the data source\r\ncurl -v \"${OHDSI_WEBAPI_URL}source/\" \\\r\n-H \"Authorization: Bearer ${token}\" \\\r\n-H 'Content-Type: multipart/form-data; boundary=----WebKitFormBoundary2C72lleJPQ9UH4DL' \\\r\n--data-raw $'------WebKitFormBoundary2C72lleJPQ9UH4DL\\r\\nContent-Disposition: form-data; name=\"keyfile\"\\r\\n\\r\\nundefined\\r\\n------WebKitFormBoundary2C72lleJPQ9UH4DL\\r\\nContent-Disposition: form-data; name=\"source\"; filename=\"blob\"\\r\\nContent-Type: application/json\\r\\n\\r\\n'\"${JSON_PAYLOAD}\"$'\\r\\n------WebKitFormBoundary2C72lleJPQ9UH4DL--\\r\\n' \\\r\n--compressed\r\n",
+    "$fxv#2": "-- This gives existing non-admin users access to all sources plus 'Atlas User' role.\r\n-- It runs once after the deployment so new users created manually should also be given right permissions.\r\n\r\nINSERT INTO webapi.sec_user_role (role_id, user_id)\r\nSELECT r.id as role_id, u.id as user_id\r\nFROM webapi.sec_user u cross join webapi.sec_role r\r\nWHERE u.name <> 'admin' AND r.name LIKE 'Source user%'\r\nEXCEPT\r\nSELECT role_id, user_id\r\nFROM webapi.sec_user_role;\r\n",
+    "$fxv#3": "#!/bin/bash\r\nset -o errexit\r\nset -o pipefail\r\nset -o nounset\r\n\r\nLOG_FILE=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/all.log\r\n\r\nexec >  >(tee -ia \"${LOG_FILE}\")\r\nexec 2> >(tee -ia \"${LOG_FILE}\" >&2)\r\n\r\nfunction build_daimon_object() {\r\n    local DAIMON_TYPE=$1\r\n    local VALUE=$2\r\n    \r\n    echo '{\r\n    \"tableQualifier\": \"'\"$VALUE\"'\",\r\n    \"priority\": 0,\r\n    \"sourceDaimonId\": null,\r\n    \"daimonType\": \"'\"$DAIMON_TYPE\"'\"\r\n    }'\r\n}\r\n\r\n\r\n# Login\r\necho 'Login to API...'\r\nlogin_response=$(curl \"${OHDSI_WEBAPI_URL}user/login/db\" \\\r\n    --data-raw \"login=$OHDSI_WEBAPI_USER&password=$OHDSI_WEBAPI_PASSWORD\" \\\r\n--compressed -i)\r\n\r\ntoken=$(echo \"$login_response\" | grep -i bearer: | sed 's/Bearer: //' | tr -d '[:space:]')\r\n\r\n\r\n# Build the request payload\r\nJSON_PAYLOAD=\"{}\"\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.dialect = $DIALECT' --arg DIALECT \"$DIALECT\")\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.name = $SOURCE_NAME' --arg SOURCE_NAME \"$SOURCE_NAME\")\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.key = $SOURCE_KEY' --arg SOURCE_KEY \"$SOURCE_KEY\")\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.connectionString = $CONNECTION_STRING' --arg CONNECTION_STRING \"$CONNECTION_STRING\")\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.username = $USERNAME' --arg USERNAME \"$USERNAME\")\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.password = $PASSWORD' --arg PASSWORD \"$PASSWORD\")\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.krbAuthMethod = \"password\"')\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.krbAdminServer = null')\r\nJSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons = []')\r\n\r\nif [[ -v DAIMON_CDM ]]; then\r\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_CDM]' --argjson DAIMON_CDM \"$(build_daimon_object \"CDM\" \"${DAIMON_CDM}\")\")\r\nfi\r\n\r\nif [[ -v DAIMON_VOCABULARY ]]; then\r\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_VOCABULARY]' --argjson DAIMON_VOCABULARY \"$(build_daimon_object \"Vocabulary\" \"${DAIMON_VOCABULARY}\")\")\r\nfi\r\n\r\nif [[ -v DAIMON_RESULTS ]]; then\r\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_RESULTS]' --argjson DAIMON_RESULTS \"$(build_daimon_object \"Results\" \"${DAIMON_RESULTS}\")\")\r\nfi\r\n\r\nif [[ -v DAIMON_CEM ]]; then\r\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_CEM]' --argjson DAIMON_CEM \"$(build_daimon_object \"CEM\" \"${DAIMON_CEM}\")\")\r\nfi\r\n\r\nif [[ -v DAIMON_CEM_RESULTS ]]; then\r\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_CEM_RESULTS]' --argjson DAIMON_CEM_RESULTS \"$(build_daimon_object \"CEMResults\" \"${DAIMON_CEM_RESULTS}\")\")\r\nfi\r\n\r\nif [[ -v DAIMON_TEMP ]]; then\r\n    JSON_PAYLOAD=$(echo \"$JSON_PAYLOAD\" | jq '.daimons += [$DAIMON_TEMP]' --argjson DAIMON_TEMP \"$(build_daimon_object \"Temp\" \"${DAIMON_TEMP}\")\")\r\nfi\r\n\r\n\r\n# Add the data source\r\necho 'Sending source payload to API...'\r\ncurl -v \"${OHDSI_WEBAPI_URL}source/\" \\\r\n-H \"Authorization: Bearer ${token}\" \\\r\n-H 'Content-Type: multipart/form-data; boundary=----WebKitFormBoundary2C72lleJPQ9UH4DL' \\\r\n--data-raw $'------WebKitFormBoundary2C72lleJPQ9UH4DL\\r\\nContent-Disposition: form-data; name=\"keyfile\"\\r\\n\\r\\nundefined\\r\\n------WebKitFormBoundary2C72lleJPQ9UH4DL\\r\\nContent-Disposition: form-data; name=\"source\"; filename=\"blob\"\\r\\nContent-Type: application/json\\r\\n\\r\\n'\"${JSON_PAYLOAD}\"$'\\r\\n------WebKitFormBoundary2C72lleJPQ9UH4DL--\\r\\n' \\\r\n--compressed\r\n\r\n\r\n# Add the right permissions for all existing users\r\necho 'Installing psql...'\r\napk --update add postgresql-client\r\n\r\necho 'Executing permissions script...'\r\npsql -v ON_ERROR_STOP=1 -e \"$OHDSI_ADMIN_CONNECTION_STRING\" -c \"${SQL_SOURCE_PERMISSIONS}\"\r\n",
     "tenantId": "[subscription().tenantId]"
   },
   "resources": [
@@ -258,7 +259,7 @@
       "location": "[parameters('location')]",
       "kind": "AzureCLI",
       "properties": {
-        "azCliVersion": "2.42.0",
+        "azCliVersion": "2.48.0",
         "timeout": "PT60M",
         "forceUpdateTag": "5",
         "containerSettings": {
@@ -308,9 +309,9 @@
       "location": "[parameters('location')]",
       "kind": "AzureCLI",
       "properties": {
-        "azCliVersion": "2.42.0",
+        "azCliVersion": "2.48.0",
         "timeout": "PT5M",
-        "forceUpdateTag": "5",
+        "forceUpdateTag": "6",
         "containerSettings": {
           "containerGroupName": "deployment-add-data-source"
         },
@@ -368,9 +369,17 @@
           {
             "name": "DAIMON_TEMP",
             "value": "temp"
+          },
+          {
+            "name": "OHDSI_ADMIN_CONNECTION_STRING",
+            "secureValue": "[format('host={0} port=5432 dbname={1} user={2} password={3} sslmode=require', reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2022-09-01').outputs.postgresServerFullyQualifiedDomainName.value, reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2022-09-01').outputs.postgresWebApiDatabaseName.value, reference(resourceId('Microsoft.Resources/deployments', 'atlasDatabase'), '2022-09-01').outputs.postgresWebapiAdminUsername.value, parameters('postgresWebapiAdminPassword'))]"
+          },
+          {
+            "name": "SQL_SOURCE_PERMISSIONS",
+            "value": "[variables('$fxv#2')]"
           }
         ],
-        "scriptContent": "[variables('$fxv#2')]"
+        "scriptContent": "[variables('$fxv#3')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'atlasDatabase')]",
@@ -428,7 +437,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.17.1.54307",
-              "templateHash": "425004114495372030"
+              "templateHash": "971489034693624592"
             }
           },
           "parameters": {
@@ -574,7 +583,7 @@
               "location": "[parameters('location')]",
               "kind": "AzureCLI",
               "properties": {
-                "azCliVersion": "2.42.0",
+                "azCliVersion": "2.48.0",
                 "timeout": "PT5M",
                 "containerSettings": {
                   "containerGroupName": "deployment-ohdsi-webapi-init"
@@ -1121,7 +1130,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.17.1.54307",
-              "templateHash": "8180553956610127678"
+              "templateHash": "1016817492691125300"
             }
           },
           "parameters": {
@@ -1241,9 +1250,9 @@
               "location": "[parameters('location')]",
               "kind": "AzureCLI",
               "properties": {
-                "azCliVersion": "2.42.0",
+                "azCliVersion": "2.48.0",
                 "timeout": "PT60M",
-                "forceUpdateTag": "1",
+                "forceUpdateTag": "2",
                 "environmentVariables": [
                   {
                     "name": "WEBAPI_SCHEMA_NAME",
@@ -1389,7 +1398,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.17.1.54307",
-              "templateHash": "13823421080305978155"
+              "templateHash": "353696755832371209"
             }
           },
           "parameters": {
@@ -1572,9 +1581,9 @@
               "location": "[parameters('location')]",
               "kind": "AzureCLI",
               "properties": {
-                "azCliVersion": "2.42.0",
+                "azCliVersion": "2.48.0",
                 "timeout": "PT60M",
-                "forceUpdateTag": "1",
+                "forceUpdateTag": "2",
                 "environmentVariables": [
                   {
                     "name": "SQLCMDSERVER",
@@ -1717,7 +1726,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.17.1.54307",
-              "templateHash": "9125573330429261875"
+              "templateHash": "16301110805765388456"
             }
           },
           "parameters": {
@@ -1784,7 +1793,7 @@
               "location": "[parameters('location')]",
               "kind": "AzureCLI",
               "properties": {
-                "azCliVersion": "2.42.0",
+                "azCliVersion": "2.48.0",
                 "timeout": "PT5M",
                 "retentionInterval": "PT1H",
                 "environmentVariables": [
