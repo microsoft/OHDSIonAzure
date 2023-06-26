@@ -365,6 +365,10 @@ resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-0
         name: 'DAIMON_RESULTS'
         value: 'cdm_results'
       }
+      {
+        name: 'DAIMON_TEMP'
+        value: 'temp'
+      }
     ]
     scriptContent: loadTextContent('scripts/add_data_source.sh')
   }
