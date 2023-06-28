@@ -50,19 +50,6 @@ If you add more users and/or new data sources then you should use Atlas to grant
 
 ## How to access Atlas
 
-After deploying your OHDSI environment you will have the following resources on your Azure subscription:
-
-| TYPE                                            | NAME                  |
-|-------------------------------------------------|-----------------------|
-| App Service                                     | app-ohdsiatlas-myenv  |
-| App Service                                     | app-ohdsiwebapi-myenv |
-| App Service plan                                | asp-myenv             |
-| Managed Identity                                | id-ohdsiwebapi-myenv  |
-| Key vault                                       | kv-myenv              |
-| Log Analytics workspace                         | log-myenv             |
-| Azure Database for PostgreSQL flexible   server | psql-myenv            |
-| Storage account                                 | stohdsimyenv          |
-
 To access your Atlas website browse to `https://app-ohdsiatlas-myenv.azurewebsites.net/atlas` (replace `myenv` with your chosen suffix).
 
 All passwords and connection strings are stored inside your Azure Key vault,
