@@ -5,7 +5,7 @@
 In order to deploy OHDSI on Azure, you will need the following prerequisites:
 
 1. Azure Subscription
-2. Logged in with a user that has Contributer role on the subscription
+2. Logged in with a user that has Contributor role on the subscription
 
 ## Setup
 
@@ -41,9 +41,31 @@ In order to deploy OHDSI on Azure, you will need the following prerequisites:
 ## Data platform
 
 As noted above this solution currently supports storing the CDM on a managed PostgresSQL and on Azure Synapse Dedicated Pool. Please choose the right SKUs for each of the platforms depending on your dataset size.
-Note that when using the Synapse option, a default table distibution is used. If you intent to use a large dataset that might to be adjusted per the comments [here](https://github.com/OHDSI/CommonDataModel/blob/main/inst/ddl/5.4/synapse/OMOPCDM_synapse_5.4_ddl.sql) (although this quickstart doesn't support this out-of-the-box you can make the right moifications yourself).
+Note that when using the Synapse option, a default table distribution is used. If you intend to use a large dataset that might need to be adjusted per the comments [here](https://github.com/OHDSI/CommonDataModel/blob/main/inst/ddl/5.4/synapse/OMOPCDM_synapse_5.4_ddl.sql) (although this quickstart doesn't support this out-of-the-box you can make the right modifications yourself).
 
 ## Permissions
 
 All the non-admin users you define in the deployment will automatically get permission to the data source created. 
 If you add more users and/or new data sources then you should use Atlas to grant additional permissions.
+
+## How to access Atlas
+
+To access your Atlas website browse to `https://app-ohdsiatlas-myenv.azurewebsites.net/atlas` (replace `myenv` with your chosen suffix).
+
+All passwords and connection strings are stored inside your Azure Key vault,
+to access it sign into Azure portal and look for your Azure Key vault (i.e. `kv-myenv`).
+click on `Access Policies` on the side menu.
+
+![Azure Key Vault Access Policies](media/kv-access-policies.png)
+
+Create a new policy with GET & LIST permissions under secrets for your identity.
+
+![Azure Key Vault Permissions](media/kv-permissions.png)
+
+After that you'll be able to access your environment secrets.
+
+![Azure Key Vault Secrets](media/kv-secrets.png)
+
+Sign in with one of the researches which you've provided during deployment and see that you can access your OMOP data source.
+
+![Atlas data sources](media/atlas-data-sources.png)
