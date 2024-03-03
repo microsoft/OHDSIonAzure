@@ -58,7 +58,7 @@ param appPlanSkuName string = 'S1'
     'Standard_B20ms'
   ]
 )
-param postgresSku string = 'Standard_D2s_v3'
+param postgresSku string = 'Standard_D2ds_v4'
 
 @description('The size of the postgres database storage')
 @allowed([ 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384 ])
@@ -102,7 +102,7 @@ param cdmDbType string = 'PostgreSQL'
 var tenantId = subscription().tenantId
 
 @description('Creates the app service plan')
-resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
+resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   #disable-next-line use-stable-resource-identifiers
   name: 'asp-${suffix}'
   location: location
@@ -116,7 +116,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
 }
 
 @description('Creates the key vault')
-resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   #disable-next-line use-stable-resource-identifiers
   name: 'kv-${suffix}'
   location: location
@@ -143,10 +143,6 @@ resource keyVaultDiagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-0
       {
         category: 'AuditEvent'
         enabled: true
-        retentionPolicy: {
-          days: 30
-          enabled: true
-        }
       }
     ]
   }
@@ -247,7 +243,7 @@ module atlasUI 'ohdsi_atlas_ui.bicep' = {
 
 output ohdsiWebapiUrl string = ohdsiWebApiWebapp.outputs.ohdsiWebapiUrl
 
-resource atlasSecurityAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource atlasSecurityAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: 'atlas-security-admin-password'
   parent: keyVault
   properties: {
@@ -257,7 +253,7 @@ resource atlasSecurityAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01'
 
 var ohdsi_admin_connection_string = 'host=${atlasDatabase.outputs.postgresServerFullyQualifiedDomainName} port=5432 dbname=${atlasDatabase.outputs.postgresWebApiDatabaseName} user=${atlasDatabase.outputs.postgresWebapiAdminUsername} password=${postgresWebapiAdminPassword} sslmode=require'
 
-resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'deployment-atlas-security'
   location: location
   kind: 'AzureCLI'
@@ -299,13 +295,13 @@ resource deploymentAtlasSecurity 'Microsoft.Resources/deploymentScripts@2020-10-
   ]
 }
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   #disable-next-line use-stable-resource-identifiers
   name: 'log-${suffix}'
   location: location
 }
 
-resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource deplymentAddDataSource 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'deployment-add-data-source'
   location: location
   kind: 'AzureCLI'

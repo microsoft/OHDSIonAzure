@@ -46,7 +46,7 @@ var OMOPCDMJDBCConnectionStringSecretName = '${databaseName}-cdm-jdbc-connection
 var OMOPCDMJDBCConnectionString = 'jdbc:sqlserver://${sqlServer.properties.fullyQualifiedDomainName}:1433;database=${databaseName};user=${sqlAdminLogin}@${sqlServerName};password=${sqlAdminPassword};encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;'
 
 
-resource sqlServer 'Microsoft.Sql/servers@2021-11-01-preview' = {
+resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = {
   name: sqlServerName
   location: location
   properties: {
@@ -58,7 +58,7 @@ resource sqlServer 'Microsoft.Sql/servers@2021-11-01-preview' = {
   }
 }
 
-resource sqlServerDatabase 'Microsoft.Sql/servers/databases@2021-11-01-preview' = {
+resource sqlServerDatabase 'Microsoft.Sql/servers/databases@2023-05-01-preview' = {
   parent: sqlServer
   name: databaseName
   location: location
@@ -76,7 +76,7 @@ resource sqlServerDatabase 'Microsoft.Sql/servers/databases@2021-11-01-preview' 
   }
 }
 
-resource encryption 'Microsoft.Sql/servers/databases/transparentDataEncryption@2021-11-01-preview' = {
+resource encryption 'Microsoft.Sql/servers/databases/transparentDataEncryption@2023-05-01-preview' = {
   parent: sqlServerDatabase
   name: 'current'
   properties: {
@@ -84,7 +84,7 @@ resource encryption 'Microsoft.Sql/servers/databases/transparentDataEncryption@2
   }
 }
 
-resource allowAccessToAzureServices 'Microsoft.Sql/servers/firewallRules@2022-11-01-preview' = {
+resource allowAccessToAzureServices 'Microsoft.Sql/servers/firewallRules@2023-05-01-preview' = {
   name: 'AllowAllAzureIps'
   parent: sqlServer
   properties: {
@@ -93,7 +93,7 @@ resource allowAccessToAzureServices 'Microsoft.Sql/servers/firewallRules@2022-11
   }
 }
 
-resource allowAccessToAll 'Microsoft.Sql/servers/firewallRules@2022-11-01-preview' = if (localDebug) {
+resource allowAccessToAll 'Microsoft.Sql/servers/firewallRules@2023-05-01-preview' = if (localDebug) {
   name: 'AllowAllIps'
   parent: sqlServer
   properties: {
@@ -111,7 +111,7 @@ param cdmContainerUrl string
 param cdmSasToken string
 
 
-resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'deployment-omop-cdm-synapse'
   location: location
   kind: 'AzureCLI'
@@ -185,11 +185,11 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
 }
 
 // Get the keyvault
-resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: keyVaultName
 }
 
-resource dbAdminUser 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource dbAdminUser 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${databaseName}-admin-user'
   parent: keyVault
   properties: {
@@ -197,7 +197,7 @@ resource dbAdminUser 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
   }
 }
 
-resource dbAdminPassword 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource dbAdminPassword 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${databaseName}-admin-password'
   parent: keyVault
   properties: {
@@ -206,7 +206,7 @@ resource dbAdminPassword 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
 }
 
 // Store the OMOP CDM JDBC connection string in keyvault
-resource omopCdmConnectionString 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource omopCdmConnectionString 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: OMOPCDMJDBCConnectionStringSecretName
   parent: keyVault
   properties: {

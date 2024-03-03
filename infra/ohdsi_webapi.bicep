@@ -21,11 +21,11 @@ var tenantId = subscription().tenantId
 var logCategories = ['AppServiceAppLogs', 'AppServiceConsoleLogs', 'AppServiceHTTPLogs']
 
 // Get the keyvault
-resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: keyVaultName
 }
 
-resource jdbcConnectionStringWebapiAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource jdbcConnectionStringWebapiAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: 'jdbc-connectionstring'
   parent: keyVault
   properties: {
@@ -34,12 +34,12 @@ resource jdbcConnectionStringWebapiAdminSecret 'Microsoft.KeyVault/vaults/secret
 }
 
 // User Assigned Identity
-resource ohdsiWebapiIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+resource ohdsiWebapiIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' = {
   name: 'id-ohdsiwebapi-${suffix}'
   location: location
 }
 
-resource ohdsiWebapiAccessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2022-07-01' = {
+resource ohdsiWebapiAccessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2023-07-01' = {
   name: 'add'
   parent: keyVault
   properties: {
@@ -59,7 +59,7 @@ resource ohdsiWebapiAccessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2022-
 }
 
 // Create an App Service webapp
-resource webApp 'Microsoft.Web/sites@2022-03-01' = {
+resource webApp 'Microsoft.Web/sites@2023-01-01' = {
   name: 'app-ohdsiwebapi-${suffix}'
   location: location
   properties: {
@@ -239,10 +239,6 @@ resource diagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-previe
     logs: [for logCategory in logCategories: {
       category: logCategory
       enabled: true
-      retentionPolicy: {
-        days: 30
-        enabled: true
-      }
     }]
   }
 }
