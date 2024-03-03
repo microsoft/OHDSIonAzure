@@ -26,11 +26,11 @@ var logCategories = ['PostgreSQLLogs']
 // these cost extra.
 // var logCategories = ['PostgreSQLLogs', 'PostgreSQLFlexDatabaseXacts', 'PostgreSQLFlexQueryStoreRuntime', 'PostgreSQLFlexQueryStoreWaitStats', 'PostgreSQLFlexSessions', 'PostgreSQLFlexTableStats']
 
-resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: keyVaultName
 }
 
-resource postgresAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource postgresAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: 'postgres-admin-password'
   parent: keyVault
   properties: {
@@ -38,7 +38,7 @@ resource postgresAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
   }
 }
 
-resource postgresWebapiAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource postgresWebapiAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: 'ohdsi-admin-password'
   parent: keyVault
   properties: {
@@ -46,7 +46,7 @@ resource postgresWebapiAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01
   }
 }
 
-resource postgresWebapiAppSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource postgresWebapiAppSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: 'ohdsi-app-password'
   parent: keyVault
   properties: {
@@ -55,7 +55,7 @@ resource postgresWebapiAppSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' 
 }
 
 // Create a PostgreSQL server
-resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {
+resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview' = {
   name: 'psql-${suffix}'
   location: location
   sku: {
@@ -77,7 +77,7 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' =
 }
 
 // Allow public access from any Azure service within Azure to this server
-resource allowAccessToAzureServices 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2022-12-01' = {
+resource allowAccessToAzureServices 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2023-06-01-preview' = {
   name: 'AllowAllAzureIps'
   parent: postgresServer
   properties: {
@@ -86,7 +86,7 @@ resource allowAccessToAzureServices 'Microsoft.DBforPostgreSQL/flexibleServers/f
   }
 }
 
-resource allowAccessToAll 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2022-12-01' = if (localDebug) {
+resource allowAccessToAll 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2023-06-01-preview' = if (localDebug) {
   name: 'AllowAllIps'
   parent: postgresServer
   properties: {
@@ -96,7 +96,7 @@ resource allowAccessToAll 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRul
 }
 
 // Create a new PostgreSQL database
-resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2022-12-01' = {
+resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06-01-preview' = {
   name: postgresWebApiDatabaseName
   parent: postgresServer
   properties: {
@@ -105,7 +105,7 @@ resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2
   }
 }
 
-resource deploymentOhdsiWebapiInitScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource deploymentOhdsiWebapiInitScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'deployment-ohdsi-webapi-init'
   location: location
   kind: 'AzureCLI'
@@ -182,10 +182,6 @@ resource diagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-previe
     logs: [for logCategory in logCategories: {
       category: logCategory
       enabled: true
-      retentionPolicy: {
-        days: 30
-        enabled: true
-      }
     }]
   }
 }

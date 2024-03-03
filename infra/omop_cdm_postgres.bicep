@@ -51,17 +51,17 @@ var postgresOMOPCDMJDBCConnectionString = 'jdbc:postgresql://${postgresServer.pr
 
 
 // Get the postgres server
-resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' existing = {
+resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview' existing = {
   name: postgresServerName
 }
 
 // Get the keyvault
-resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: keyVaultName
 }
 
 // Store OMOM CDM user password in keyvault
-resource postgresAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource postgresAdminSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: postgresOMOPCDMUserSecretName
   parent: keyVault
   properties: {
@@ -70,7 +70,7 @@ resource postgresAdminSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
 }
 
 // Store the OMOP CDM JDBC connection string in keyvault
-resource postgresOMOPCDMJDBCConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource postgresOMOPCDMJDBCConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: postgresOMOPCDMJDBCConnectionStringSecretName
   parent: keyVault
   properties: {
@@ -79,7 +79,7 @@ resource postgresOMOPCDMJDBCConnectionStringSecret 'Microsoft.KeyVault/vaults/se
 }
 
 // Create a new PostgreSQL database for the OMOP CDM
-resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2022-12-01' = {
+resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06-01-preview' = {
   name: postgresOMOPCDMDatabaseName
   parent: postgresServer
   properties: {
@@ -88,7 +88,7 @@ resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2
   }
 }
 
-resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'deployment-omop-cdm'
   location: location
   kind: 'AzureCLI'

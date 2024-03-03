@@ -11,7 +11,7 @@ var shareName = 'atlas'
 var mountPath = '/etc/atlas'
 var logCategories = ['AppServiceAppLogs', 'AppServiceConsoleLogs', 'AppServiceHTTPLogs']
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: 'stohdsi${suffix}'
   location: location
   kind: 'StorageV2'
@@ -28,7 +28,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   }
 }
 
-resource deploymentOhdsiAtlasConfigScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource deploymentOhdsiAtlasConfigScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'deployment-ohdsi-atlas-config-file'
   location: location
   kind: 'AzureCLI'
@@ -69,7 +69,7 @@ resource deploymentOhdsiAtlasConfigScript 'Microsoft.Resources/deploymentScripts
   }
 }
 
-resource uiWebApp 'Microsoft.Web/sites@2022-03-01' = {
+resource uiWebApp 'Microsoft.Web/sites@2023-01-01' = {
   name: 'app-ohdsiatlas-${suffix}'
   location: location
   properties: {
@@ -129,10 +129,6 @@ resource diagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-previe
     logs: [for logCategory in logCategories: {
       category: logCategory
       enabled: true
-      retentionPolicy: {
-        days: 30
-        enabled: true
-      }
     }]
   }
 }
