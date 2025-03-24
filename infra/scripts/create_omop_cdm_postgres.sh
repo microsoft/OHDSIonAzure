@@ -44,7 +44,7 @@ for element in "${tables[@]}"; do
     ((i++)) || true
     printf "Downloading and extracting: %s (%s)\n" "$element.csv.gz" "$i/$n"
     file=/tmp/"$element".csv
-    curl "${OMOP_CDM_CONTAINER_URL}$element.csv.gz${OMOP_CDM_SAS_TOKEN}" | gunzip > "$file"
+    curl -L "${OMOP_CDM_CONTAINER_URL}$element.csv.gz${OMOP_CDM_SAS_TOKEN}" | gunzip > "$file"
     num_of_records=$(wc -l "$file" | awk '{print $1}')
     printf "Copying %s records to table: %s\n" "$num_of_records" "$element"
     psql "$OMOP_CONNECTION_STRING" -c "\COPY $element FROM '$file' WITH CSV;" -v ON_ERROR_STOP=1
