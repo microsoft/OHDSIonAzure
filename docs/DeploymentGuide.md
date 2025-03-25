@@ -47,7 +47,7 @@ As noted above this solution currently supports storing the CDM on a managed Pos
 This solution uses a sample CDM dataset that is hosted on GitHub releases. However, that isn't a valid source to load data into Synapse automatically.
 
 The general idea is:
-1. Create a new storage account and container separtly and before you run the OHDSI deployment.
+1. Create a new storage account and container separately and before you run the OHDSI deployment.
 2. Download [synthea1k.tar](https://github.com/microsoft/OHDSIonAzure/releases/download/2.1/synthea1k.tar).
 3. Extract the files in it to their gz form (don't gunzip them). 
 ```sh
