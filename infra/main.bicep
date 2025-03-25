@@ -6,7 +6,7 @@ param suffix string = uniqueString(utcNow())
 
 @description('The url of the container where the cdm is stored')
 #disable-next-line no-hardcoded-env-urls
-param cdmContainerUrl string = 'https://omoppublic.blob.core.windows.net/shared/synthea1k/'
+param cdmContainerUrl string = 'https://github.com/microsoft/OHDSIonAzure/releases/download/2.1/'
 
 @description('The sas token to access the cdm container')
 param cdmSasToken string = ''

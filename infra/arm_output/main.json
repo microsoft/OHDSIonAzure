@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.1.11899",
-      "templateHash": "11901168927341514894"
+      "templateHash": "2805468182102239853"
     }
   },
   "parameters": {
@@ -22,7 +22,7 @@
     },
     "cdmContainerUrl": {
       "type": "string",
-      "defaultValue": "https://omoppublic.blob.core.windows.net/shared/synthea1k/",
+      "defaultValue": "https://github.com/microsoft/OHDSIonAzure/releases/download/2.1/",
       "metadata": {
         "description": "The url of the container where the cdm is stored"
       }
