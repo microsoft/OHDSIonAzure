@@ -41,7 +41,24 @@ In order to deploy OHDSI on Azure, you will need the following prerequisites:
 ## Data platform
 
 As noted above this solution currently supports storing the CDM on a managed PostgresSQL and on Azure Synapse Dedicated Pool. Please choose the right SKUs for each of the platforms depending on your dataset size.
-Note that when using the Synapse option, a default table distribution is used. If you intend to use a large dataset that might need to be adjusted per the comments [here](https://github.com/OHDSI/CommonDataModel/blob/main/inst/ddl/5.4/synapse/OMOPCDM_synapse_5.4_ddl.sql) (although this quickstart doesn't support this out-of-the-box you can make the right modifications yourself).
+
+### Synapse
+
+This solution uses a sample CDM dataset that is hosted on GitHub releases. However, that isn't a valid source to load data into Synapse automatically.
+
+The general idea is:
+1. Create a new storage account and container separately before you run the OHDSI deployment.
+2. Download [synthea1k.tar](https://github.com/microsoft/OHDSIonAzure/releases/download/2.1/synthea1k.tar).
+3. Extract the files in it to their gz form (don't gunzip them). 
+```sh
+tar xvf synthea1k.tar
+``` 
+4. Upload the gz files into the container created in step 1.
+5. Create a SAS token, or configure for anonymous access.
+
+From here you can continue with the deployment but remember to use the details from the new storage account in the deployment parameters.
+
+Note that a default table distribution is used. If you intend to use a large dataset that might need to be adjusted per the comments [here](https://github.com/OHDSI/CommonDataModel/blob/main/inst/ddl/5.4/synapse/OMOPCDM_synapse_5.4_ddl.sql) (although this quickstart doesn't support this out-of-the-box you can make the right modifications yourself).
 
 ## Permissions
 
